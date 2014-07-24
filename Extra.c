@@ -9,13 +9,43 @@
 
 
 /**
- \fn	int in (long double *c, size_t s, long double x) 
- \brief	Check if element is exists in array.			 
- \date	20-May-14										 
- \param [in]	c		If non-null, the long double * to process.
- \param	s			 	The array size to process.
- \param	x			 	The element value.				 
- \return	1 if success, else 0.
+\fn	bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n)
+\brief	Makes next combination over the index array while it can be made.
+\date	15-May-14
+\param [in,out]	index	If non-null, * to index array.
+\param	k				 	The K.
+\param	n				 	The N.
+\return	true if next combination is generated, false if no possible combinations left.
+*/
+bool nextCombination(size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO: 
+	for (ptrdiff_t i = k - 1; i >= 0; --i) {
+		if (index[i] < n - k + i + 1) {	//warning C4018: '<' : signed/unsigned mismatch
+			++index[i];
+			for (ptrdiff_t j = i + 1; j < k; ++j) {
+				index[j] = index[j - 1] + 1;
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+#pragma region "Search in array"
+
+/**
+ \fn	bool exists_d (long double *c, size_t s, long double x)
+
+ \brief	Check if element x is exists in array c of size s.
+
+ \date	20-May-14
+
+ \param [in]	c	If non-null, the * to array process.
+ \param	s		 	The array size to process.
+ \param	x		 	The element value.
+
+ \return	true if success, else false.
  */
 bool exists_d (long double *c, size_t s, long double x) {
 	for (size_t i = 0; i < s; i++) {
@@ -36,38 +66,20 @@ bool exists_u (size_t *c, size_t s, size_t e, size_t x) {
 
 	return 0;
 }
+#pragma endregion "Search in array"
+
+
+#pragma region "Allocation routines"
 
 /**
-\fn	int nextCombination (int *index, int k, int n)	 
-\brief	Makes next combination over the index array while it can be made.  	 
-\date	15-May-14															 
-\param [in,out]	index		If non-null, * to index array.
-\param	k				 	The K.
-\param	n				 	The N.											 
-\return	true if next combination is generated, false if no possible combinations left.
-*/
-bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO: 
-	for (ptrdiff_t i = k - 1; i >= 0; --i) {
-		if (index[i] < n - k + i + 1) {	//warning C4018: '<' : signed/unsigned mismatch
-			++index[i];
-			for (ptrdiff_t j = i + 1; j < k; ++j) {
-				index[j] = index[j - 1] + 1;
-			}
-			return true;
-		}
-	}
+ \fn	int64_t *iAllocVec (size_t Size)
 
-	return false;
-}
+ \brief	Allocate vector.
 
-void fillIndex(size_t *index, size_t Size) {
-	for (size_t i = 0; i < Size; i++) {
-		index[i] = i + 1;
-	}
+ \param	Size	The size.
 
-	return;
-}
-
+ \return	null if it fails, else an int64_t*.
+ */
 int64_t *iAllocVec (size_t Size) {
 	int64_t *v;
 	v = ((int64_t *) malloc(sizeof(int64_t) * (Size)));
@@ -77,6 +89,15 @@ int64_t *iAllocVec (size_t Size) {
 	return v;
 }
 
+/**
+ \fn	size_t *uAllocVec (size_t Size)
+
+ \brief	Allocate vector.
+
+ \param	Size	The size.
+
+ \return	null if it fails, else a size_t*.
+ */
 size_t *uAllocVec (size_t Size) {
 	size_t *v;
 	v = ((size_t *) malloc(sizeof(size_t) * (Size)));
@@ -86,6 +107,15 @@ size_t *uAllocVec (size_t Size) {
 	return v;
 }
 
+/**
+ \fn	long double *ldAllocVec (size_t Size)
+
+ \brief	Ld allocate vector.
+
+ \param	Size	The size.
+
+ \return	null if it fails, else a double*.
+ */
 long double *ldAllocVec (size_t Size) {
 	long double *v;
 	v = ((long double *) malloc(sizeof(long double) * Size));
@@ -94,7 +124,32 @@ long double *ldAllocVec (size_t Size) {
 	
 	return v;
 }
+#pragma endregion "Allocation routines"
 
-bool equal (double a, double b) {
-	return (a==b);
+/**
+ \fn	void fillIndex(size_t *index, size_t size, size_t start)
+
+ \brief	Fills index array.
+
+ \param [in,out]	index	If non-null, * to index array.
+ \param	size			 	The array size.
+ \param	start			 	The starting value.
+ */
+void fillIndex(size_t *index, size_t size, size_t start) {
+	for (size_t i = 0; i < size; i++) {
+		index[i] = start++;
+	}
+
+	return;
+}
+
+int64_t GCD_euclid (int64_t a, int64_t b) {
+	int64_t t = 0;
+	while (b) {
+		t = a;
+		a = b;
+		b = t % b;
+	}
+
+	return abs(a);
 }

@@ -10,17 +10,25 @@
 #include "SpinningIndicator.h"
 
 
-tElementWise2(add, +); tElementWise2(sub, -); tElementWise2(mul, *); tElementWise2(div, / );
+#pragma region "Entrywise operations"
+tElementWise2(add, +); tElementWise2(sub, -); tElementWise2(mul, *); tElementWise2(div, /);
 tScalar(add, +); tScalar(sub, -); tScalar(mul, *); tScalar(div, / );
-tElementWise3(add, +); tElementWise3(sub, -); tElementWise3(mul, *); tElementWise3(div, / );
+tElementWise3(add, +); tElementWise3(sub, -); tElementWise3(mul, *); tElementWise3(div, /);
+#pragma endregion "Entrywise operations"
 
+
+#pragma region "Is?.."
 /**
- \fn	int IsEqual (dMat A, dMat B) 
- \brief	Checks for element-wise equality of matrices A and B. 
- \date	04-Jun-14											  
- \param	A	The dMat to process.
- \param	B	The dMat to process.							  
- \return	An int.
+ \fn	bool IsEqual (Mat A, Mat B)
+
+ \brief	Checks for element-wise equality of matrices A and B.
+
+ \date	04-Jun-14
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	true if equal, else false.
  */
 bool IsEqual (Mat A, Mat B) {
 	double **a = A->a;
@@ -42,37 +50,16 @@ bool IsEqual (Mat A, Mat B) {
 }
 
 /**
-\fn	int Rank (dMat A)
-\brief	Calculates Rank of matrix A in RREF form.	
-\date	17-May-14			  
-\param	A   	The dMat to process.  
-\return	Rank value.
-*/
-size_t Rank (Mat A) {
-	size_t rank = 0;
-	size_t i, j;
-	double **r = A->a;
+ \fn	bool IsIdentity (Mat A)
 
-	for (i = 0; i < A->rowsCount; i++) {
-		for (j = 0; j < A->colsCount; j++) {
-			if (fabs(r[i][j]) > EPS) {
-				rank++;
-				break;
-			}
-		}
-	}
+ \brief	Check if matrix A is an identity matrix.
 
-	return rank;
-}
+ \date	17-May-14
 
-/**
-\fn	char isIdentity (dMat A, size_t Size)
-\brief	Check if matrix A is identity matrix.	
-\date	17-May-14 
-\param	A   	The dMat to process.
-\param	Size	The size.  
-\return	Checking result {0|1}.
-*/
+ \param	A	The Mat to process.
+
+ \return	Checking result (true or false).
+ */
 bool IsIdentity (Mat A) {
 	double **a = A->a;
 	
@@ -91,12 +78,124 @@ bool IsIdentity (Mat A) {
 	return true;
 }
 
+bool IsSingular (Mat A) {
+	if (A->isSingular) {
+		return 1;
+	} else {
+		Mat T = DeepCopy(A);
+		Assert(T != NULL, "Cannot create copy...");
+		toRowEchelonForm(T);
+		bool r = T->isSingular;
+		FreeMat(T);
+		return r;
+	}
+}
+
 /**
- \fn	void toInverse (dMat A)
- \brief	Transforms square matrix A to an inverse matrix A^(-1)
- using row operations (Gauss-Jordan method) for n>2. 
- \date	24-May-14	 
- \param	A	The dMat to process.
+ \fn	int IsSymmetric (Mat A)
+
+ \brief	Chacks if Matrix A is symmetric.
+
+ \param	A	The Mat to process.
+
+ \return	true or false.
+ */
+int IsSymmetric (Mat A) {
+	if (!square(A)) {
+		return false;
+	}
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		for (size_t j = 0; j < i; j++) {
+			if (!equal_d(A->a[i][j], A->a[j][i])) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+#pragma endregion "Is?.."
+
+
+#pragma region "Transpose & Inverse"
+
+/**
+ \fn	void toTransposed_square (Mat A)
+
+ \brief	In-place square matrix transposition.
+
+ \date	04-Jun-14
+
+ \param	A	The Mat to process.
+ */
+void toTransposed_square (Mat A) {
+	Assert(square(A), "Cannot transpose non-square matrix with this func.");
+	double **a = A->a;
+
+	for (size_t i = 0; i < A->rowsCount - 1; i++) {
+		for (size_t j = i + 1; j < A->rowsCount; j++) {
+			swap_d(a[i][j], a[j][i]);
+		}
+	}
+
+	return;
+}
+
+/**
+ \fn	Mat Transposed (Mat A)
+
+ \brief	Returns A transposed.
+
+ \date	04-Jun-14
+
+ \param	A	The Mat to process.
+
+ \return	A transposed.
+ */
+Mat Transposed (Mat A) {
+	double **a = A->a;
+	Mat T = AllocMat(A->colsCount, A->rowsCount);
+	double **t = T->a;
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		for (size_t j = 0; j < A->colsCount; j++) {
+			t[j][i] = a[i][j];
+		}
+	}
+
+	return T;
+}
+
+/**
+ \fn	void transpose (Mat A)
+
+ \brief	In-place transposes the given Matrix A.
+
+ \param	A	The Mat to process.
+ */
+void transpose (Mat A) {
+	if (A->rowsCount == A->colsCount) {
+		toTransposed_square(A);
+	} else {
+		Mat T = Transposed(A);
+		FreeMat(A);
+		A = DeepCopy(T);
+		FreeMat(T);
+	}
+
+	return;
+}
+
+/**
+ \fn	void toInverse (Mat A)
+
+ \brief	Transforms square matrix A with size n into an inverse matrix A^(-1)
+		using row operations (Gauss-Jordan method) for n>2.
+
+ \date	24-May-14
+
+ \param	A	The Mat to process.
  */
 void toInverse (Mat A) {
 	if ((A->isSingular == true) || (fabs(Det_gauss(A)) <= EPS) || (!square(A))) {
@@ -137,16 +236,22 @@ void toInverse (Mat A) {
 
 	return;
 }
+#pragma endregion "Transpose & Inverse"
 
+
+#pragma region "Matrix multiplication"
 /**
- \fn	dMat MatMul (dMat A, dMat B) 
+ \fn	Mat MatMul_naive (Mat A, Mat B)
+
  \brief	Matrix multiplication using naive, but cache-friendly method))
- ijk - 1.25 cache misses per iteration
- ikj - 0.5 cache misses (row-wise)
+		ijk - 1.25 cache misses per iteration ikj - 0.5 cache misses (row-wise)
+
  \date	24-May-14
- \param	A	The dMat to process.
- \param	B	The dMat to process.
- \return	Matrix product.
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	Matrix product of A & B.
  */
 Mat MatMul_naive (Mat A, Mat B) {
 	Assert(A->colsCount == B->rowsCount, "Cannot multiply.");
@@ -178,10 +283,27 @@ Mat MatMul_naive (Mat A, Mat B) {
 	}
 }
 
-//C11 = A11B11 + A12B21
-//C12 = A11B12 + A12B22
-//C21 = A21B11 + A22B21
-//C22 = A21B12 + A22B22
+/**
+ \fn	Mat MatMul_naive_recursive (Mat A, Mat B)
+
+ \brief	Recursive implementation of naive matrix multiplication algorithm.
+ Only for square Matrices with size=2^n
+ A, B & product C will be split into 4 submatrices, then the product will be:
+		C11 = A11B11 + A12B21
+		C12 = A11B12 + A12B22
+		C21 = A21B11 + A22B21
+		C22 = A21B12 + A22B22,
+		or:
+		C11 ← A11×B11;  C11 ← C11 + A12×B21
+		C12 ← A11×B12;  C12 ← C12 + A12×B22
+		C21 ← A21×B11;  C21 ← C21 + A22×B21
+		C22 ← A21×B12;  C22 ← C22 + A22×B22
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	Product of A & B.
+ */
 Mat MatMul_naive_recursive (Mat A, Mat B) {
 	Mat C = NULL;
 
@@ -233,7 +355,29 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				}
 			}
 
-			tmp_1 = MatMul_naive_recursive(A11, B11);
+			C11 = MatMul_naive_recursive(A11, B11);
+			C12 = MatMul_naive_recursive(A11, B12);
+			C21 = MatMul_naive_recursive(A21, B11);
+			C22 = MatMul_naive_recursive(A21, B12);
+
+			//TODO: C22 can be used as temporary, so no tmp_1 needed!)
+			tmp_1 = MatMul_naive_recursive(A12, B21);
+			__add(C11, tmp_1);
+			FreeMat(tmp_1);
+
+			tmp_1 = MatMul_naive_recursive(A12, B22);
+			__add(C12, tmp_1);
+			FreeMat(tmp_1);
+
+			tmp_1 = MatMul_naive_recursive(A22, B21);
+			__add(C21, tmp_1);
+			FreeMat(tmp_1);
+
+			tmp_1 = MatMul_naive_recursive(A22, B22);
+			__add(C22, tmp_1);
+			FreeMat(tmp_1);
+
+			/*tmp_1 = MatMul_naive_recursive(A11, B11);
 			tmp_2 = MatMul_naive_recursive(A12, B21);
 			___add(tmp_1, tmp_2, C11);
 			freeMats(tmp_1, tmp_2, NULL);
@@ -251,7 +395,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 			tmp_1 = MatMul_naive_recursive(A21, B12);
 			tmp_2 = MatMul_naive_recursive(A22, B22);
 			___add(tmp_1, tmp_2, C22);
-			freeMats(tmp_1, tmp_2, NULL);
+			freeMats(tmp_1, tmp_2, NULL);*/
 
 			for (size_t i = 0; i < Size; i++) {
 				for (size_t j = 0; j < Size; j++) {
@@ -270,11 +414,14 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 }
 
 /**
- \fn	void matMul (dMat A, dMat B)
+ \fn	void matMul (Mat A, Mat B)
+
  \brief	In-place matrix multiplication (multiplicand is replaced by result).
- \date	24-May-14					  
- \param	A	The dMat to process.
- \param	B	The dMat to process.
+
+ \date	24-May-14
+
+ \param	A	The Mat A to process (will be replaced by product of A & B).
+ \param	B	The Mat B to process.
  */
 void matMul (Mat A, Mat B) {
 	Assert(A != NULL && B != NULL, "NULLs received...");
@@ -311,14 +458,18 @@ void matMul (Mat A, Mat B) {
 }
 
 /**
- \fn	dMat MatPow (dMat A, size_t pow)
+ \fn	Mat MatPow (Mat A, size_t pow)
+
  \brief	Raise matrix to power N.		
- \date	24-May-14						
- \param	A  	The dMat to process.
- \param	pow	The power to raise to.		
- \return	Result.
+		TODO: use addition - chain exponentiation.
+
+ \date	24-May-14
+ 
+ \param	A  	The Mat to process.
+ \param	pow	The power value to raise matrix to.
+
+ \return	A^n.
  */
-//TODO: use addition - chain exponentiation
 Mat MatPow (Mat A, size_t pow) {
 	Assert(pow != 0, "Cannot raise power.");
 	Assert(square(A), "Cannot raise power of non-square matrix.");
@@ -353,58 +504,32 @@ Mat MatPow (Mat A, size_t pow) {
 			break;
 	}
 }
+#pragma endregion "Matrix multiplication"
 
+
+#pragma region "Norms, etc."
 /**
- \fn	void toTransposed_sq (dMat A)
- \brief	In-place square matrix transposition.
- \date	04-Jun-14	   
- \param	A	The dMat to process.
- */
-void toTransposed_square (Mat A) {
-	Assert(square(A), "Cannot transpose non-square matrix with this func.");
-	double **a = A->a;
+\fn	int Rank (dMat A)
+\brief	Calculates Rank of matrix A in RREF form.
+\date	17-May-14
+\param	A   	The dMat to process.
+\return	Rank value.
+*/
+size_t Rank(Mat A) {
+	size_t rank = 0;
+	size_t i, j;
+	double **r = A->a;
 
-	for (size_t i = 0; i < A->rowsCount - 1; i++) {
-		for (size_t j = i + 1; j < A->rowsCount; j++) {
-			swap_d(a[i][j], a[j][i]);
+	for (i = 0; i < A->rowsCount; i++) {
+		for (j = 0; j < A->colsCount; j++) {
+			if (fabs(r[i][j]) > EPS) {
+				rank++;
+				break;
+			}
 		}
 	}
 
-	return;
-}
-
-/**
- \fn	dMat Transposed (dMat A)
- \brief	Returns A transposed.
- \date	04-Jun-14			 
- \param	A	The dMat to process.
- \return	A transposed.
- */
-Mat Transposed (Mat A) {
-	double **a = A->a;
-	Mat T = AllocMat(A->colsCount, A->rowsCount);
-	double **t = T->a;
-
-	for (size_t i = 0; i < A->rowsCount; i++) {
-		for (size_t j = 0; j < A->colsCount; j++) {
-			t[j][i] = a[i][j];
-		}
-	}
-
-	return T;
-}
-
-void transpose (Mat A) {
-	if (A->rowsCount == A->colsCount) {
-		toTransposed_square(A);
-	} else {
-		Mat T = Transposed(A);
-		FreeMat(A);
-		A = DeepCopy(T);
-		FreeMat(T);
-	}
-
-	return;
+	return rank;
 }
 
 double Trace (Mat A) {
@@ -473,7 +598,10 @@ double ConditionNumber (Mat A) {
 
 	return r;
 }
+#pragma endregion "Norms, etc."
 
+
+#pragma region "Kronecker"
 Mat KroneckerProd (Mat A, Mat B) {
 	Mat K = AllocMat(A->rowsCount*B->rowsCount, A->colsCount*B->colsCount);
 	double **a = A->a;
@@ -505,36 +633,19 @@ Mat KroneckerSum (Mat A, Mat B) {
 
 	return KS;
 }
+#pragma endregion "Kronecker"
 
-bool IsSingular (Mat A) {
-	if (A->isSingular) { 
-		return 1;
-	} else {
-		Mat T = DeepCopy(A);
-		Assert(T != NULL, "Cannot create copy...");
-		toRowEchelonForm(T);
-		bool r = T->isSingular;
-		FreeMat(T);
-		return r;
-	}
-}
 
-int IsSymmetric (Mat A) {
-	if (!square(A)) {
-		return false;
-	}
+#pragma region "Strassen"
+/**
+ \fn	size_t fixSize (size_t Size)
 
-	for (size_t i = 0; i < A->rowsCount; i++) {
-		for (size_t j = 0; j < i; j++) {
-			if (!equal_d(A->a[i][j], A->a[j][i])) {
-				return false;
-			}
-		}	
-	}
+ \brief	Fix size.
 
-	return true;
-}
+ \param	Size	The size.
 
+ \return	A size_t.
+ */
 size_t fixSize (size_t Size) {
 	if (!(Check(powerof2(Size), "Matrix size is not a power of 2."))) {
 		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(Size)))); //-V113
@@ -542,18 +653,30 @@ size_t fixSize (size_t Size) {
 	return Size;
 }
 
-//TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix if matrices')
-//M1 := (A1,1 + A2,2)(B1,1 + B2,2)
-//M2 := (A2,1 + A2,2)B1,1
-//M3 := A1,1(B1,2 − B2,2)
-//M4 := A2,2(B2,1 − B1,1)
-//M5 := (A1,1 + A1,2)B2, 2
-//M6 := (A2,1 − A1,1)(B1,1 + B1,2)
-//M7 := (A1,2 − A2,2)(B2,1 + B2,2)
-//C1, 1 = M1 + M4 − M5 + M7
-//C1, 2 = M3 + M5
-//C2, 1 = M2 + M4
-//C2, 2 = M1 − M2 + M3 + M6 
+/**
+ \fn	Mat MatMul_strassen (Mat A, Mat B)
+
+ \brief	Finds product of A & B using Strassen algorithm.
+ Source matrices A, B & its product C will be divided into 4 square blocks (submatrices),
+ and this algorithm repeated recursively until blocks become numbers. 
+ (or when size of blocks reaches some threshold value when naive algorithm will be used).
+ Complexity: O(n^2.8)
+ TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix if matrices')
+		M1 := (A1,1 + A2,2)(B1,1 + B2,2)
+		M2 := (A2,1 + A2,2)B1,1 M3 := A1,1(B1,2 − B2,2)
+		M4 := A2,2(B2,1 − B1,1)
+		M5 := (A1,1 + A1,2)B2, 2 M6 := (A2,1 − A1,1)(B1,1 + B1,2)
+		M7 := (A1,2 − A2,2)(B2,1 + B2,2)
+		C1,1 = M1 + M4 − M5 + M7
+		C1,2 = M3 + M5
+		C2,1 = M2 + M4
+		C2,2 = M1 − M2 + M3 + M6.
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	Product of A & B.
+ */
 Mat MatMul_strassen (Mat A, Mat B) {
 	Mat C = NULL;
 	size_t Size = A->rowsCount;
@@ -599,6 +722,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			Mat A_tmp = AllocMat(Size, Size);
 			Mat B_tmp = AllocMat(Size, Size);
 
+			// Split
 			for (size_t i = 0; i < Size; i++) {
 				for (size_t j = 0; j < Size; j++) {
 					A11->a[i][j] = A->a[i][j];
@@ -648,7 +772,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			___add(A_tmp, p6, B_tmp); // p1 + p3 + p6
 			___sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
 
-			// Grouping the results obtained in a single matrix:
+			// Join:
 			for (size_t i = 0; i < Size; i++) {
 				for (size_t j = 0; j < Size; j++) {
 					C->a[i][j] = C11->a[i][j];
@@ -666,19 +790,30 @@ Mat MatMul_strassen (Mat A, Mat B) {
 	}
 }
 
-// nw00 nb01
-// sw10 sb11
-// P1 = (A01+A10)(B10+B01)
-// P2 = (A10+A11)B10
-// P3 = A01(B11-B01)
-// P4 = A10(B00-B10)
-// P5 = (A01+A00)B01
-// P6 = (A11-A01)(B10+B11)
-// P7 = (A00-A10)(B00+B01)
-// C00 = P1+P4-P5+P7
-// C01 = P3+P5
-// C10 = P2+P4
-// C11 = P1-P2+P3+P6
+/**
+ \fn	Mat MatMul_strassen_optimized (Mat A, Mat B)
+
+ \brief	P1 = (A01+A10)(B10+B01)
+		P2 = (A10+A11)B10 P3 = A01(B11-B01)
+		P4 = A10(B00-B10)
+		P5 = (A01+A00)B01 P6 = (A11-A01)(B10+B11)
+		P7 = (A00-A10)(B00+B01)
+		C00 = P1+P4-P5+P7 C01 = P3+P5 C10 = P2+P4 C11 = P1-P2+P3+P6.
+
+ \param	A	The Mat to process.
+ \param	B	The Mat to process.
+
+ \return	A Mat.
+ */
+
+/*
+ 
+
+
+ */
+
+
 Mat MatMul_strassen_optimized (Mat A, Mat B) {
-	return A;
+	return MatMul_strassen(A, B); //TODO:
 }
+#pragma endregion "Strassen"

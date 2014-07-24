@@ -96,7 +96,7 @@ Mat *QRDcmp_householder (Mat A) {
 	return result;
 }
 
-double Det_qr(Mat *qr) {
+double Det_qr (Mat *qr) {
 	double det = 1.0;
 	
 	for (size_t i = 0; i < qr[1]->rowsCount; i++) {
@@ -114,6 +114,7 @@ Mat Solve_qr (Mat *qr, Mat B) {
 
 	Mat Qt = Transposed(qr[0]);
 	matMul(Qt, B);
+	printMatrixToFile(Qt, stdout, FMT_FLT);
 
 	for (ptrdiff_t k = qr[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -131,13 +132,4 @@ Mat Solve_qr (Mat *qr, Mat B) {
 
 //Solve X*A = B === A'*X' = B'
 //Mat QRSolve_t (Mat A, Mat B) {
-//	//Mat At = Transposed(A);
-//	//Mat Bt = Transposed(B);
-//	////Mat X = QRSolve(A, B);	//TODO: 
-//	////Mat Xt = Transposed(X);
-//	//FreeMat(At);
-//	//FreeMat(Bt);
-//	////FreeMat(X);
-//
-//	////return Xt;
 //}

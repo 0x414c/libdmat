@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "Matrix.h"
 
@@ -13,9 +14,6 @@ void fillEigenvalueMatrix (Mat L, long double *eVal, size_t c, size_t k);
 Mat EDMatPow (Mat* res, size_t n);
 Mat Spectrum (Mat* evd);
 double SpectralRadius (Mat Sp);
-
-/*void PrintEigendecomposition (EVD res);
-void FreeEigendecomposition (EVD res);*/	  						   
 
 int64_t GetPrincipalMinorsSum (Mat A, size_t order);
 void strikeOut (Mat A, size_t d);

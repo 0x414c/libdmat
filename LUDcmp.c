@@ -8,6 +8,19 @@
 #include "Extra.h"
 
 
+#pragma region "Gauss"
+/**
+ \fn	Mat *LUDcmp_gauss (Mat A)
+
+ \brief	The Gaussian elimination algorithm (with partial (row) pivoting)
+		for obtaining LU decomposition of Matrix A. 
+		NOTE: L and U can be stored in one matrix LU where diagonal
+		(containing only 1.0's) of L is omitted.
+
+ \param	A	The Mat to process.
+
+ \return	The * to Matrices array containing L, U &amp; P. \[0] is L, [1] is U, [2] is P. \.
+ */
 Mat *LUDcmp_gauss (Mat A) {
 	Mat LU = DeepCopy(A);
 	double **lu = LU->a;
@@ -48,6 +61,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	}
 	P->permutationSign = permutationSign;
 
+	// fill L
 	Mat L = AllocMat(rows, cols);
 	double **l = L->a;
 	for (size_t i = 0; i < rows; i++) {
@@ -60,6 +74,7 @@ Mat *LUDcmp_gauss (Mat A) {
 		}
 	}
 
+	// fill U
 	Mat U = AllocMat(rows, cols);
 	double **u = U->a;
 	for (size_t i = 0; i < rows; i++) {
@@ -81,7 +96,19 @@ Mat *LUDcmp_gauss (Mat A) {
 
 	return result;
 }
+#pragma endregion "Gauss"
 
+
+#pragma region "Crout"
+/**
+ \fn	Mat LUPivotize (Mat A)
+
+ \brief	Pivotize matrix for further using in LUP decomposition process.
+
+ \param	[in,out] A	The Matrix to process.	Note that A will be modified too.
+
+ \return	Pivoting matrix.
+ */
 Mat LUPivotize (Mat A) {
 	Mat P = Identity(A->rowsCount);
 	double **a = A->a;
@@ -109,15 +136,21 @@ Mat LUPivotize (Mat A) {
 }
 
 /**
- \fn	void LUPDcmp (dMat A)
- \brief	LUP decomposition using Crout's method with partial pivoting,
- where L is lower triangular (has elements only on the diagonal and below) and U
- is upper triangular (has elements only on the diagonal and above).
- P is the permutation matrix of A produced by partial pivoting method.
- Non-pivoted matrices can lead this algorithm to numerical instability (division by 0 or such shit).
- TODO: L and U can be stored in one matrix LU where diagonal of L is omitted.	 
- \date	05-Jun-14																 
- \param	A	The dMat to process.
+ \fn	Mat *LUDcmp_crout (Mat A)
+
+ \brief	LUP decomposition using Crout's method with partial pivoting, where L is lower triangular
+		(has elements only on the diagonal and below) and U is upper triangular (has elements
+		only on the diagonal and above). P is the permutation matrix of A produced by partial
+		(row) pivoting method. Non-pivoted matrices can lead this algorithm to numerical
+		instability (division by 0 or such shit). 
+		NOTE: L and U can be stored in one matrix LU
+		where diagonal (containing only 1.0's) of L is omitted.
+
+ \date	05-Jun-14
+
+ \param	A	The Matrix to factorize.
+
+ \return	The * to Matrices array containing L, U &amp; P. \[0] is L, [1] is U, [2] is P. \.
  */
 Mat *LUDcmp_crout (Mat A) {
 	Mat A_copy;
@@ -162,10 +195,22 @@ Mat *LUDcmp_crout (Mat A) {
 	
 	return result;
 }
+#pragma endregion "Crout"
 
-// Ly=b	forward
-// Ux=y	backward
-// More precision loss than in QRSolve() 
+
+/**
+ \fn	Mat Solve_lup (Mat *lup, Mat B)
+
+ \brief	Solves system of linear equations using LUP decomposition. System can be solved
+		directly by forward and backward substitution without using the Gaussian elimination
+		process (however we do need this process or equivalent to compute the LU decomposition
+		itself).
+
+ \param [in]	lup	* to Matrices array containing L, U &amp; P.
+ \param	B		  	Right hand side.
+
+ \return	Solution as column-vector.
+ */
 Mat Solve_lup (Mat *lup, Mat B) {
 	Assert(lup[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
 	Check(isSingular_lup(lup) == false, "Cannot solve for singular matrix.");
@@ -181,6 +226,7 @@ Mat Solve_lup (Mat *lup, Mat B) {
 	double **x = X->a;
 
 	for (size_t c = 0; c < B->colsCount; c++) {
+		// forward solve Ly = b
 		for (size_t i = 0; i < lup[0]->rowsCount; i++) {
 			y[i][c] = b[i][c];
 			for (size_t j = 0; j < i; j++) {
@@ -188,6 +234,7 @@ Mat Solve_lup (Mat *lup, Mat B) {
 			}
 			//y[i][c] /= l[i][i];
 		}
+		// backward solve Ux=y
 		for (ptrdiff_t i = lup[1]->rowsCount - 1; i >= 0; i--) {
 			x[i][c] = y[i][c];
 			for (size_t j = i + 1; j < lup[1]->colsCount; j++) {
@@ -203,11 +250,15 @@ Mat Solve_lup (Mat *lup, Mat B) {
 }
 
 /**
- \fn	double LUDet (LUP lup)
- \brief	Calculate matrix determinant using LU decomposition.
- \date	12-Jun-14											
- \param	lup	The * to LUP struct to get data from.				
- \return	A double.
+ \fn	double Det_lup (Mat *lup)
+
+ \brief	Calculates matrix determinant using LU decomposition.
+
+ \date	12-Jun-14
+
+ \param [in]	lup	* to Matrices array containing L, U &amp; P.
+
+ \return	Determinant value.
  */
 double Det_lup (Mat *lup) {
 	double** u = lup[1]->a;
@@ -220,6 +271,15 @@ double Det_lup (Mat *lup) {
 	return det;
 }
 
+/**
+ \fn	bool isSingular_lup (Mat *lup)
+
+ \brief	Checks if matrix is singular.
+
+ \param [in]	lup	* to Matrices array containing L, U &amp; P.
+
+ \return	true if singular, false if not.
+ */
 bool isSingular_lup (Mat *lup) {
 	for (size_t i = 0; i < lup[1]->rowsCount; i++) {
 		if (fabs(lup[1]->a[i][i]) <= EPS) {

@@ -4,5 +4,5 @@
 
 
 Mat CholeskyDcmp (Mat A);
-Mat CholeskySolve (Mat L, Mat B);
-double CholeskyDet (Mat L);
+Mat Solve_cholesky (Mat L, Mat B);
+double Det_cholesky (Mat L);

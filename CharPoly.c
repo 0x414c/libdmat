@@ -13,36 +13,44 @@
 
 
 /**
- \fn	int *GetPolynomialCoeffs (dMat A)
- \brief	Computes operator' characteristic polynomial coeffs
-  by the Method of Direct Expansion.
- \date	14-May-14	 
- \param	A   The int-valued matrix to process. 
+ \fn	int64_t *GetCharPolyCoeffs (Mat A)
+
+ \brief	Computes operator' characteristic polynomial coeffs by the Method of Direct Expansion.
+
+ \date	14-May-14
+
+ \param	A	The matrix to process.
+
  \return	null if it fails, else the * to array of polynomial coeffs.
  */
 int64_t *GetCharPolyCoeffs (Mat A) {
 	int64_t *coeffs = iAllocVec(A->rowsCount);
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
-		//spinActivityIndicator();
 		coeffs[i] = GetPrincipalMinorsSum(A, i + 1);
 		if (!(i % 2)) {
 			coeffs[i] *= -1; //-V127
 		}
 	}
-	//clearActivityIndicator();
 
 	return coeffs;
 }
 
 /**
- \fn	void PrintCharacteristicEquation (int *c, size_t s)	
- \brief	Prints characteristic equation.	
- \date	14-May-14		
- \param [in,out]	c	If non-null, the * to array of polynomial coeffs to read from.
- \param	s			The array size.
+ \fn	void printCharacteristicEquation (int64_t *c, size_t s, FILE *file)
+
+ \brief	Prints characteristic equation.
+
+ \date	14-May-14
+
+ \param [in]	c		If non-null, the * to array of polynomial coeffs to read from.
+ \param	s				The array size.
+ \param [out]	file	If non-null, the file.
  */
 void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
+	Assert(c != NULL, "");
+	Assert(file != NULL, "");
+
 	for (size_t i = 0; i < s; i++) {
 		fprintf(file, "x^%Iu", s - i);
 		fprintf(file, " + (%lld)", c[i]);
@@ -52,14 +60,21 @@ void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
 	return;
 }
 
+
+#pragma region "Evaluation & root finding"
+
 /**
- \fn	long double EvalPolyAt (long double x, int *c, size_t s)  
+ \fn	long double EvalPolyAt (long double x, int64_t *c, size_t s)
+
  \brief	Evaluates polynomial value at point X using Horner's method.  
- \date	14-May-14			 
- \param	x			 	The x coordinate.
- \param [in]	c		If non-null, the * to array of coeffs.
- \param	s			 	The array size.	  
- \return	A double.
+
+ \date	14-May-14
+
+ \param	x		 	The x coordinate.
+ \param [in]	c	If non-null, the * to array of coeffs.
+ \param	s		 	The array size.
+
+ \return	Evaluated value.
  */
 long double EvalPolyAt (long double x, int64_t *c, size_t s) {
 	long double res = 0.0;
@@ -73,15 +88,19 @@ long double EvalPolyAt (long double x, int64_t *c, size_t s) {
 }
 
 /**
- \fn	long double FindRoot (int *c, size_t s, long double a, long double b, size_t maxIters)	 
- \brief	Searches for the equation's first root at range [a, b] using Regula Falsi method.		 
- \date	15-May-14																				 
- \param [in]	c		If non-null, the * to array of polynomial coefficients.
- \param	s			 	The coeffs array size.
- \param	a			 	Starting position.
- \param	b			 	Ending position.
- \param	maxIterCount 	Number of maximum iterations.											 
- \return	The found root.
+ \fn	long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t maxIters)
+
+ \brief	Searches for the equation's first root in range [a, b] using Regula Falsi method.
+
+ \date	15-May-14
+
+ \param [in]	c	If non-null, the * to array of polynomial coefficients.
+ \param	s		 	The coeffs array size.
+ \param	a		 	Start position.
+ \param	b		 	End position.
+ \param	maxIters 	Number of maximum iterations.
+
+ \return	The found root value.
  */
 long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t maxIters) {
 	double root = 0.0, falseRoot = 0.0;
@@ -121,12 +140,16 @@ long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t
 }
 
 /**
- \fn	long double *GetPolynomialRoots (int *c, size_t s, size_t *rootsCount)		
- \brief	Searches for all the roots of given equation.	 							
- \date	15-May-14																	
- \param [in]	c		  		If non-null, the * to coeffs array.
- \param	s					  	The array size to process.
- \param [out]	rootsCount		If non-null, number of roots.						
+ \fn	long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount)
+
+ \brief	Searches for all the roots of given equation.
+
+ \date	15-May-14
+
+ \param [in]	c		  	If non-null, the * to coeffs array.
+ \param	s				  	The array size to process.
+ \param [out]	rootsCount	If non-null, number of roots.
+
  \return	null if it fails, else the * to array of polynomial roots.
  */
 long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
@@ -146,7 +169,6 @@ long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
 		*rootsCount = 0;
 		roots[0] = 0;
 		printf("No roots exists. Only the trivial solution (x=0) is available.\n");
-
 		return roots;
 	}
 
@@ -172,3 +194,4 @@ long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
 
 	return roots;
 }
+#pragma endregion "Evaluation & root finding"

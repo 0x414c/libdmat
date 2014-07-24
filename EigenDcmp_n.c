@@ -237,7 +237,7 @@ void strikeOut (Mat A, size_t d) {
 int64_t GetPrincipalMinorsSum (Mat A, size_t order) {
 	int64_t sum = 0;
 	size_t *index = uAllocVec(A->rowsCount);
-	fillIndex(index, A->rowsCount);
+	fillIndex(index, A->rowsCount, 1);
 
 	do {
 		Mat M = DeepCopy(A);

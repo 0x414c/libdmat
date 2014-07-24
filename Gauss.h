@@ -8,6 +8,7 @@ void toRowEchelonForm_r (Mat A);
 void toReducedRowEchelonForm (Mat A);
 
 double Det_gauss (Mat A);
+double Det_bareiss (Mat A);
 
 Mat Solve_gaussjordan (Mat A, Mat B);
 Mat Solve_gauss (Mat A, Mat B);

@@ -29,7 +29,6 @@ Mat MatPow (Mat A, size_t deg);
 void matMul (Mat A, Mat B);
 
 #define MatMul(A,B) MatMul_naive(A,B)
-//#define MatMul(A,B) MatMul_naive_recursive(A,B)
 
 Mat KroneckerProd (Mat A, Mat B);
 Mat KroneckerSum (Mat A, Mat B);
@@ -45,16 +44,16 @@ double ConditionNumber (Mat A);
 #define for_j(A) for (size_t j = 0; j < A->colsCount; j++)
 
 #define tElementWise2(funcName, operator)							        \
-	void __##funcName (Mat A, Mat B) {							        \
+	void __##funcName (Mat A, Mat B) {							            \
 	for_i(A) for_j(A) A->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
 void __add(); void __sub(); void __mul(); void __div();	
 
 #define tElementWise3(funcName, operator)							        \
-	void ___##funcName (Mat A, Mat B, Mat C) {							\
+	void ___##funcName (Mat A, Mat B, Mat C) {							    \
 	for_i(A) for_j(B) C->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
 void ___add(); void ___sub(); void ___mul(); void ___div();
 
-#define tScalar(funcName, operator)                                \
-	void _s##funcName (Mat A, double x) {				       	   \
-	for_i(A) for_j(A) A->a[i][j] = A->a[i][j] operator x; return; }\
+#define tScalar(funcName, operator)                                  \
+	void _s##funcName (Mat A, double x) {				       	     \
+	for_i(A) for_j(A) A->a[i][j] = A->a[i][j] operator (x); return; }\
 void _sadd(); void _ssub(); void _smul(); void _sdiv();	 

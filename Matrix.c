@@ -18,13 +18,18 @@
 #include "SpinningIndicator.h"
 
 
+#pragma region "Alloc & dealloc"
 /**
- \fn	dMat dAllocMat (size_t RowsCount, size_t ColumnsCount)
+ \fn	Mat AllocMat (size_t RowsCount, size_t ColumnsCount)
+
  \brief	Allocate double-valued MxN matrix.
- \date	17-May-14						  
- \param	RowsCount		The rows count.
+
+ \date	17-May-14
+
+ \param	RowsCount   	The rows count.
  \param	ColumnsCount	The columns count.
- \return	Pointer to _dMat struct.
+
+ \return	Pointer to _Mat struct.
  */
 Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
 	Mat A = NULL;
@@ -58,10 +63,15 @@ Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
 }
 
 /**
- \fn	void FreeMat (dMat A)	
- \brief	Deallocate matrix.		
- \date		15-May-14			
- \param	A	The dMat to process.
+ \fn	Mat freeMat (Mat A)
+
+ \brief	Deallocate matrix.
+
+ \date	15-May-14
+
+ \param	A	The Mat to process.
+
+ \return	NULL pointer. //TODO:
  */
 Mat freeMat (Mat A) {
 	Assert(A != NULL, "Cannot free Mat."); //TODO: fucking 0xFEEEFEEE; upd: just do not free already freed mem chunks 
@@ -77,6 +87,15 @@ Mat freeMat (Mat A) {
 	return NULL; //TODO: ? 
 }
 
+/**
+ \fn	size_t freeMats (Mat A, ...)
+
+ \brief	Deallocates many Mats...
+
+ \param	A	The Mat to process.
+
+ \return	Deallocated matrices count.
+ */
 size_t freeMats (Mat A, ...) {
 	Assert(A != NULL, "Cannot free.");
 	size_t n = 0;
@@ -89,38 +108,20 @@ size_t freeMats (Mat A, ...) {
 
 	return n;
 }
+#pragma endregion "Alloc & dealloc"
+
+
+#pragma region "Resizing"
 
 /**
- \fn	dMat DeepCopy (dMat A)
- \brief	Constructs a new deep copy of matrix A.	
- \date	22-May-14	 
- \param	A   	The dMat to process.		
- \return	A dMat.
+ \fn	void resize (Mat A, size_t newRows, size_t newCols)
+
+ \brief	Resizes matrix.
+
+ \param	A	   	The Mat to process.
+ \param	newRows	The new rows count.
+ \param	newCols	The new cols count.
  */
-Mat DeepCopy (Mat A) {
-	Assert(A != NULL, "Cannot copy NULL...");
-	double **a = A->a;
-	Mat B = AllocMat(A->rowsCount, A->colsCount);
-	Assert(B != NULL, "Cannot create copy...");	//TODO: remove asserts like this?
-	double **b = B->a;
-
-	for (size_t i = 0; i < B->rowsCount; i++) {
-		for (size_t j = 0; j < B->colsCount; j++) {
-			b[i][j] = a[i][j];
-		}
-	}
-
-	B->rank = A->rank;
-	B->trace = A->trace;
-	B->det = A->det;
-	B->isSingular = A->isSingular;
-	B->isSPD = A->isSPD;
-	B->isRankDeficient = A->isRankDeficient;
-	B->permutationSign = A->permutationSign;
-
-	return B;
-}
-
 void resize (Mat A, size_t newRows, size_t newCols) {
 	//C6385	Read overrun	Reading invalid data from 'A->a':  the readable size is 'newRows*sizeof(double *)' bytes, but '8' bytes may be read.	5	matrix.c	132
 	//	'a' is an Input to 'realloc' (declared at c : \program files(x86)\microsoft visual studio 12.0\vc\include\stdlib.h:644)			127
@@ -169,6 +170,14 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	return;
 }
 
+/**
+ \fn	void concat (Mat A, Mat B)
+
+ \brief	Merges matrices into one, result will be in A.
+
+ \param	A	The source Mat A to process.
+ \param	B	The source Mat B to process.
+ */
 void concat (Mat A, Mat B) {
 	Assert((A != NULL) && (B != NULL), "Cannot join matrices.");
 
@@ -184,14 +193,20 @@ void concat (Mat A, Mat B) {
 
 	return;
 }
+#pragma endregion "Resizing"
 
+
+#pragma region "Printing"
 /**
- \fn	void PrintMatrixToFile (dMat A, FILE *file, char *format) 
- \brief	Prints matrix to file.								  
- \date	17-May-14											  
- \param	A							The dMat to process.
- \param [out]		file			If non-null, the file to write to.
- \param [in]		formatString	If non-null, the format string.
+ \fn	void printMatrixToFile (Mat A, FILE *file, char *format)
+
+ \brief	Prints matrix to file.
+
+ \date	17-May-14
+
+ \param	A			  	The Mat to process.
+ \param [out]	file  	If non-null, the file to write to.
+ \param [in]	format	If non-null, the format string.
  */
 void printMatrixToFile (Mat A, FILE *file, char *format) {
 	Assert(file != NULL, "File reading error");
@@ -212,6 +227,15 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 	return;
 }
 
+/**
+ \fn	size_t printMatricesToFile (Mat A, ...)
+
+ \brief	Print many matrices to file.
+
+ \param	A	The Mat to process.
+
+ \return	Printed matrices count.
+ */
 size_t printMatricesToFile (Mat A, ...) {
 	Assert(A != NULL, "Cannot print.");
 	size_t n = 0;
@@ -226,16 +250,15 @@ size_t printMatricesToFile (Mat A, ...) {
 	return n;
 }
 
-
 /**
-\fn	void toString (dMat A, FILE *file, char *format)
+ \fn	void toString (Mat A, FILE *file, char *format)
 
-\brief	Prints matrix A in form of Mathematica-compatible string.
+ \brief	Prints matrix A in form of Mathematica-compatible string.
 
-\param	A						The dMat to process.
-\param [out]	file			If non-null, the file to write to.
-\param [in]		formatString	If non-null, the format string.
-*/
+ \param	A			  	The Mat to process.
+ \param [out]	file  	If non-null, the file to write to.
+ \param [in]	format	If non-null, the format string.
+ */
 void toString (Mat A, FILE *file, char *format) {
 	Assert(file != NULL, "File reading error");
 	Assert(A != NULL, "Cannot print.");
@@ -258,7 +281,16 @@ void toString (Mat A, FILE *file, char *format) {
 	return;
 }
 
+/**
+ \fn	void _cleanTrailingZeroes (char *str)
+
+ \brief	Cleans trailing zeroes in string containing floating-point number.
+
+ \param [in,out]	str	If non-null, the string to process.
+ */
 void _cleanTrailingZeroes (char *str) {
+	Assert(str != NULL, "");
+
 	char *s;
 	char *start = strchr(str, '.');
 	s = strrchr(start, '0');
@@ -278,7 +310,55 @@ void _cleanTrailingZeroes (char *str) {
 
 	return;
 }
+#pragma endregion "Printing"
 
+
+#pragma region "Constructors"
+
+/**
+\fn	Mat DeepCopy (Mat A)
+
+\brief	Constructs a deep copy of matrix A.
+
+\date	22-May-14
+
+\param	A	The source Mat to process.
+
+\return	Deep copy of source Matrix.
+*/
+Mat DeepCopy (Mat A) {
+	Assert(A != NULL, "Cannot copy NULL...");
+	double **a = A->a;
+	Mat B = AllocMat(A->rowsCount, A->colsCount);
+	Assert(B != NULL, "Cannot create copy...");	//TODO: remove asserts like this?
+	double **b = B->a;
+
+	for (size_t i = 0; i < B->rowsCount; i++) {
+		for (size_t j = 0; j < B->colsCount; j++) {
+			b[i][j] = a[i][j];
+		}
+	}
+
+	B->rank = A->rank;
+	B->trace = A->trace;
+	B->det = A->det;
+	B->isSingular = A->isSingular;
+	B->isSPD = A->isSPD;
+	B->isRankDeficient = A->isRankDeficient;
+	B->permutationSign = A->permutationSign;
+
+	return B;
+}
+
+/**
+ \fn	Mat Diag (Mat A)
+
+ \brief	Returns main diagonal of A in form of column-vector.
+
+ \param	A	The Mat to process.
+
+ \return	A Mat.
+ */
 Mat Diag (Mat A) {
 	double **a = A->a;
 	Mat D = AllocMat(1, A->colsCount);
@@ -290,18 +370,84 @@ Mat Diag (Mat A) {
 	return D;
 }
 
+/**
+ \fn	Mat Sub (Mat A, size_t row, size_t col)
+
+ \brief	Returns sumbatrix of A.
+
+ \param	A  	The Mat to process.
+ \param	row	The row.
+ \param	col	The col.
+
+ \return	A Mat.
+ */
 Mat Sub (Mat A, size_t row, size_t col) {
 	Mat S = AllocMat(A->rowsCount / 2, A->colsCount / 2);
 	return S; //TODO:
 }
 
 /**
- \fn	size_t fillMatrixFromFile (dMat A, FILE *file)	
- \brief	Fills matrix from file.	
- \date		17-May-14		
- \param	[out]		A		The dMat to fill to.
- \param [in]		file	If non-null, the file to read from.	 
- \return			Number of read items.
+ \fn	Mat Identity(size_t Size)
+
+ \brief	Constructs an identity matrix with the given size.
+
+ \date	30-May-14
+
+ \param	Size	The size.
+
+ \return	Identity Matrix.
+ */
+Mat Identity (size_t Size) {
+	Mat I = AllocMat(Size, Size);
+
+	for (size_t i = 0; i < Size; i++) {
+		*(I->a[i] + i) = 1.0;
+	}
+	I->det = 1.0;
+
+	return I;
+}
+
+/**
+ \fn	Mat Minor (Mat A, size_t d)
+
+ \brief	Returns leading Minor of A.
+
+ \param	A	The Mat to process.
+ \param	d	The order.
+
+ \return	Minor.
+ */
+Mat Minor (Mat A, size_t d) { //TODO: 
+	Assert(A->rowsCount <= d, "");
+	Mat M = AllocMat(A->rowsCount, A->colsCount);
+
+	for (size_t i = 0; i < d; i++)	{
+		M->a[i][i] = 1.0;
+	}
+	for (size_t i = d; i < A->rowsCount; i++) {
+		for (size_t j = d; j < A->colsCount; j++) {
+			M->a[i][j] = A->a[i][j];
+		}
+	}
+
+	return M;
+}
+#pragma endregion "Constructors"
+
+
+#pragma region "Filling routines"
+/**
+ \fn	size_t fillFromFile (Mat A, FILE *file)
+
+ \brief	Fills matrix from file.
+
+ \date	17-May-14
+
+ \param [out]	A   	The Mat to fill to.
+ \param [in]	file	If non-null, the file to read from.
+
+ \return	Number of read items.
  */
 size_t fillFromFile (Mat A, FILE *file) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
@@ -327,10 +473,13 @@ size_t fillFromFile (Mat A, FILE *file) {
 }
 
 /**
- \fn	void randomFill (dMat A)   
+ \fn	void fillRandom (Mat A)
+
  \brief	Fills matrix with random integer values.
- \date	30-May-14						 
- \param	A	The dMat to process.
+
+ \date	30-May-14
+
+ \param	A	The Mat to process.
  */
 void fillRandom (Mat A) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
@@ -347,11 +496,14 @@ void fillRandom (Mat A) {
 }
 
 /**
- \fn	void zeroFill (dMat A) 
- \brief	Fills double-valued matrix with zeroes.	
- \date	04-Jun-14							  
- \param	A	The dMat to process.
- */						
+ \fn	void fillZero (Mat A)
+
+ \brief	Fills double-valued matrix with zeroes.
+
+ \date	04-Jun-14
+
+ \param	A	The Mat to process.
+ */
 void fillZero (Mat A) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
 
@@ -366,6 +518,14 @@ void fillZero (Mat A) {
 	return;
 }
 
+/**
+ \fn	void fillNumbers (Mat A, int64_t start)
+
+ \brief	Fill Matrix A with sequential numbers starting from some value.
+
+ \param	A	 	The Mat to process.
+ \param	start	The start value.
+ */
 void fillNumbers (Mat A, int64_t start) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
 
@@ -380,6 +540,14 @@ void fillNumbers (Mat A, int64_t start) {
 	return;
 }
 
+/**
+ \fn	void fillSpiral (Mat A, int64_t start)
+
+ \brief	Fill spiral-like.
+
+ \param	A	 	The Mat to process.
+ \param	start	The start value.
+ */
 void fillSpiral (Mat A, int64_t start) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
 
@@ -412,6 +580,14 @@ void fillSpiral (Mat A, int64_t start) {
 	return;
 }
 
+/**
+ \fn	void fillZigZag (Mat A, int64_t start)
+
+ \brief	Fill 'zig-zag'-like.
+
+ \param	A	 	The Mat to process.
+ \param	start	The start value.
+ */
 void fillZigZag (Mat A, int64_t start) {
 	Assert(A != NULL, "Cannot fill. It is NULL.");
 
@@ -445,37 +621,4 @@ void fillZigZag (Mat A, int64_t start) {
 
 	return;
 }
-
-/**
- \fn	dMat Identity (size_t Size)	
- \brief	Constructs an identity matrix with the given size. 
- \date	30-May-14		   
- \param	Size	The size.	 
- \return	A dMat.
- */
-Mat Identity (size_t Size) {
-	Mat I = AllocMat(Size, Size);
-
-	for (size_t i = 0; i < Size; i++) {
-		*(I->a[i] + i) = 1.0;
-	}
-	I->det = 1.0;
-
-	return I;
-}
-
-Mat Minor (Mat A, size_t d) { //TODO: 
-	Assert(A->rowsCount <= d, "");
-	Mat M = AllocMat(A->rowsCount, A->colsCount);
-
-	for (size_t i = 0; i < d; i++)	{
-		M->a[i][i] = 1.0;
-	}
-	for (size_t i = d; i < A->rowsCount; i++) {
-		for (size_t j = d; j < A->colsCount; j++) {
-			M->a[i][j] = A->a[i][j];
-		}
-	}
-	
-	return M;
-}
+#pragma endregion "Filling routines"

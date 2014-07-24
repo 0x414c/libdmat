@@ -9,15 +9,21 @@
 #include "Gauss.h"
 
 
+#pragma region "Determinant computation"
+
 /**
- \fn	double GaussianDeterminant (dMat A)	 
- \brief	Calculates matrix determinant by Gauss' method for n>3
- and with rule of Sarrus for n<=3.			 
- \date	13-May-14							 
- \param	A   	The double-valued matrix to process.
- \return		Determinant value.
+ \fn	double Det_gauss (Mat A)
+
+ \brief	Calculates matrix determinant by Gauss' method for n&gt;3 and with rule of Sarrus for
+		n&lt;=3. 
+		TODO: long double?
+
+ \date	13-May-14
+
+ \param	A	The Mat to process.
+
+ \return	Determinant value.
  */
-//TODO: long double?
 double Det_gauss (Mat A) {
 	double **a = A->a;
 	Mat T = NULL;
@@ -47,9 +53,8 @@ double Det_gauss (Mat A) {
 			toRowEchelonForm(T);
 			
 			if (!(T->isSingular)) {
-				double **t = T->a;
 				for (size_t i = 0; i < A->rowsCount; i++) {
-					det *= t[i][i];
+					det *= T->a[i][i];
 				}
 				det *= T->permutationSign;
 			} else {
@@ -64,20 +69,83 @@ double Det_gauss (Mat A) {
 	return det;
 }
 
+/**
+ \fn	double Det_bareiss (Mat A)
+
+ \brief	Computes Matrix determinant by Baeriss' algorithm.
+		The Bareiss Algorithm is fraction-free method for determinant
+		computation.
+		However, it can also be thought of as a sophisticated form of row reduction.
+		Note that the divisions computed at any step are exact; thus Bareiss’ Algorithm is
+		indeed fraction-free. Entry a[n][n] is the determinant of A (after Bareiss and pivoting steps).
+
+ \param	A	The Mat to process.
+
+ \return	Determinant.
+ */
+double Det_bareiss (Mat A) {
+	Mat T = DeepCopy(A);
+
+	// Pivotize
+	for (size_t k = 0; k < A->rowsCount; k++) {
+		size_t pivot = k;
+		for (size_t i = k; i < A->rowsCount; i++) {
+			if (fabs(T->a[i][k]) > fabs(T->a[pivot][k])) {
+				pivot = i;
+			}
+		}
+		if (pivot != k) {
+			T->permutationSign *= -1; //-V127
+			for (size_t j = 0; j < A->colsCount; j++) {
+				swap_d(T->a[k][j], T->a[pivot][j]);
+			}
+		}
+	}
+	
+	// Bareiss algorithm main step
+	for (size_t i = 0; i < T->rowsCount - 1; i++) {
+		//Assert(T->a[i][i] > EPS, "Singularity...");
+		for (size_t j = i + 1; j < T->rowsCount; j++)
+			for (size_t k = i + 1; k < T->rowsCount; k++) {
+			T->a[j][k] = T->a[j][k]*T->a[i][i] - T->a[j][i]*T->a[i][k];
+			if (i) {
+				T->a[j][k] /= T->a[i-1][i-1];
+			}
+		}
+	}
+
+	double det = T->a[T->rowsCount - 1][T->rowsCount - 1];
+	FreeMat(T);
+
+	return det;
+}
+#pragma endregion "Determinant computation"
+
+
+#pragma region "Transforming routines"
+
+/**
+ \fn	void toRowEchelonForm (Mat A)
+
+ \brief	Transforms matrix A into a row echelon form.
+
+ \param	A	The Mat to process.
+ */
 void toRowEchelonForm (Mat A) {
 	double **a = A->a;
 
 	//optimized? with immediate rows swapping
 	for (size_t k = 0; k < A->rowsCount; k++) {
+		// Pivotize
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 				if (fabs(a[i][k]) > EPS) {
 					for (size_t j = 0; j < A->colsCount; j++) {
 						swap_d(a[k][j], a[i][j]);
 					}
 					A->permutationSign *= -1; //-V127
-					break;
-				} 
+				}
 		}
+		// Eliminate
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			if (fabs(a[k][k]) > EPS) {
 				double factor = a[i][k] / a[k][k];
@@ -86,7 +154,7 @@ void toRowEchelonForm (Mat A) {
 				}
 			} else {
 				A->isSingular = true;
-				//Check(0, "toRowEchelonForm: singular mat.");
+				Check(0, "toRowEchelonForm: singular mat.");
 				return;
 			}
 		}
@@ -94,32 +162,39 @@ void toRowEchelonForm (Mat A) {
 
 	return;
 }
+
+/**
+ \fn	void toRowEchelonForm_r (Mat A)
+
+ \brief	Transforms A to a row echelon form ('reference' implementation).
+
+ \param	A	The Mat to process.
+ */
 void toRowEchelonForm_r (Mat A) {
 	double **a = A->a;
 
 	//reference implementation of pivoting algorithm
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
-		//double Max = a[k][k];
+		// Find pivot
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			//double abs = fabs(a[i][k]);
-			//if (abs > Max)
 			if (fabs(a[i][k]) > fabs(a[pivot][k])) {
 				pivot = i;
-				//Max = abs;
 			}
 		}
 		if (fabs(a[pivot][k]) <= EPS) {
 			A->isSingular = true;
-			//Check(0, "toRowEchelonForm_r: Singular matrix.");
+			Check(0, "toRowEchelonForm_r: Singular matrix.");
 			return;
 		}
+		// Swap rows
 		if (pivot != k) {
 			for (size_t i = 0; i < A->colsCount; i++) {
 				swap_d(a[k][i], a[pivot][i]);
 			}
 			A->permutationSign *= -1; //-V127
 		}
+		// Eliminate
 		//if (fabs(a[k][k]) > EPS) {
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				//a[i][k] /= a[k][k];
@@ -138,11 +213,16 @@ void toRowEchelonForm_r (Mat A) {
 }
 
 /**
- \fn	void toReducedRowEchelonForm (dMat A)
- \brief	(In-place) Transforms matrix into reduced row echelon form
- (aka row canonical form).
- \date	13-May-14		  
- \param	A   	The double-valued matrix to process.
+ \fn	void toReducedRowEchelonForm (Mat A)
+
+ \brief	(In-place) Transforms matrix into reduced row echelon form (aka row canonical form).
+		The reduced row echelon form of A is unique, the pivot positions are
+		uniquely determined and do not depend on whether or not row interchanges
+		are performed in the reduction process.
+
+ \date	13-May-14
+
+ \param	A	The double-valued matrix to process.
  */
 void toReducedRowEchelonForm (Mat A) {
 	double **a = A->a;
@@ -188,9 +268,23 @@ void toReducedRowEchelonForm (Mat A) {
 
 	return;
 }
+#pragma endregion "Transforming routines"
 
+
+#pragma region "Solving routines"
+
+/**
+ \fn	Mat Solve_gaussjordan (Mat A, Mat B)
+
+ \brief	Solves system of linear equations using Gauss-Jordan method.
+
+ \param	A	Coeffs matrix.
+ \param	B	Right hand side.
+
+ \return	Solution as column-vector.
+ */
 Mat Solve_gaussjordan (Mat A, Mat B) {
-	Assert(B->colsCount == 1, "Use LUSolver for this.");
+	Assert(B->colsCount == 1, "");
 	Assert(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
 
 	Mat X = AllocMat(A->rowsCount, 1);
@@ -212,6 +306,16 @@ Mat Solve_gaussjordan (Mat A, Mat B) {
 	return X;
 }
 
+/**
+ \fn	Mat Solve_gauss (Mat A, Mat B)
+
+ \brief	Solves system of linear equations using Gauss elimination.
+
+ \param	A	Coeffs matrix.
+ \param	B	Right hand side.
+
+ \return	Solution as column-vector.
+ */
 Mat Solve_gauss (Mat A, Mat B) {
 	Assert(B->colsCount == 1, "");
 	Assert(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
@@ -219,13 +323,12 @@ Mat Solve_gauss (Mat A, Mat B) {
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
 	Mat AU = DeepCopy(A);
 	Assert(AU != NULL, "Cannot create copy...");
-
 	
 	concat(AU, B);
+	//Forward step (elimination with row pivoting)
 	toRowEchelonForm_r(AU);
 
-	//print(AU);
-
+	//Back-substitution
 	for (ptrdiff_t i = AU->rowsCount - 1; i >= 0; i--) {
 		X->a[i][0] = AU->a[i][AU->colsCount-1];
 		for (size_t j = i + 1; j < AU->rowsCount; j++) {
@@ -238,10 +341,11 @@ Mat Solve_gauss (Mat A, Mat B) {
 
 	return X;
 }
+#pragma endregion "Solving routines"
 
 
-//------------------------------------------------------------------------------
-
+//-----------------------------somewhat outdated, but working...----------------
+#pragma region old
 /**
  \fn	void simpleSolver (double **a, size_t Size, double *x)
  \brief	Simple back-substitution routine for undeterminedSolver.
@@ -352,3 +456,4 @@ Mat GaussianSolve_h (Mat A)	{
 		return RES;
 	}
 }
+#pragma endregion old
