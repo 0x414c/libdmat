@@ -4,4 +4,4 @@
 
 
 #define EPS (FLT_EPSILON)
-#define EPS (DBL_EPSILON)
+//#define EPS (DBL_EPSILON)

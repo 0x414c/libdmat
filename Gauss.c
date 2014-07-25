@@ -48,7 +48,6 @@ double Det_gauss (Mat A) {
 			break;
 		default:
 			T = DeepCopy(A);
-			Assert(T != NULL, "Cannot create copy...");
 
 			toRowEchelonForm(T);
 			
@@ -289,7 +288,6 @@ Mat Solve_gaussjordan (Mat A, Mat B) {
 
 	Mat X = AllocMat(A->rowsCount, 1);
 	Mat AU = DeepCopy(A);
-	Assert(AU != NULL, "Cannot create copy...");
 
 	concat(AU, B);
 	double **au = AU->a;
@@ -322,9 +320,9 @@ Mat Solve_gauss (Mat A, Mat B) {
 
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
 	Mat AU = DeepCopy(A);
-	Assert(AU != NULL, "Cannot create copy...");
 	
 	concat(AU, B);
+
 	//Forward step (elimination with row pivoting)
 	toRowEchelonForm_r(AU);
 
@@ -403,7 +401,6 @@ void undeterminedSolver_h (Mat RREF, Mat A, Mat R) {
 	
 	do {
 		Mat Copy = DeepCopy(A);
-		Assert(Copy != NULL, "Cannot create copy...");
 
 		double **copy = Copy->a;
 		for (i = 0; i < c-1; i++) {
@@ -436,7 +433,6 @@ If a homogeneous system has more unknowns than equations, then it has infinitely
 Mat GaussianSolve_h (Mat A)	{
 	double **a = A->a;
 	Mat copyA = DeepCopy(A);
-	Assert(copyA != NULL, "Cannot create copy...");	
 
 	toReducedRowEchelonForm(A);
 	A->rank = Rank(A);

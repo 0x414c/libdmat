@@ -14,7 +14,7 @@
 
  \brief	Will otutput be produced?
  */
-#define PRINT
+//#define PRINT
 
 /**
  \def	OUTFILE();
@@ -90,8 +90,8 @@
 
 
 Mat AllocMat (size_t SizeR, size_t SizeC);
-Mat freeMat (Mat A);
-#define FreeMat(p) ((p)?(p=freeMat(p)):(p)) //TODO:
+void freeMat (Mat *A);
+#define FreeMat(p) ( (p)?(freeMat(&p), p=NULL):(printf("Cannot free..."), NULL) )
 size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);

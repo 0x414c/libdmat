@@ -113,8 +113,7 @@ Mat Solve_qr (Mat *qr, Mat B) {
 	Check(qr[1]->isRankDeficient == false, "Rank deficient system.");
 
 	Mat Qt = Transposed(qr[0]);
-	matMul(Qt, B);
-	printMatrixToFile(Qt, stdout, FMT_FLT);
+	matMul(&Qt, B);
 
 	for (ptrdiff_t k = qr[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {

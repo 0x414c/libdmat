@@ -87,20 +87,21 @@ bool IsSingular (Mat A) {
 		toRowEchelonForm(T);
 		bool r = T->isSingular;
 		FreeMat(T);
+		A->isSingular = r;
 		return r;
 	}
 }
 
 /**
- \fn	int IsSymmetric (Mat A)
+ \fn	bool IsSymmetric (Mat A)
 
- \brief	Chacks if Matrix A is symmetric.
+ \brief	Checks if Matrix A is symmetric.
 
  \param	A	The Mat to process.
 
  \return	true or false.
  */
-int IsSymmetric (Mat A) {
+bool IsSymmetric (Mat A) {
 	if (!square(A)) {
 		return false;
 	}
@@ -131,11 +132,10 @@ int IsSymmetric (Mat A) {
  */
 void toTransposed_square (Mat A) {
 	Assert(square(A), "Cannot transpose non-square matrix with this func.");
-	double **a = A->a;
 
 	for (size_t i = 0; i < A->rowsCount - 1; i++) {
 		for (size_t j = i + 1; j < A->rowsCount; j++) {
-			swap_d(a[i][j], a[j][i]);
+			swap_d(A->a[i][j], A->a[j][i]);
 		}
 	}
 
@@ -168,19 +168,19 @@ Mat Transposed (Mat A) {
 }
 
 /**
- \fn	void transpose (Mat A)
+ \fn	void toTransposed (Mat *A)
 
- \brief	In-place transposes the given Matrix A.
+ \brief	(In-place) Transposes the given Matrix A.
 
  \param	A	The Mat to process.
  */
-void transpose (Mat A) {
-	if (A->rowsCount == A->colsCount) {
-		toTransposed_square(A);
+void toTransposed (Mat *A) {
+	if ((*A)->rowsCount == (*A)->colsCount) {
+		toTransposed_square(*A);
 	} else {
-		Mat T = Transposed(A);
-		FreeMat(A);
-		A = DeepCopy(T);
+		Mat T = Transposed(*A);
+		FreeMat(*A);
+		*A = DeepCopy(T);
 		FreeMat(T);
 	}
 
@@ -287,7 +287,7 @@ Mat MatMul_naive (Mat A, Mat B) {
  \fn	Mat MatMul_naive_recursive (Mat A, Mat B)
 
  \brief	Recursive implementation of naive matrix multiplication algorithm.
- Only for square Matrices with size=2^n
+ Only for square Matrices with size=2^n. Not memory	efficient!
  A, B & product C will be split into 4 submatrices, then the product will be:
 		C11 = A11B11 + A12B21
 		C12 = A11B12 + A12B22
@@ -312,7 +312,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 		C->a[0][0] = A->a[0][0] * B->a[0][0];
 		return C;
 	} else {
-		if (A->rowsCount == 2) {
+		if (A->rowsCount < 3) {
 			C = AllocMat(2, 2);
 			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
 			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
@@ -320,138 +320,116 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 		} else {
-			size_t Size = A->rowsCount;
-			Mat tmp_1 = NULL, tmp_2 = NULL;
-			C = AllocMat(Size, Size);
+			if (A->rowsCount < THRESHOLD) {
+				C = MatMul_naive(A, B);
+				return C;
+			} else {
+				size_t Size = A->rowsCount;
+				Mat tmp_1 = NULL, tmp_2 = NULL;
 
-			Size /= 2;
+				C = AllocMat(Size, Size);
 
-			Mat A11 = AllocMat(Size, Size);
-			Mat A12 = AllocMat(Size, Size);
-			Mat A21 = AllocMat(Size, Size);
-			Mat A22 = AllocMat(Size, Size);
+				Size /= 2;
 
-			Mat B11 = AllocMat(Size, Size);
-			Mat B12 = AllocMat(Size, Size);
-			Mat B21 = AllocMat(Size, Size);
-			Mat B22 = AllocMat(Size, Size);
+				Mat A11 = AllocMat(Size, Size);
+				Mat A12 = AllocMat(Size, Size);
+				Mat A21 = AllocMat(Size, Size);
+				Mat A22 = AllocMat(Size, Size);
 
-			Mat C11 = AllocMat(Size, Size);
-			Mat C12 = AllocMat(Size, Size);
-			Mat C21 = AllocMat(Size, Size);
-			Mat C22 = AllocMat(Size, Size);
+				Mat B11 = AllocMat(Size, Size);
+				Mat B12 = AllocMat(Size, Size);
+				Mat B21 = AllocMat(Size, Size);
+				Mat B22 = AllocMat(Size, Size);
 
-			for (size_t i = 0; i < Size; i++) {
-				for (size_t j = 0; j < Size; j++) {
-					A11->a[i][j] = A->a[i][j];
-					A12->a[i][j] = A->a[i][j + Size];
-					A21->a[i][j] = A->a[i + Size][j];
-					A22->a[i][j] = A->a[i + Size][j + Size];
+				for (size_t i = 0; i < Size; i++) {
+					for (size_t j = 0; j < Size; j++) {
+						A11->a[i][j] = A->a[i][j];
+						A12->a[i][j] = A->a[i][j + Size];
+						A21->a[i][j] = A->a[i + Size][j];
+						A22->a[i][j] = A->a[i + Size][j + Size];
 
-					B11->a[i][j] = B->a[i][j];
-					B12->a[i][j] = B->a[i][j + Size];
-					B21->a[i][j] = B->a[i + Size][j];
-					B22->a[i][j] = B->a[i + Size][j + Size];
+						B11->a[i][j] = B->a[i][j];
+						B12->a[i][j] = B->a[i][j + Size];
+						B21->a[i][j] = B->a[i + Size][j];
+						B22->a[i][j] = B->a[i + Size][j + Size];
+					}
 				}
-			}
 
-			C11 = MatMul_naive_recursive(A11, B11);
-			C12 = MatMul_naive_recursive(A11, B12);
-			C21 = MatMul_naive_recursive(A21, B11);
-			C22 = MatMul_naive_recursive(A21, B12);
+				//TODO: C22 can be used as temporary, so no tmp_1 needed!)
+				tmp_1 = MatMul_naive_recursive(A12, B21);
+				Mat C11 = MatMul_naive_recursive(A11, B11);
+				__add(C11, tmp_1);
+				FreeMat(tmp_1);
 
-			//TODO: C22 can be used as temporary, so no tmp_1 needed!)
-			tmp_1 = MatMul_naive_recursive(A12, B21);
-			__add(C11, tmp_1);
-			FreeMat(tmp_1);
+				tmp_1 = MatMul_naive_recursive(A12, B22);
+				Mat C12 = MatMul_naive_recursive(A11, B12);
+				__add(C12, tmp_1);
+				FreeMat(tmp_1);
 
-			tmp_1 = MatMul_naive_recursive(A12, B22);
-			__add(C12, tmp_1);
-			FreeMat(tmp_1);
+				tmp_1 = MatMul_naive_recursive(A22, B21);
+				Mat C21 = MatMul_naive_recursive(A21, B11);
+				__add(C21, tmp_1);
+				FreeMat(tmp_1);
 
-			tmp_1 = MatMul_naive_recursive(A22, B21);
-			__add(C21, tmp_1);
-			FreeMat(tmp_1);
+				tmp_1 = MatMul_naive_recursive(A22, B22);
+				Mat C22 = MatMul_naive_recursive(A21, B12);
+				__add(C22, tmp_1);
+				FreeMat(tmp_1);
 
-			tmp_1 = MatMul_naive_recursive(A22, B22);
-			__add(C22, tmp_1);
-			FreeMat(tmp_1);
+				/*tmp_1 = MatMul_naive_recursive(A11, B11);
+				tmp_2 = MatMul_naive_recursive(A12, B21);
+				___add(tmp_1, tmp_2, C11);
+				freeMats(tmp_1, tmp_2, NULL);
 
-			/*tmp_1 = MatMul_naive_recursive(A11, B11);
-			tmp_2 = MatMul_naive_recursive(A12, B21);
-			___add(tmp_1, tmp_2, C11);
-			freeMats(tmp_1, tmp_2, NULL);
+				tmp_1 = MatMul_naive_recursive(A11, B12);
+				tmp_2 = MatMul_naive_recursive(A12, B22);
+				___add(tmp_1, tmp_2, C12);
+				freeMats(tmp_1, tmp_2, NULL);
 
-			tmp_1 = MatMul_naive_recursive(A11, B12);
-			tmp_2 = MatMul_naive_recursive(A12, B22);
-			___add(tmp_1, tmp_2, C12);
-			freeMats(tmp_1, tmp_2, NULL);
+				tmp_1 = MatMul_naive_recursive(A21, B11);
+				tmp_2 = MatMul_naive_recursive(A22, B21);
+				___add(tmp_1, tmp_2, C21);
+				freeMats(tmp_1, tmp_2, NULL);
 
-			tmp_1 = MatMul_naive_recursive(A21, B11);
-			tmp_2 = MatMul_naive_recursive(A22, B21);
-			___add(tmp_1, tmp_2, C21);
-			freeMats(tmp_1, tmp_2, NULL);
+				tmp_1 = MatMul_naive_recursive(A21, B12);
+				tmp_2 = MatMul_naive_recursive(A22, B22);
+				___add(tmp_1, tmp_2, C22);
+				freeMats(tmp_1, tmp_2, NULL);*/
 
-			tmp_1 = MatMul_naive_recursive(A21, B12);
-			tmp_2 = MatMul_naive_recursive(A22, B22);
-			___add(tmp_1, tmp_2, C22);
-			freeMats(tmp_1, tmp_2, NULL);*/
-
-			for (size_t i = 0; i < Size; i++) {
-				for (size_t j = 0; j < Size; j++) {
-					C->a[i][j] = C11->a[i][j];
-					C->a[i][j + Size] = C12->a[i][j];
-					C->a[i + Size][j] = C21->a[i][j];
-					C->a[i + Size][j + Size] = C22->a[i][j];
+				for (size_t i = 0; i < Size; i++) {
+					for (size_t j = 0; j < Size; j++) {
+						C->a[i][j] = C11->a[i][j];
+						C->a[i][j + Size] = C12->a[i][j];
+						C->a[i + Size][j] = C21->a[i][j];
+						C->a[i + Size][j + Size] = C22->a[i][j];
+					}
 				}
+
+				freeMats(A11, A12, A21, A22, B11, B12, B21, B22, C11, C12, C21, C22, NULL);
+
+				return C;
 			}
-
-			freeMats(A11, A12, A21, A22, B11, B12, B21, B22, C11, C12, C21, C22, NULL);
-
-			return C;
 		}
 	}
 }
 
 /**
- \fn	void matMul (Mat A, Mat B)
+ \fn	void matMul(Mat *A, Mat B)
 
  \brief	In-place matrix multiplication (multiplicand is replaced by result).
 
  \date	24-May-14
 
- \param	A	The Mat A to process (will be replaced by product of A & B).
+ \param	A	The Mat A to process (will be replaced by product of A &amp; B).
  \param	B	The Mat B to process.
  */
-void matMul (Mat A, Mat B) {
-	Assert(A != NULL && B != NULL, "NULLs received...");
-	Assert(A->colsCount == B->rowsCount,
+void matMul (Mat *A, Mat B) {
+	Assert((*A)->colsCount == B->rowsCount,
 		"Cannot multiply matrices\n(Number of columns of A must be equal to number of rows of B).");
 
-	/*double **a = A->a;
-	double **b = B->a;
-	dMat P = AllocMat(A->rowsCount, A->colsCount);
-	double **p = P->a;
-
-	for (size_t i = 0; i < A->rowsCount; ++i) {
-		for (size_t k = 0; k < A->colsCount; ++k) {
-			for (size_t j = 0; j < B->colsCount; ++j) {
-				p[i][j] += a[i][k] * b[k][j];
-			}
-		}
-	}
-
-	for (size_t i = 0; i < A->rowsCount; ++i) {
-		for (size_t j = 0; j < A->colsCount; ++j) {
-			a[i][j] = p[i][j];
-		}
-	}
-
-	FreeMat(P);*/
-
-	Mat P = MatMul(A, B);
-	FreeMat(A);
-	A = DeepCopy(P);
+	Mat P = MatMul(*A, B);
+	FreeMat(*A);
+	*A = DeepCopy(P);
 	FreeMat(P);
 
 	return;
@@ -487,7 +465,7 @@ Mat MatPow (Mat A, size_t pow) {
 			break;
 		case 2:
 			R = DeepCopy(A);
-			matMul(R, A);
+			matMul(&R, A);
 
 			return R;
 			break;
@@ -495,7 +473,7 @@ Mat MatPow (Mat A, size_t pow) {
 			R = DeepCopy(A);
 			do {
 				spinActivityIndicator();
-				matMul(R, A);
+				matMul(&R, A);
 				c++;
 			} while (c < pow-1);
 			clearActivityIndicator();
@@ -508,14 +486,19 @@ Mat MatPow (Mat A, size_t pow) {
 
 
 #pragma region "Norms, etc."
+
 /**
-\fn	int Rank (dMat A)
-\brief	Calculates Rank of matrix A in RREF form.
-\date	17-May-14
-\param	A   	The dMat to process.
-\return	Rank value.
-*/
-size_t Rank(Mat A) {
+ \fn	size_t Rank (Mat A)
+
+ \brief	Calculates Rank of matrix A in RREF form.
+
+ \date	17-May-14
+
+ \param	A	The dMat to process.
+
+ \return	Rank value.
+ */
+size_t Rank (Mat A) {
 	size_t rank = 0;
 	size_t i, j;
 	double **r = A->a;
@@ -532,6 +515,15 @@ size_t Rank(Mat A) {
 	return rank;
 }
 
+/**
+ \fn	double Trace (Mat A)
+
+ \brief	Computes traces of A.
+
+ \param	A	The Mat to process.
+
+ \return	Trace value.
+ */
 double Trace (Mat A) {
 	double **a = A->a;	
 	double tr = 0.0;
@@ -544,7 +536,15 @@ double Trace (Mat A) {
 	return A->trace;
 }
 
-//maximum column sum.
+/**
+ \fn	double OneNorm (Mat A)
+
+ \brief	One-norm of A (maximum column sum).
+
+ \param	A	The Mat to process.
+
+ \return	1-norm.
+ */
 double OneNorm (Mat A) {
 	double norm = 0.0;
 
@@ -563,7 +563,15 @@ double TwoNorm (Mat A) {
 	return OneNorm(A); //TODO:
 }
 
-//max row sum
+/**
+ \fn	double InfinityNorm (Mat A)
+
+ \brief	Infinity-norm of A (max row sum).
+
+ \param	A	The Mat to process.
+
+ \return	Inf-norm.
+ */
 double InfinityNorm (Mat A) {
 	double norm = 0.0;
 
@@ -578,6 +586,15 @@ double InfinityNorm (Mat A) {
 	return norm;
 }
 
+/**
+ \fn	double EuclideanNorm (Mat A)
+
+ \brief	Euclidean norm of A.
+
+ \param	A	The Mat to process.
+
+ \return	Eucl. norm.
+ */
 double EuclideanNorm (Mat A) {
 	double sum = 0.0;
 
@@ -590,6 +607,15 @@ double EuclideanNorm (Mat A) {
 	return sqrt(sum);
 }
 
+/**
+ \fn	double ConditionNumber (Mat A)
+
+ \brief	Condition number of operator A.
+
+ \param	A	The Mat to process.
+
+ \return	Condition number.
+ */
 double ConditionNumber (Mat A) {
 	Mat Ai = DeepCopy(A);
 	toInverse(Ai);
@@ -602,6 +628,17 @@ double ConditionNumber (Mat A) {
 
 
 #pragma region "Kronecker"
+
+/**
+ \fn	Mat KroneckerProd (Mat A, Mat B)
+
+ \brief	Kronecker product of A & B.
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	A(x)B.
+ */
 Mat KroneckerProd (Mat A, Mat B) {
 	Mat K = AllocMat(A->rowsCount*B->rowsCount, A->colsCount*B->colsCount);
 	double **a = A->a;
@@ -618,6 +655,16 @@ Mat KroneckerProd (Mat A, Mat B) {
 	return K;
 }
 
+/**
+ \fn	Mat KroneckerSum (Mat A, Mat B)
+
+ \brief	Kronecker sum of A & B.
+
+ \param	A	The Mat A to process.
+ \param	B	The Mat B to process.
+
+ \return	A(+)B.
+ */
 Mat KroneckerSum (Mat A, Mat B) {
 	Assert(square(A) && square(B), "");
 	Mat Ib = Identity(B->rowsCount);
@@ -695,7 +742,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 			break;
-		case 3: case 4: case 5: case 6: case 7: case 8: //fuckin' MSVC does not support C99 case ranges((
+		case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges((
 			C = MatMul(A, B);
 			return C;
 			break;
@@ -772,7 +819,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			___add(A_tmp, p6, B_tmp); // p1 + p3 + p6
 			___sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
 
-			// Join:
+			// Join
 			for (size_t i = 0; i < Size; i++) {
 				for (size_t j = 0; j < Size; j++) {
 					C->a[i][j] = C11->a[i][j];
@@ -805,14 +852,6 @@ Mat MatMul_strassen (Mat A, Mat B) {
 
  \return	A Mat.
  */
-
-/*
- 
-
-
- */
-
-
 Mat MatMul_strassen_optimized (Mat A, Mat B) {
 	return MatMul_strassen(A, B); //TODO:
 }

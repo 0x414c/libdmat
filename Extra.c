@@ -151,5 +151,5 @@ int64_t GCD_euclid (int64_t a, int64_t b) {
 		b = t % b;
 	}
 
-	return abs(a);
+	return llabs(a);
 }

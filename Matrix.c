@@ -73,18 +73,18 @@ Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
 
  \return	NULL pointer. //TODO:
  */
-Mat freeMat (Mat A) {
-	Assert(A != NULL, "Cannot free Mat."); //TODO: fucking 0xFEEEFEEE; upd: just do not free already freed mem chunks 
-	Assert((A->rowsCount != 0) && (A->colsCount != 0), "Invalid size.");
-	//Assert(A->a != NULL, "Seems that there exists no contents to free...");
+void freeMat (Mat *A) {
+	Assert(*A != NULL, "Cannot free Mat.");
+	Assert(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Invalid size.");
+	Assert((*A)->a != NULL, "Seems that there exists no contents to free...");
 	
-	for (size_t i = 0; i < A->rowsCount; i++) {
-		free(A->a[i]); A->a[i] = NULL;
+	for (size_t i = 0; i < (*A)->rowsCount; i++) {
+		free((*A)->a[i]);
 	}
-	free(A->a); A->a = NULL;
-	free(A); A = NULL;
+	free((*A)->a); (*A)->a = NULL; 
+	free(*A); *A = NULL;
 
-	return NULL; //TODO: ? 
+	return;
 }
 
 /**
@@ -330,7 +330,7 @@ Mat DeepCopy (Mat A) {
 	Assert(A != NULL, "Cannot copy NULL...");
 	double **a = A->a;
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
-	Assert(B != NULL, "Cannot create copy...");	//TODO: remove asserts like this?
+	Assert(B != NULL, "");
 	double **b = B->a;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {

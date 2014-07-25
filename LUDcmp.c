@@ -160,7 +160,6 @@ Mat *LUDcmp_crout (Mat A) {
 	L = Identity(A->rowsCount);
 	U = AllocMat(A->rowsCount, A->colsCount);
 	A_copy = DeepCopy(A);
-	Assert(A_copy != NULL, "Cannot create copy...");
 
 	P = LUPivotize(A_copy);
 

@@ -6,18 +6,21 @@
 #include "Matrix.h"
 
 
+#define THRESHOLD 16
+
+
 size_t Rank (Mat RREF);
 double Trace (Mat A);
 
 bool IsIdentity (Mat A);
 //int IsSingular (Mat A);
-int IsSymmetric (Mat A);
+bool IsSymmetric (Mat A);
 bool IsEqual (Mat A, Mat B);
 
 void toInverse (Mat A);
 void toTransposed_square (Mat A);
 Mat Transposed (Mat A);
-void transpose (Mat A);
+void toTransposed (Mat *A);
 
 Mat MatMul_naive (Mat A, Mat B);
 Mat MatMul_naive_recursive (Mat A, Mat B);
@@ -26,7 +29,7 @@ Mat MatMul_strassen_optimized (Mat A, Mat B);
 
 size_t fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
-void matMul (Mat A, Mat B);
+void matMul (Mat *A, Mat B);
 
 #define MatMul(A,B) MatMul_naive(A,B)
 
