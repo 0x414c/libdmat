@@ -518,7 +518,7 @@ size_t Rank (Mat A) {
 /**
  \fn	double Trace (Mat A)
 
- \brief	Computes traces of A.
+ \brief	Computes trace of A.
 
  \param	A	The Mat to process.
 
@@ -528,7 +528,7 @@ double Trace (Mat A) {
 	double **a = A->a;	
 	double tr = 0.0;
 
-	for (size_t i = 0; i < A->rowsCount; i++)	{
+	for (size_t i = 0; i < min(A->rowsCount, A->colsCount); i++) {
 		tr += a[i][i];
 	}
 	A->trace = tr;

@@ -37,15 +37,15 @@ void fillIndex (size_t *index, size_t size, size_t start);
 
 int64_t GCD_euclid (int64_t a, int64_t b);
 
-#define round(x)	 ( (int32_t)(((x)>=EPS)?(((x)+0.5)):(((x)-0.5))) ) //Half away from zero 'rounding'
+#define round(x)	 ( (int64_t)(((x)>=EPS)?(((x)+0.5)):(((x)-0.5))) ) //Half away from zero 'rounding'
 #define swap_d(a,b)	 { double t=a; a=b; b=t; }
-#define swap_i(a,b)	 ( ((a)!=(b))?(((a)^=(b)),((b)^=(a)),((a)^=(b))):(0) )
+#define swap_i(a,b)	 ( ((a)!=(b))?(((a)^=(b)^=(a)^=(b))):(0) )
 #define powerof2(x)  ( ((x)&&((x&(~x+1))==x)) )
 #define square_i(x)  ( (!x)?(0):((x)*(x)) )
 #define square_d(x)	 ( (x)*(x) )
 #define equal_d(a,b) ( ((fabs(b-a))<(EPS*fabs(b+a))) ) //TODO: (more) proper floats comparison
 //#define equal_d(a,b) ( fabs(a-b)<=EPS )
-//#define equal_d(a,b) ( (fabs(a-b) <= EPS * max(1.0f, fabs(a), fabs(b))) )
+//#define equal_d(a,b) ( (fabs(a-b)<=EPS*max(1.0f,fabs(a),fabs(b))) )
 
 #ifdef __GNUC__
 #define min(a,b)	( ((a)<(b))?(a):(b) )

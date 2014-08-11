@@ -14,7 +14,7 @@
 
  \brief	Will otutput be produced?
  */
-//#define PRINT
+#define PRINT
 
 /**
  \def	OUTFILE();

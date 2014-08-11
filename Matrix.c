@@ -173,7 +173,7 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 /**
  \fn	void concat (Mat A, Mat B)
 
- \brief	Merges matrices into one, result will be in A.
+ \brief	Merges matrices A & B into one, result will be in A.
 
  \param	A	The source Mat A to process.
  \param	B	The source Mat B to process.
@@ -387,7 +387,7 @@ Mat Sub (Mat A, size_t row, size_t col) {
 }
 
 /**
- \fn	Mat Identity(size_t Size)
+ \fn	Mat Identity (size_t Size)
 
  \brief	Constructs an identity matrix with the given size.
 
@@ -423,7 +423,7 @@ Mat Minor (Mat A, size_t d) { //TODO:
 	Mat M = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < d; i++)	{
-		M->a[i][i] = 1.0;
+		M->a[i][i] = 1.0; //TODO: Array access results in a null pointer dereference
 	}
 	for (size_t i = d; i < A->rowsCount; i++) {
 		for (size_t j = d; j < A->colsCount; j++) {
@@ -455,10 +455,10 @@ size_t fillFromFile (Mat A, FILE *file) {
 	double tmp = 0.0;
 	size_t r = 0;
 
-	Assert(A->rowsCount != 0, "Invalid size.");
+	Assert(A->rowsCount != 0 && A->colsCount != 0, "Invalid size.");
 	Assert(file != NULL, "File reading error");
 
-	while (!(feof(file))) {
+	while (!(feof(file)) && !(ferror(file))) {
 		spinActivityIndicator();
 		for (size_t i = 0; i < A->rowsCount; i++) {
 			for (size_t j = 0; j < A->colsCount; j++) {

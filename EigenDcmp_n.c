@@ -50,10 +50,10 @@ Mat *EigenDcmp_n (Mat A) {
 		Mat C = AllocMat(A->rowsCount, A->rowsCount);
 
 		for (i = 0; i < rootsCount; i++) {
-			printf(">>>Eigenvalue v%Iu=%.2f\n", i, polynomialRoots[i]);
+			printf(">>>Eigenvalue v%Iu=%.2Lf\n", i, polynomialRoots[i]);
 
 			Mat eigenvectors = GetEigenvectors(dCopyA, polynomialRoots[i]);
-			printf(" >>Corresponding eigenvectors for v=%.2f (written as rows):\n", polynomialRoots[i]);
+			printf(" >>Corresponding eigenvectors for v=%.2Lf (written as rows):\n", polynomialRoots[i]);
 			printMat(eigenvectors);
 
 			LIVectorsCounter += eigenvectors->rowsCount;
