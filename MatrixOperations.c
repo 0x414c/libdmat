@@ -216,6 +216,21 @@ void toInverse (Mat A) {
 			swap_d(a[0][0], a[1][1]);
 			_smul(A, 1.0 / A->det);
 			break;
+		case 3:
+			a[0][0] = (a[1][1] * a[2][2] - a[2][1] * a[1][2]);
+			a[0][1] = (a[0][2] * a[2][1] - a[0][1] * a[2][2]);
+			a[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]);
+			a[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]);
+			a[1][1] = (a[0][0] * a[2][2] - a[0][2] * a[2][0]);
+			a[1][2] = (a[1][0] * a[0][2] - a[0][0] * a[1][2]);
+			a[2][0] = (a[1][0] * a[2][1] - a[2][0] * a[1][1]);
+			a[2][1] = (a[2][0] * a[0][1] - a[0][0] * a[2][1]);
+			a[2][2] = (a[0][0] * a[1][1] - a[1][0] * a[0][1]);
+			_smul(A, 1.0 / A->det);
+			break;
+		//case 4:
+		//	//TODO: much code will be here
+		//	break;
 		default:
 			I = Identity(A->rowsCount);
 			R = DeepCopy(A);
@@ -560,7 +575,7 @@ double OneNorm (Mat A) {
 }
 
 double TwoNorm (Mat A) {
-	return OneNorm(A); //TODO:
+	return EuclideanNorm(A); //TODO:
 }
 
 /**

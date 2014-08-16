@@ -31,7 +31,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	//size_t *permutationVector = uAllocVec(m);
 	int permutationSign = 1;
 
-	// Pivoting //TODO: generalize? to single procedure
+	// Pivoting //TODO: ?? one procedure to pivotize them all
 	for (size_t k = 0; k < cols; k++) {
 		// Find pivot.
 		size_t pivot = k;
@@ -62,15 +62,11 @@ Mat *LUDcmp_gauss (Mat A) {
 	P->permutationSign = permutationSign;
 
 	// fill L
-	Mat L = AllocMat(rows, cols);
+	Mat L = Identity(rows);
 	double **l = L->a;
 	for (size_t i = 0; i < rows; i++) {
-		for (size_t j = 0; j < cols; j++) {
-			if (i > j) {
-				l[i][j] = lu[i][j];
-			} else {
-				l[i][j] = (double) (i == j);
-			}
+		for (size_t j = 0; j < i; j++) {
+			l[i][j] = lu[i][j];
 		}
 	}
 
@@ -78,10 +74,8 @@ Mat *LUDcmp_gauss (Mat A) {
 	Mat U = AllocMat(rows, cols);
 	double **u = U->a;
 	for (size_t i = 0; i < rows; i++) {
-		for (size_t j = 0; j < cols; j++) {
-			if (i <= j) {
-				u[i][j] = lu[i][j];
-			}
+		for (size_t j = i; j < cols; j++) {
+			u[i][j] = lu[i][j];
 		}
 	}
 

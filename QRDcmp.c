@@ -129,6 +129,4 @@ Mat Solve_qr (Mat *qr, Mat B) {
 	return Qt;
 }
 
-//Solve X*A = B === A'*X' = B'
-//Mat QRSolve_t (Mat A, Mat B) {
-//}
+//TODO: Solve X*A = B === A'*X' = B'	   
