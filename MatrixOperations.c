@@ -188,66 +188,108 @@ void toTransposed (Mat *A) {
 }
 
 /**
- \fn	void toInverse (Mat A)
+ \fn	Mat Inverse (Mat A)
 
- \brief	Transforms square matrix A with size n into an inverse matrix A^(-1)
-		using row operations (Gauss-Jordan method) for n>2.
+ \brief	Returns Inverse of the given Matrix A.
+
+ \param	A	The Mat to process.
+
+ \return	A^(-1).
+ */
+Mat Inverse (Mat A) {
+	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!square(A))) {
+		puts("Cannot invert singular matrix.");
+		return NULL;
+	}
+
+	double **a = A->a;
+	Mat R = NULL, I = NULL;
+
+	switch (A->rowsCount) {
+		case 1:
+			R = AllocMat(A->rowsCount, A->colsCount);
+			R->a[0][0] = 1.0 / a[0][0];
+			return R;
+			break;
+		case 2:
+			R = AllocMat(A->rowsCount, A->colsCount);
+			R->a[1][0] = a[1][0] * -1.0;
+			R->a[0][1] = a[0][1] * -1.0;
+			R->a[0][0] = a[1][1];
+			R->a[1][1] = a[0][0];
+			_smul(R, 1.0 / A->det); //HACK: A->det is already computed at the very beginning of func when 
+			                        //it checks for matrix singularity. So if checks are disabled, 
+			                        //you need to compute Det(A) manually)  
+			return R;
+			break;
+		case 3:
+			R = AllocMat(A->rowsCount, A->colsCount);
+			R->a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
+			R->a[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
+			R->a[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1];
+			R->a[1][0] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
+			R->a[1][1] = a[0][0] * a[2][2] - a[0][2] * a[2][0];
+			R->a[1][2] = a[1][0] * a[0][2] - a[0][0] * a[1][2];
+			R->a[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1];
+			R->a[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
+			R->a[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
+			_smul(R, 1.0 / A->det);
+			return R;
+			break;
+		case 4:
+			R = AllocMat(A->rowsCount, A->colsCount);
+			R->a[0][0] = a[1][2] * a[2][3] * a[3][1] - a[1][3] * a[2][2] * a[3][1] + a[1][3] * a[2][1] * a[3][2] - a[1][1] * a[2][3] * a[3][2] - a[1][2] * a[2][1] * a[3][3] + a[1][1] * a[2][2] * a[3][3];
+			R->a[0][1] = a[0][3] * a[2][2] * a[3][1] - a[0][2] * a[2][3] * a[3][1] - a[0][3] * a[2][1] * a[3][2] + a[0][1] * a[2][3] * a[3][2] + a[0][2] * a[2][1] * a[3][3] - a[0][1] * a[2][2] * a[3][3];
+			R->a[0][2] = a[0][2] * a[1][3] * a[3][1] - a[0][3] * a[1][2] * a[3][1] + a[0][3] * a[1][1] * a[3][2] - a[0][1] * a[1][3] * a[3][2] - a[0][2] * a[1][1] * a[3][3] + a[0][1] * a[1][2] * a[3][3];
+			R->a[0][3] = a[0][3] * a[1][2] * a[2][1] - a[0][2] * a[1][3] * a[2][1] - a[0][3] * a[1][1] * a[2][2] + a[0][1] * a[1][3] * a[2][2] + a[0][2] * a[1][1] * a[2][3] - a[0][1] * a[1][2] * a[2][3];
+			R->a[1][0] = a[1][3] * a[2][2] * a[3][0] - a[1][2] * a[2][3] * a[3][0] - a[1][3] * a[2][0] * a[3][2] + a[1][0] * a[2][3] * a[3][2] + a[1][2] * a[2][0] * a[3][3] - a[1][0] * a[2][2] * a[3][3];
+			R->a[1][1] = a[0][2] * a[2][3] * a[3][0] - a[0][3] * a[2][2] * a[3][0] + a[0][3] * a[2][0] * a[3][2] - a[0][0] * a[2][3] * a[3][2] - a[0][2] * a[2][0] * a[3][3] + a[0][0] * a[2][2] * a[3][3];
+			R->a[1][2] = a[0][3] * a[1][2] * a[3][0] - a[0][2] * a[1][3] * a[3][0] - a[0][3] * a[1][0] * a[3][2] + a[0][0] * a[1][3] * a[3][2] + a[0][2] * a[1][0] * a[3][3] - a[0][0] * a[1][2] * a[3][3];
+			R->a[1][3] = a[0][2] * a[1][3] * a[2][0] - a[0][3] * a[1][2] * a[2][0] + a[0][3] * a[1][0] * a[2][2] - a[0][0] * a[1][3] * a[2][2] - a[0][2] * a[1][0] * a[2][3] + a[0][0] * a[1][2] * a[2][3];
+			R->a[2][0] = a[1][1] * a[2][3] * a[3][0] - a[1][3] * a[2][1] * a[3][0] + a[1][3] * a[2][0] * a[3][1] - a[1][0] * a[2][3] * a[3][1] - a[1][1] * a[2][0] * a[3][3] + a[1][0] * a[2][1] * a[3][3];
+			R->a[2][1] = a[0][3] * a[2][1] * a[3][0] - a[0][1] * a[2][3] * a[3][0] - a[0][3] * a[2][0] * a[3][1] + a[0][0] * a[2][3] * a[3][1] + a[0][1] * a[2][0] * a[3][3] - a[0][0] * a[2][1] * a[3][3];
+			R->a[2][2] = a[0][1] * a[1][3] * a[3][0] - a[0][3] * a[1][1] * a[3][0] + a[0][3] * a[1][0] * a[3][1] - a[0][0] * a[1][3] * a[3][1] - a[0][1] * a[1][0] * a[3][3] + a[0][0] * a[1][1] * a[3][3];
+			R->a[2][3] = a[0][3] * a[1][1] * a[2][0] - a[0][1] * a[1][3] * a[2][0] - a[0][3] * a[1][0] * a[2][1] + a[0][0] * a[1][3] * a[2][1] + a[0][1] * a[1][0] * a[2][3] - a[0][0] * a[1][1] * a[2][3];
+			R->a[3][0] = a[1][2] * a[2][1] * a[3][0] - a[1][1] * a[2][2] * a[3][0] - a[1][2] * a[2][0] * a[3][1] + a[1][0] * a[2][2] * a[3][1] + a[1][1] * a[2][0] * a[3][2] - a[1][0] * a[2][1] * a[3][2];
+			R->a[3][1] = a[0][1] * a[2][2] * a[3][0] - a[0][2] * a[2][1] * a[3][0] + a[0][2] * a[2][0] * a[3][1] - a[0][0] * a[2][2] * a[3][1] - a[0][1] * a[2][0] * a[3][2] + a[0][0] * a[2][1] * a[3][2];
+			R->a[3][2] = a[0][2] * a[1][1] * a[3][0] - a[0][1] * a[1][2] * a[3][0] - a[0][2] * a[1][0] * a[3][1] + a[0][0] * a[1][2] * a[3][1] + a[0][1] * a[1][0] * a[3][2] - a[0][0] * a[1][1] * a[3][2];
+			R->a[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
+			_smul(R, 1.0 / A->det);
+			return R;
+			break;
+		default:
+			R = DeepCopy(A);
+			I = Identity(A->rowsCount);
+
+			concat(R, I);
+			toReducedRowEchelonForm(R);
+
+			for (size_t i = 0; i < A->rowsCount; i++) {
+				for (size_t j = 0; j < A->colsCount; j++) {
+					I->a[i][j] = R->a[i][j + A->colsCount];
+				}
+			}
+
+			FreeMat(R);
+			return I;
+			break;
+	}
+}
+
+/**
+ \fn	void toInverse (Mat *A)
+
+ \brief	(In-place) Transforms square matrix A with size n into an inverse matrix A^(-1)
+		using row operations (Gauss-Jordan method) for n>4.
 
  \date	24-May-14
 
  \param	A	The Mat to process.
  */
-void toInverse (Mat A) {
-	if ((A->isSingular == true) || (fabs(Det_gauss(A)) <= EPS) || (!square(A))) {
-		printf("Cannot invert singular matrix.");
-		return;
-	}
-
-	double **a = A->a;
-	Mat R, I;
-
-	switch (A->rowsCount) {
-		case 1:
-			a[0][0] = 1.0 / a[0][0];
-			break;
-		case 2:
-			a[1][0] *= -1.0;
-			a[0][1] *= -1.0;
-			swap_d(a[0][0], a[1][1]);
-			_smul(A, 1.0 / A->det);
-			break;
-		case 3:
-			a[0][0] = (a[1][1] * a[2][2] - a[2][1] * a[1][2]);
-			a[0][1] = (a[0][2] * a[2][1] - a[0][1] * a[2][2]);
-			a[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]);
-			a[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]);
-			a[1][1] = (a[0][0] * a[2][2] - a[0][2] * a[2][0]);
-			a[1][2] = (a[1][0] * a[0][2] - a[0][0] * a[1][2]);
-			a[2][0] = (a[1][0] * a[2][1] - a[2][0] * a[1][1]);
-			a[2][1] = (a[2][0] * a[0][1] - a[0][0] * a[2][1]);
-			a[2][2] = (a[0][0] * a[1][1] - a[1][0] * a[0][1]);
-			_smul(A, 1.0 / A->det);
-			break;
-		//case 4:
-		//	//TODO: much code will be here
-		//	break;
-		default:
-			I = Identity(A->rowsCount);
-			R = DeepCopy(A);
-
-			concat(R, I);
-			toReducedRowEchelonForm(R);
-			double **r = R->a;
-
-			for (size_t i = 0; i < A->rowsCount; i++) {
-				for (size_t j = 0; j < A->colsCount; j++) {
-					a[i][j] = r[i][j + A->colsCount];
-				}
-			}
-			FreeMat(R);
-			FreeMat(I);
-			break;
-	}
+void toInverse (Mat *A) {	
+	Mat I = Inverse(*A);
+	FreeMat(*A);
+	*A = I;
 
 	return;
 }
@@ -335,7 +377,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 		} else {
-			if (A->rowsCount < THRESHOLD) {
+			if (A->rowsCount < MUL_THRESHOLD) {
 				C = MatMul_naive(A, B);
 				return C;
 			} else {
@@ -390,26 +432,6 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				Mat C22 = MatMul_naive_recursive(A21, B12);
 				__add(C22, tmp_1);
 				FreeMat(tmp_1);
-
-				/*tmp_1 = MatMul_naive_recursive(A11, B11);
-				tmp_2 = MatMul_naive_recursive(A12, B21);
-				___add(tmp_1, tmp_2, C11);
-				freeMats(tmp_1, tmp_2, NULL);
-
-				tmp_1 = MatMul_naive_recursive(A11, B12);
-				tmp_2 = MatMul_naive_recursive(A12, B22);
-				___add(tmp_1, tmp_2, C12);
-				freeMats(tmp_1, tmp_2, NULL);
-
-				tmp_1 = MatMul_naive_recursive(A21, B11);
-				tmp_2 = MatMul_naive_recursive(A22, B21);
-				___add(tmp_1, tmp_2, C21);
-				freeMats(tmp_1, tmp_2, NULL);
-
-				tmp_1 = MatMul_naive_recursive(A21, B12);
-				tmp_2 = MatMul_naive_recursive(A22, B22);
-				___add(tmp_1, tmp_2, C22);
-				freeMats(tmp_1, tmp_2, NULL);*/
 
 				for (size_t i = 0; i < Size; i++) {
 					for (size_t j = 0; j < Size; j++) {
@@ -633,7 +655,7 @@ double EuclideanNorm (Mat A) {
  */
 double ConditionNumber (Mat A) {
 	Mat Ai = DeepCopy(A);
-	toInverse(Ai);
+	toInverse(&Ai);
 	double r = InfinityNorm(A) * InfinityNorm(Ai);
 	FreeMat(Ai);
 
@@ -757,8 +779,8 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 			break;
-		case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges((
-			C = MatMul(A, B);
+		case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges upd(seems that it is GCC extension or smth)
+			C = MatMul(A, B);							//TODO: use MUL_THRESHOLD
 			return C;
 			break;
 		default:

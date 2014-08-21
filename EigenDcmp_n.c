@@ -79,7 +79,7 @@ Mat *EigenDcmp_n (Mat A) {
 		}
 		
 		Mat Ci = DeepCopy(C);
-		toInverse(Ci);
+		toInverse(&Ci);
 
 		result[0] = C;
 		result[1] = D;

@@ -213,13 +213,19 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 	Assert(A != NULL, "Cannot print.");
 
 	double **a = A->a;
+#ifdef PRETTYOUTPUT
 	char buf[PRINTBUFSZ];
+#endif // PRETTYOUTPUT
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
-		for (size_t j = 0; j < A->colsCount; j++) {			 
+		for (size_t j = 0; j < A->colsCount; j++) {
+#ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
 			_cleanTrailingZeroes(buf);
 			fprintf(file, "%s", buf);
+#else
+			fprintf(file, format, a[i][j]);
+#endif
 		}
 		fprintf(file, "\n");
 	}
@@ -264,15 +270,21 @@ void toString (Mat A, FILE *file, char *format) {
 	Assert(A != NULL, "Cannot print.");
 
 	double **a = A->a;
+#ifdef PRETTYOUTPUT
 	char buf[PRINTBUFSZ];
+#endif // PRETTYOUTPUT
 	
 	fprintf(file, "{");
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf (file, "\n{");
 		for (size_t j = 0; j < A->colsCount; j++) {
+#ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
-			//_cleanTrailingZeroes(buf);
+			//_cleanTrailingZeroes(buf); //TODO: it just fails
 			fprintf(file, "%s,", buf);
+#else
+			fprintf(file, format, a[i][j]);
+#endif // PRETTYOUTPUT
 		}
 		fprintf(file, "\b},");
 	}
@@ -281,6 +293,7 @@ void toString (Mat A, FILE *file, char *format) {
 	return;
 }
 
+#ifdef PRETTYOUTPUT
 /**
  \fn	void _cleanTrailingZeroes (char *str)
 
@@ -288,7 +301,7 @@ void toString (Mat A, FILE *file, char *format) {
 
  \param [in,out]	str	If non-null, the string to process.
  */
-void _cleanTrailingZeroes (char *str) {
+static void _cleanTrailingZeroes (char *str) {
 	Assert(str != NULL, "");
 
 	char *s;
@@ -310,6 +323,9 @@ void _cleanTrailingZeroes (char *str) {
 
 	return;
 }
+#else
+#define _cleanTrailingZeroes
+#endif // PRETTYOUTPUT
 #pragma endregion "Printing"
 
 

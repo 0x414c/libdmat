@@ -6,7 +6,7 @@
 #include "Matrix.h"
 
 
-#define THRESHOLD 16
+#define MUL_THRESHOLD 16
 
 
 size_t Rank (Mat RREF);
@@ -17,7 +17,8 @@ bool IsIdentity (Mat A);
 bool IsSymmetric (Mat A);
 bool IsEqual (Mat A, Mat B);
 
-void toInverse (Mat A);
+Mat Inverse(Mat A);
+void toInverse (Mat* A);
 void toTransposed_square (Mat A);
 Mat Transposed (Mat A);
 void toTransposed (Mat *A);

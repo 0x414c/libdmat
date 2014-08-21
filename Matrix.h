@@ -10,11 +10,11 @@
 
 
 /**
- \def	PRINT();
+ \def	DOPRINT();
 
  \brief	Will otutput be produced?
  */
-#define PRINT
+#define DOPRINT
 
 /**
  \def	OUTFILE();
@@ -24,39 +24,51 @@
 #define OUTFILE	   stdout
 
 /**
+ \def	PRETTYOUTPUT();
+
+ \brief	Will output be in readable form?
+ */
+#define PRETTYOUTPUT
+
+#ifdef PRETTYOUTPUT
+/**
  \def	PRINTBUFSZ();
 
  \brief	Size of printing buffer.
+ Note that buffer must be capable to hold string defined by FMT_FLT
  */
 #define PRINTBUFSZ (64)
+#endif // PRETTYOUTPUT
+
 
 /**
  \def	FMT_INT();
 
- \brief	Formatting string for int.
+ \brief	Formatting string for ints.
  */
 #define FMT_INT	"%5d"
 
 /**
  \def	FMT_FLT();
 
- \brief	Formatting string for float.
+ \brief	Formatting string for floats.
  */
 #define FMT_FLT	"%12.3f"
 
 /**
  \def	FMT_FLT_STR();
 
- \brief	Format string for float (used in printStr()).
+ \brief	Format string for floats (used in printStr()).
  */
 #define FMT_FLT_STR		"% .50g"
 
 /**
  \def	FMT_FLT_INPUT();
 
- \brief	Format string for filling from file (fillFromFile()).
+ \brief	Format string for filling from file containing floats (fillFromFile()).
  */
 #define FMT_FLT_INPUT   "%lf"
+
 
 #ifdef _MSC_VER
 /**
@@ -96,14 +108,19 @@ size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);
 void concat (Mat A, Mat B);
-#define square(A) ((A->rowsCount)==(A->colsCount))
+#define square(A) (((A)->rowsCount)==((A)->colsCount))
 
 void printMatrixToFile (Mat A, FILE *file, char *format);
 size_t printMatricesToFile (Mat A, ...); 
 void toString (Mat A, FILE *file, char *format);
-void _cleanTrailingZeroes (char *str);
 
-#ifndef PRINT
+#ifdef PRETTYOUTPUT
+static void _cleanTrailingZeroes(char *str);
+#else
+#define _cleanTrailingZeroes()
+#endif // PRETTYOUTPUT
+
+#ifndef DOPRINT
 #define printMat(a)
 #define printMats(a, ...)
 #define printStr(a)
