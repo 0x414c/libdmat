@@ -13,8 +13,9 @@ size_t Rank (Mat RREF);
 double Trace (Mat A);
 
 bool IsIdentity (Mat A);
-//int IsSingular (Mat A);
+bool IsSingular (Mat A);
 bool IsSymmetric (Mat A);
+bool IsSkewSymmetric(Mat A);
 bool IsEqual (Mat A, Mat B);
 
 Mat Inverse(Mat A);

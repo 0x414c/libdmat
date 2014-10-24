@@ -110,7 +110,7 @@ long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t
 
 	for (size_t i = 0; i < maxIters; i++) {
 		root = (fA*b - fB*a) / (fA - fB);
-		if (equal_d(a,b)) {
+		if (equal_ld(a, b)) {
 			//printf("# %f %f \n", a, b);
 			break;
 		}
@@ -176,7 +176,7 @@ long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
 		spinActivityIndicator();
 		root = round(FindRoot(c, s, a, b, MAXITERS)); //To round or not to round?
 
-		if (fabs(EvalPolyAt(root, c, s)) <= EPS) {
+		if (fabsl(EvalPolyAt(root, c, s)) <= EPS) {
 			if (!(exists_d(roots, i+1, root))) {
 				roots[i++] = (root);
 			}

@@ -397,9 +397,9 @@ Mat Diag (Mat A) {
 
  \return	A Mat.
  */
-Mat Sub (Mat A, size_t row, size_t col) {
+Mat Sub (Mat A, size_t row, size_t col) { //TODO:
 	Mat S = AllocMat(A->rowsCount / 2, A->colsCount / 2);
-	return S; //TODO:
+	return S; 
 }
 
 /**

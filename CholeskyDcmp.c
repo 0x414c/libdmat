@@ -25,7 +25,7 @@
  \return	A Lower Triangular form of A.
  */
 Mat CholeskyDcmp (Mat A) {
-	Assert(square(A), "Matrix is not square.");
+	Assert(isSquare(A), "Matrix is not square.");
 
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
 	bool isSPD = true;

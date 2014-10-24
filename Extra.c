@@ -17,7 +17,7 @@
 \param	n				 	The N.
 \return	true if next combination is generated, false if no possible combinations left.
 */
-bool nextCombination(size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO: 
+bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 	for (ptrdiff_t i = k - 1; i >= 0; --i) {
 		if (index[i] < n - k + i + 1) {	//warning C4018: '<' : signed/unsigned mismatch
 			++index[i];
@@ -49,8 +49,8 @@ bool nextCombination(size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
  */
 bool exists_d (long double *c, size_t s, long double x) {
 	for (size_t i = 0; i < s; i++) {
-		if (equal_d(c[i], x)) {
-			return 1; 
+		if (equal_ld(c[i], x)) {
+			return 1;
 		}
 	}
 
@@ -85,7 +85,7 @@ int64_t *iAllocVec (size_t Size) {
 	v = ((int64_t *) malloc(sizeof(int64_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
 	Assert(v != NULL, "Cannot allocate.");
-	
+
 	return v;
 }
 
@@ -103,7 +103,7 @@ size_t *uAllocVec (size_t Size) {
 	v = ((size_t *) malloc(sizeof(size_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
 	Assert(v != NULL, "Cannot allocate.");
-	
+
 	return v;
 }
 
@@ -121,7 +121,7 @@ long double *ldAllocVec (size_t Size) {
 	v = ((long double *) malloc(sizeof(long double) * Size));
 	//v = ((long double *) calloc(Size, sizeof(long double)));
 	Assert(v != NULL, "Cannot allocate.");
-	
+
 	return v;
 }
 #pragma endregion "Allocation routines"

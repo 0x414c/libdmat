@@ -35,7 +35,7 @@
  \def	PRINTBUFSZ();
 
  \brief	Size of printing buffer.
- Note that buffer must be capable to hold string defined by FMT_FLT
+        Note that buffer must be capable to hold string defined by FMT_FLT
  */
 #define PRINTBUFSZ (64)
 #endif // PRETTYOUTPUT
@@ -103,19 +103,19 @@
 
 Mat AllocMat (size_t SizeR, size_t SizeC);
 void freeMat (Mat *A);
-#define FreeMat(p) ( (p)?(freeMat(&p), p=NULL):(printf("Cannot free..."), NULL) )
+#define FreeMat(p) ( (p)?(freeMat(&(p)), (p) = NULL):(printf("Cannot free..."), NULL) )
 size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);
 void concat (Mat A, Mat B);
-#define square(A) (((A)->rowsCount)==((A)->colsCount))
+#define isSquare(A) (((A)->rowsCount)==((A)->colsCount))
 
 void printMatrixToFile (Mat A, FILE *file, char *format);
 size_t printMatricesToFile (Mat A, ...); 
 void toString (Mat A, FILE *file, char *format);
 
 #ifdef PRETTYOUTPUT
-static void _cleanTrailingZeroes(char *str);
+static void _cleanTrailingZeroes (char *str);
 #else
 #define _cleanTrailingZeroes()
 #endif // PRETTYOUTPUT

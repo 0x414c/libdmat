@@ -14,6 +14,18 @@
 tElementWise2(add, +); tElementWise2(sub, -); tElementWise2(mul, *); tElementWise2(div, /);
 tScalar(add, +); tScalar(sub, -); tScalar(mul, *); tScalar(div, / );
 tElementWise3(add, +); tElementWise3(sub, -); tElementWise3(mul, *); tElementWise3(div, /);
+
+Mat MatLerp (Mat A, Mat B, double t) {
+	Mat L = AllocMat(A->rowsCount, A->colsCount);
+
+	for (size_t i = 0; i < L->rowsCount; i++) {
+		for (size_t j = 0; j < L->colsCount; j++) {
+			L->a[i][j] = lerp(A->a[i][j], B->a[i][j], t);
+		}
+	}
+
+	return L;
+}
 #pragma endregion "Entrywise operations"
 
 
@@ -80,10 +92,9 @@ bool IsIdentity (Mat A) {
 
 bool IsSingular (Mat A) {
 	if (A->isSingular) {
-		return 1;
+		return true;
 	} else {
 		Mat T = DeepCopy(A);
-		Assert(T != NULL, "Cannot create copy...");
 		toRowEchelonForm(T);
 		bool r = T->isSingular;
 		FreeMat(T);
@@ -102,13 +113,29 @@ bool IsSingular (Mat A) {
  \return	true or false.
  */
 bool IsSymmetric (Mat A) {
-	if (!square(A)) {
+	if (!isSquare(A)) {
 		return false;
 	}
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
 			if (!equal_d(A->a[i][j], A->a[j][i])) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool IsSkewSymmetric (Mat A) {
+	if (!isSquare(A)) {
+		return false;
+	}
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		for (size_t j = 0; j < i; j++) {
+			if (!equal_d(A->a[i][j], -A->a[j][i])) {
 				return false;
 			}
 		}
@@ -131,7 +158,7 @@ bool IsSymmetric (Mat A) {
  \param	A	The Mat to process.
  */
 void toTransposed_square (Mat A) {
-	Assert(square(A), "Cannot transpose non-square matrix with this func.");
+	Assert(isSquare(A), "Cannot transpose non-square matrix with this func.");
 
 	for (size_t i = 0; i < A->rowsCount - 1; i++) {
 		for (size_t j = i + 1; j < A->rowsCount; j++) {
@@ -197,7 +224,7 @@ void toTransposed (Mat *A) {
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!square(A))) {
+	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare(A))) {
 		puts("Cannot invert singular matrix.");
 		return NULL;
 	}
@@ -315,11 +342,11 @@ Mat MatMul_naive (Mat A, Mat B) {
 
 	Mat C = AllocMat(A->rowsCount, B->colsCount);
 
-	if ((square(A)) && (A->rowsCount == 1) && (square(B))) {
+	if ((isSquare(A)) && (A->rowsCount == 1) && (isSquare(B))) {
 		C->a[0][0] = A->a[0][0] * B->a[0][0];
 		return C;
 	} else {
-		if ((square(A)) && (A->rowsCount == 2) && (square(B))) {
+		if ((isSquare(A)) && (A->rowsCount == 2) && (isSquare(B))) {
 			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
 			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
 			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
@@ -382,7 +409,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				return C;
 			} else {
 				size_t Size = A->rowsCount;
-				Mat tmp_1 = NULL, tmp_2 = NULL;
+				Mat tmp_1 = NULL;
 
 				C = AllocMat(Size, Size);
 
@@ -487,7 +514,7 @@ void matMul (Mat *A, Mat B) {
  */
 Mat MatPow (Mat A, size_t pow) {
 	Assert(pow != 0, "Cannot raise power.");
-	Assert(square(A), "Cannot raise power of non-square matrix.");
+	Assert(isSquare(A), "Cannot raise power of non-square matrix.");
 
 	size_t c = 0;
 	Mat R;
@@ -703,7 +730,7 @@ Mat KroneckerProd (Mat A, Mat B) {
  \return	A(+)B.
  */
 Mat KroneckerSum (Mat A, Mat B) {
-	Assert(square(A) && square(B), "");
+	Assert(isSquare(A) && isSquare(B), "");
 	Mat Ib = Identity(B->rowsCount);
 	Mat Ia = Identity(A->rowsCount);
 	Mat AI = KroneckerProd(A, Ib);
