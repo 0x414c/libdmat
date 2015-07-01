@@ -74,7 +74,7 @@ bool IsEqual (Mat A, Mat B) {
  */
 bool IsIdentity (Mat A) {
 	double **a = A->a;
-	
+
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 			if ((i != j) && (fabs(a[i][j]) > EPS)) {
@@ -224,12 +224,7 @@ void toTransposed (Mat *A) {
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-//	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))) {
-//		return NULL;
-//	}
-
-    if (!Check$(!((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))),
-               "Cannot invert singular matrix.")) {
+    if (!Check$(!((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))), "Cannot invert singular matrix.")) {
         return NULL;
     }
 
@@ -249,11 +244,11 @@ Mat Inverse (Mat A) {
 			R->a[0][0] = a[1][1];
 			R->a[1][1] = a[0][0];
 			_ms_mul(R, 1.0 / A->det); //TODO: A->det is already computed at the very beginning of func when
-			                        //it checks for matrix singularity. So if checks are disabled, 
-			                        //you need to compute Det(A) manually)  
-            return R;
-            break;
-        case 3:
+			                          //it checks for matrix singularity. So if checks are disabled,
+			                          //you need to compute Det(A) manually)
+      return R;
+      break;
+    case 3:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
 			R->a[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
@@ -317,7 +312,7 @@ Mat Inverse (Mat A) {
 
  \param	A	The Mat to process.
  */
-void toInverse (Mat *A) {	
+void toInverse (Mat *A) {
 	Mat I = Inverse(*A);
 	freeMat$(*A);
 	*A = I;
@@ -331,7 +326,7 @@ void toInverse (Mat *A) {
 /**
  \fn	Mat MatMul_naive (Mat A, Mat B)
 
- \brief	Matrix multiplication using naive, but cache-friendly method))
+ \brief	Matrix multiplication using naive, but cache-friendly method)
 		ijk - 1.25 cache misses per iteration ikj - 0.5 cache misses (row-wise)
 
  \date	24-May-14
@@ -493,7 +488,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
  */
 void matMul (Mat *A, Mat B) {
 	Assert$((*A)->colsCount == B->rowsCount,
-		"Cannot multiply matrices\n(Number of columns of A must be equal to number of rows of B).");
+		"Cannot multiply matrices. Number of columns of A must be equal to number of rows of B.");
 
 	Mat P = MatMul(*A, B);
 	freeMat$(*A);
@@ -506,11 +501,11 @@ void matMul (Mat *A, Mat B) {
 /**
  \fn	Mat MatPow (Mat A, size_t pow)
 
- \brief	Raise matrix to power N.		
+ \brief	Raise matrix to power N.
 		TODO: use addition - chain exponentiation.
 
  \date	24-May-14
- 
+
  \param	A  	The Mat to process.
  \param	pow	The power value to raise matrix to.
 
@@ -593,7 +588,7 @@ size_t Rank (Mat A) {
  \return	Trace value.
  */
 double Trace (Mat A) {
-	double **a = A->a;	
+	double **a = A->a;
 	double tr = 0.0;
 
 	for (size_t i = 0; i < min(A->rowsCount, A->colsCount); i++) {
@@ -628,7 +623,7 @@ double OneNorm (Mat A) {
 }
 
 double TwoNorm (Mat A) {
-	return EuclideanNorm(A); //TODO:
+	return 0.0; //TODO:
 }
 
 /**
@@ -687,10 +682,10 @@ double EuclideanNorm (Mat A) {
 double ConditionNumber (Mat A) {
 	Mat Ai = DeepCopy(A);
 	toInverse(&Ai);
-	double r = InfinityNorm(A) * InfinityNorm(Ai);
+	double c = InfinityNorm(A) * InfinityNorm(Ai);
 	freeMat$(Ai);
 
-	return r;
+	return c;
 }
 #pragma endregion "Norms, etc."
 
@@ -763,7 +758,7 @@ Mat KroneckerSum (Mat A, Mat B) {
  */
 size_t _fixSize(size_t Size) {
 	if (!(Check$(ispowerof2_i(Size), "Matrix size is not a power of 2."))) {
-		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(Size)))); //-V113
+		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(Size)))); //-V113 //TODO: get rid of FP operations here
 	}
 	return Size;
 }
@@ -773,14 +768,16 @@ size_t _fixSize(size_t Size) {
 
  \brief	Finds product of A & B using Strassen algorithm.
  Source matrices A, B & its product C will be divided into 4 square blocks (submatrices),
- and this algorithm repeated recursively until blocks become numbers. 
+ and this algorithm repeated recursively until blocks become numbers.
  (or when size of blocks reaches some threshold value when naive algorithm will be used).
  Complexity: O(n^2.8)
  TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix if matrices')
 		M1 := (A1,1 + A2,2)(B1,1 + B2,2)
-		M2 := (A2,1 + A2,2)B1,1 M3 := A1,1(B1,2 − B2,2)
+		M2 := (A2,1 + A2,2)B1,1
+		M3 := A1,1(B1,2 − B2,2)
 		M4 := A2,2(B2,1 − B1,1)
-		M5 := (A1,1 + A1,2)B2, 2 M6 := (A2,1 − A1,1)(B1,1 + B1,2)
+		M5 := (A1,1 + A1,2)B2,2
+		M6 := (A2,1 − A1,1)(B1,1 + B1,2)
 		M7 := (A1,2 − A2,2)(B2,1 + B2,2)
 		C1,1 = M1 + M4 − M5 + M7
 		C1,2 = M3 + M5
@@ -795,7 +792,7 @@ size_t _fixSize(size_t Size) {
 Mat MatMul_strassen (Mat A, Mat B) {
 	Mat C = NULL;
 	size_t Size = A->rowsCount;
-	
+
 	switch (Size) {
 		case 1:
 			C = AllocMat(Size, Size);
@@ -810,7 +807,8 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
             return C;
             break;
-        case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges upd(seems that it is GCC extension or smth)
+        case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges.
+																												// upd.: seems that it is actually an GCC extension or smth.
 			C = MatMul(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
 			break;
@@ -852,39 +850,39 @@ Mat MatMul_strassen (Mat A, Mat B) {
 				}
 			}
 
-            _mm2_add(A11, A22, A_tmp); // A11 + A22
-            _mm2_add(B11, B22, B_tmp); // B11 + B22
+      _mm2_add(A11, A22, A_tmp); // A11 + A22
+      _mm2_add(B11, B22, B_tmp); // B11 + B22
 			Mat p1 = MatMul_strassen(A_tmp, B_tmp); // p1 = (A11+A22) * (B11+B22)
 
 			_mm2_add(A21, A22, A_tmp); // A21 + A22
 			Mat p2 = MatMul_strassen(A_tmp, B11); // p2 = (A21+A22) * (B11)
 
-            _mm2_sub(B12, B22, B_tmp); // B12 - B22
+      _mm2_sub(B12, B22, B_tmp); // B12 - B22
 			Mat p3 = MatMul_strassen(A11, B_tmp); // p3 = (A11) * (B12 - B22)
 
-            _mm2_sub(B21, B11, B_tmp); // B21 - B11
+      _mm2_sub(B21, B11, B_tmp); // B21 - B11
 			Mat p4 = MatMul_strassen(A22, B_tmp); // p4 = (A22) * (B21 - B11)
 
-            _mm2_add(A11, A12, A_tmp); // A11 + A12
-			Mat p5 = MatMul_strassen(A_tmp, B22); // p5 = (A11+A12) * (B22)   
+      _mm2_add(A11, A12, A_tmp); // A11 + A12
+			Mat p5 = MatMul_strassen(A_tmp, B22); // p5 = (A11+A12) * (B22)
 
-            _mm2_sub(A21, A11, A_tmp); // A21 - A11
-            _mm2_add(B11, B12, B_tmp); // B11 + B12
+      _mm2_sub(A21, A11, A_tmp); // A21 - A11
+      _mm2_add(B11, B12, B_tmp); // B11 + B12
 			Mat p6 = MatMul_strassen(A_tmp, B_tmp); // p6 = (A21-A11) * (B11+B12)
 
-            _mm2_sub(A12, A22, A_tmp); // A12 - A22
-            _mm2_add(B21, B22, B_tmp); // B21 + B22
+      _mm2_sub(A12, A22, A_tmp); // A12 - A22
+      _mm2_add(B21, B22, B_tmp); // B21 + B22
 			Mat p7 = MatMul_strassen(A_tmp, B_tmp); // p7 = (A12-A22) * (B21+B22)
 
-            _mm2_add(p3, p5, C12); // c12 = p3 + p5
-            _mm2_add(p2, p4, C21); // c21 = p2 + p4
+      _mm2_add(p3, p5, C12); // c12 = p3 + p5
+      _mm2_add(p2, p4, C21); // c21 = p2 + p4
 
-            _mm2_add(p1, p4, A_tmp); // p1 + p4
-            _mm2_add(A_tmp, p7, B_tmp); // p1 + p4 + p7
-            _mm2_sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
+      _mm2_add(p1, p4, A_tmp); // p1 + p4
+      _mm2_add(A_tmp, p7, B_tmp); // p1 + p4 + p7
+      _mm2_sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
 
-            _mm2_add(p1, p3, A_tmp); // p1 + p3
-            _mm2_add(A_tmp, p6, B_tmp); // p1 + p3 + p6
+      _mm2_add(p1, p3, A_tmp); // p1 + p3
+      _mm2_add(A_tmp, p6, B_tmp); // p1 + p3 + p6
 			_mm2_sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
 
 			// Join
@@ -909,11 +907,16 @@ Mat MatMul_strassen (Mat A, Mat B) {
  \fn	Mat MatMul_strassen_optimized (Mat A, Mat B)
 
  \brief	P1 = (A01+A10)(B10+B01)
-		P2 = (A10+A11)B10 P3 = A01(B11-B01)
+		P2 = (A10+A11)B10
+		P3 = A01(B11-B01)
 		P4 = A10(B00-B10)
-		P5 = (A01+A00)B01 P6 = (A11-A01)(B10+B11)
+		P5 = (A01+A00)B01
+		 P6 = (A11-A01)(B10+B11)
 		P7 = (A00-A10)(B00+B01)
-		C00 = P1+P4-P5+P7 C01 = P3+P5 C10 = P2+P4 C11 = P1-P2+P3+P6.
+		C00 = P1+P4-P5+P7
+		C01 = P3+P5
+		C10 = P2+P4
+		C11 = P1-P2+P3+P6.
 
  \param	A	The Mat to process.
  \param	B	The Mat to process.
