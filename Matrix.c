@@ -1,8 +1,3 @@
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#define snprintf _snprintf
-#endif
-
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -13,8 +8,9 @@
 #include <float.h>
 #include <math.h>
 
-#include "Matrix.h"
+#include "Config.h"
 #include "Const.h"
+#include "Matrix.h"
 #include "Extra.h"
 #include "SpinningIndicator.h"
 
@@ -213,7 +209,7 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 	Assert$(file != NULL, "File reading error");
 	Assert$(A != NULL, "Cannot print.");
 
-	double **a = A->a;
+	entry_t **a = A->a;
 #ifdef PRETTYOUTPUT
 	char buf[PRINTBUFSZ];
 #endif // PRETTYOUTPUT
@@ -223,8 +219,6 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 #ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
-//            double tm = a[i][j];
-//            printf ("\n>>>%f\n", a[i][j]);
 			_cleanTrailingZeroes(buf);
 			fprintf(file, "%s", buf);
 #else
@@ -247,12 +241,13 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
  \return	Printed matrices count.
  */
 size_t printMatricesToFile (Mat A, ...) {
-	Assert$(A != NULL, "Cannot print.");
+	Assert$(A != NULL, "Cannot print because of A is NULL.");
 	size_t n = 0;
 	va_list vl;
 	va_start(vl, A);
 	for (Mat T = A; T; T = va_arg(vl, Mat), n++) {
-		printf(" >>Mat[%Iu]\n", n);
+//		printf(" >>Mat[%zu]\n", n);
+        printf(" >>Mat[" FMT_SIZET "]\n", n);
 		printMat$(T);
 	}
 	va_end(vl);
@@ -351,10 +346,10 @@ static void _cleanTrailingZeroes (char *str) {
 */
 Mat DeepCopy (Mat A) {
 	Assert$(A != NULL, "Cannot copy NULL...");
-	double **a = A->a;
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
-	Assert$(B != NULL, "");
-	double **b = B->a;
+//	Assert$(B != NULL, "");
+    double **a = A->a;
+    double **b = B->a;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -369,6 +364,33 @@ Mat DeepCopy (Mat A) {
 	B->isSPD = A->isSPD;
 	B->isRankDeficient = A->isRankDeficient;
 	B->permutationSign = A->permutationSign;
+
+	return B;
+}
+
+/**
+\fn	Mat Copy (Mat A)
+
+\brief	Constructs an shallow copy of matrix A.
+
+\date	01-Jul-15
+
+\param	A	The source Mat to process.
+
+\return	Shallow copy of source Matrix.
+*/
+Mat Copy (Mat A) {
+	Assert$(A != NULL, "Cannot copy NULL...");
+	Mat B = AllocMat(A->rowsCount, A->colsCount);
+//	Assert$(B != NULL, "");
+    double **a = A->a;
+    double **b = B->a;
+
+	for (size_t i = 0; i < B->rowsCount; i++) {
+		for (size_t j = 0; j < B->colsCount; j++) {
+			b[i][j] = a[i][j];
+		}
+	}
 
 	return B;
 }
@@ -580,22 +602,22 @@ void fillSpiral (Mat A, int64_t start) {
 	for (size_t i = 0; i < numConcentricSquares; i++) {
 		// do top side
 		for (size_t j = 0; j < sideLen; j++) {
-			A->a[i][i + j] = (double) start++;
+			A->a[i][i + j] = (entry_t) start++;
 		}
 
 		// do right side
 		for (size_t j = 1; j < sideLen; j++) {
-			A->a[i + j][A->rowsCount - 1 - i] = (double) start++;
+			A->a[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
 		}
 
 		// do bottom side
 		for (ptrdiff_t j = sideLen - 2; j > -1; j--) {
-			A->a[A->rowsCount - 1 - i][i + j] = (double) start++;
+			A->a[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
 		}
 
 		// do left side
 		for (ptrdiff_t j = sideLen - 2; j > 0; j--) {
-			A->a[i + j][i] = (double) start++;
+			A->a[i + j][i] = (entry_t) start++;
 		}
 
 		sideLen -= 2;
@@ -636,12 +658,24 @@ void fillZigZag (Mat A, int64_t start) {
 				col = loopTo - i + loopFrom;
 			}
 
-			A->a[row][col] = (double) start++;
+			A->a[row][col] = (entry_t) start++;
 		}
 
 		currDiag++;
 	} while (currDiag <= lastValue);
 
 	return;
+}
+
+void fillTabulate (Mat A, Function2_u_u_e func) {
+    Assert$(A != NULL, "Cannot fill. It is NULL.");
+
+    for (size_t i = 0; i < A->rowsCount; ++i) {
+        for (size_t j = 0; j < A->colsCount; ++j) {
+            A->a[i][j] = (*func) (i, j);
+        }
+    }
+
+    return;
 }
 #pragma endregion "Filling routines"

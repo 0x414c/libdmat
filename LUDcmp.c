@@ -163,7 +163,7 @@ Mat *LUDcmp_crout (Mat A) {
 	
 	for (size_t j = 0; j < n; j++) {
 		for (size_t i = 0; i <= j; i++) {
-			long double sum = 0.0;
+			double sum = 0.0;
 			for (size_t k = 0; k < i; k++) {
 				sum += u[k][j] * l[i][k];
 			}
@@ -230,7 +230,7 @@ Mat Solve_lup (Mat *lup, Mat B) {
 		// backward solve Ux=y
 		for (ptrdiff_t i = lup[1]->rowsCount - 1; i >= 0; i--) {
 			x[i][c] = y[i][c];
-			for (size_t j = i + 1; j < lup[1]->colsCount; j++) {
+			for (size_t j = i + 1; j < lup[1]->colsCount; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 				x[i][c] -= u[i][j] * x[j][c];
 			}
 			x[i][c] /= u[i][i];

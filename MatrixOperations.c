@@ -517,7 +517,7 @@ void matMul (Mat *A, Mat B) {
  \return	A^n.
  */
 Mat MatPow (Mat A, size_t pow) {
-	Assert$(pow != 0, "Cannot raise power.");
+	Assert$(pow >= 0, "Cannot raise power.");
 	Assert$(isSquare$(A), "Cannot raise power of non-square matrix.");
 
 	size_t c = 0;

@@ -355,7 +355,7 @@ Mat Solve_gauss (Mat A, Mat B) {
 	//Back-substitution
 	for (ptrdiff_t i = AU->rowsCount - 1; i >= 0; i--) {
 		X->a[i][0] = AU->a[i][AU->colsCount-1];
-		for (size_t j = i + 1; j < AU->rowsCount; j++) {
+		for (size_t j = i + 1; j < AU->rowsCount; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 			X->a[i][0] -= AU->a[i][j] * X->a[j][0];
 		}
 		X->a[i][0] /= AU->a[i][i];
@@ -378,12 +378,9 @@ Mat Solve_gauss (Mat A, Mat B) {
  \param	Size		 	The matrix size.
  \param [out]	x		* to array to write the solution to.
  */
-void simpleSolver_h (double **a, size_t Size, double *x) {
-	ptrdiff_t i;
-	size_t j;
-
-	for (i = Size - 1; i >= 0; i--) {
-		for (j = i + 1; j < Size; j++) {
+void simpleSolver_h (double **a, size_t size, double *x) {
+	for (ptrdiff_t i = size - 1; i >= 0; i--) {
+		for (size_t j = i + 1; j < size; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 			x[i] -= a[i][j];
 		}
 		if ((fabs(x[i]) > EPS) && (fabs(a[i][i]) > EPS)) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#define SPINNER
+//#define SPINNER
 
 #ifdef SPINNER
 #define MIN_TICKS 64

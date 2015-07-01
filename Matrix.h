@@ -8,6 +8,7 @@
 #include "Datatypes.h"
 #include "Const.h"
 #include "Config.h"
+#include "Functional.h"
 
 
 Mat AllocMat (size_t SizeR, size_t SizeC);
@@ -45,9 +46,10 @@ void fillZeroes (Mat A);
 void fillSequential (Mat A, int64_t start);
 void fillSpiral (Mat A, int64_t start);
 void fillZigZag (Mat A, int64_t start);
+void fillTabulate(Mat A, entry_t (*func) (size_t, size_t));
 
 Mat DeepCopy (Mat A);
-//Mat ShallowCopy (Mat A);
+Mat Copy (Mat A);
 Mat Identity (size_t Size);
 Mat Diag (Mat A);
 Mat Minor (Mat A, size_t d);

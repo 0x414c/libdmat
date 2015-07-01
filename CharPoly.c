@@ -9,6 +9,7 @@
 #include "Extra.h"
 #include "EigenDcmp_n.h"
 #include "Const.h"
+#include "Config.h"
 #include "SpinningIndicator.h"
 
 
@@ -52,7 +53,7 @@ void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
 	Assert$(file != NULL, "");
 
 	for (size_t i = 0; i < s; i++) {
-		fprintf(file, "x^%Iu", s - i);
+		fprintf(file, "x^" FMT_SIZET, s - i);
 		fprintf(file, " + (%lld)", c[i]);
 	}
 	fprintf(file, " = 0\n");
@@ -103,8 +104,9 @@ long double EvalPolyAt (long double x, int64_t *c, size_t s) {
  \return	The found root value.
  */
 long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t maxIters) {
-	double root = 0.0, falseRoot = 0.0;
-	int x = 0;
+	long double falseRoot = 0.0;
+    long double root = 0.0;
+    int x = 0;
 	long double fA = EvalPolyAt(a, c, s);
 	long double fB = EvalPolyAt(b, c, s);
 

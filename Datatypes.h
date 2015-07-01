@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "Config.h"
 
@@ -11,7 +12,11 @@
 
  \brief	Defines an alias representing the Matrix entry type.
  */
-typedef float entry_t; //TODO:
+#ifdef DOUBLE_PRECISION
+typedef double_t entry_t;
+#else
+typedef float_t entry_t;
+#endif
 
 /**
  \struct	_Mat_struct

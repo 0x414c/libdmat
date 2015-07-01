@@ -72,14 +72,14 @@ Mat *QRDcmp_householder (Mat A) {
 			Q->a[i][k] = 0.0;
 		}
 		Q->a[k][k] = 1.0;
-		for (size_t j = k; j < columns; j++) {
+		for (size_t j = k; j < columns; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 			if (fabs(qrPtr[k][k]) > EPS) {
 				double s = 0.0;
-				for (size_t i = k; i < rows; i++) {
+				for (size_t i = k; i < rows; i++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 					s += qrPtr[i][k] * Q->a[i][j];
 				}
 				s = -s / qrPtr[k][k];
-				for (size_t i = k; i < rows; i++) {
+				for (size_t i = k; i < rows; i++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 					Q->a[i][j] += s*(qrPtr[i][k]);
 				}
 			}

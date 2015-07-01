@@ -86,7 +86,7 @@ Mat Solve_cholesky (Mat L, Mat B) {
 	// Solve L'*X = Y;
 	for (ptrdiff_t k = L->rowsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
-			for (size_t i = k + 1; i < L->rowsCount; i++) {
+			for (size_t i = k + 1; i < L->rowsCount; i++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
 				X->a[k][j] -= X->a[i][j] * L->a[i][k];
 			}
 			X->a[k][j] /= L->a[k][k];

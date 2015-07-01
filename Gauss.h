@@ -14,5 +14,5 @@ Mat Solve_gaussjordan (Mat A, Mat B);
 Mat Solve_gauss (Mat A, Mat B);
 
 Mat GaussianSolve_h (Mat A);
-void simpleSolver_h (double **a, size_t Size, double *x);
+void simpleSolver_h (double **a, size_t size, double *x);
 void undeterminedSolver_h (Mat RREF, Mat A, Mat R);

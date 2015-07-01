@@ -50,7 +50,8 @@ Mat *EigenDcmp_n (Mat A) {
 		Mat C = AllocMat(A->rowsCount, A->rowsCount);
 
 		for (i = 0; i < rootsCount; i++) {
-			printf(">>>Eigenvalue v%Iu=%.2Lf\n", i, polynomialRoots[i]);
+//			printf(">>>Eigenvalue v%Iu=%.2Lf\n", i, polynomialRoots[i]);
+			printf(">>>Eigenvalue v%zu=%.2Lf\n", i, polynomialRoots[i]);
 
 			Mat eigenvectors = GetEigenvectors(dCopyA, polynomialRoots[i]);
 			printf(" >>Corresponding eigenvectors for v=%.2Lf (written as rows):\n", polynomialRoots[i]);
@@ -65,13 +66,13 @@ Mat *EigenDcmp_n (Mat A) {
 		}
 		//----------------------eigendecomposition--------------------------------------
 
-		if (!(LIVectorsCounter == A->rowsCount)) {
+		if (LIVectorsCounter != A->rowsCount) {
 			puts("Matrix A is not diagonalizable (by this method) so eigendecomposition cannot be performed.\n(too few eigenvectors).");
 			return NULL;
 		}
 
-		Mat *result = (Mat*) malloc(3 * sizeof(*result));
-		Assert$(result != NULL, "Cannot allocate.");
+		Mat *results = (Mat*) malloc(3 * sizeof(*results));
+		Assert$(results != NULL, "Cannot allocate.");
 
 		Mat D = AllocMat(A->rowsCount, A->rowsCount);
 		for (i = 0; i < valuesCount; i++) {
@@ -81,21 +82,21 @@ Mat *EigenDcmp_n (Mat A) {
 		Mat Ci = DeepCopy(C);
 		toInverse(&Ci);
 
-		result[0] = C;
-		result[1] = D;
-		result[2] = Ci;
+		results[0] = C;
+		results[1] = D;
+		results[2] = Ci;
 
 		freeMat$(dCopyA);
-		free(k); k = NULL;
+		free$(k);
 
-		return result;
+		return results;
 	} else {
 		printf("Matrix A is not diagonalizable so eigendecomposition cannot be performed.\n(no real eigenvalues found).\n");
 		return NULL;
 	}
 	//----------------------free up resources---------------------------------------
-	free(polynomialCoeffs);	polynomialCoeffs = NULL;
-	free(polynomialRoots); polynomialRoots = NULL;
+	free$(polynomialCoeffs);
+	free$(polynomialRoots);
 
 	return result;
 }
@@ -179,7 +180,7 @@ void fillEigenvalueMatrix (Mat OUT, long double *eValues, size_t c, size_t k) {
 	double **o = OUT->a;
 
 	for (size_t i = c; i < k+1; i++) {
-		o[i][i] = eValues[c];
+        o[i][i] = eValues[c]; //TODO: Values of type 'long double' may not fit into the receiver type 'double'
 	}
 
 	return;
