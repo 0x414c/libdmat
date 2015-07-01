@@ -6,7 +6,7 @@
 #include "Matrix.h"
 
 
-#define MUL_THRESHOLD 16
+#define MM_SIZE_THRESHOLD 16
 
 
 size_t Rank (Mat RREF);
@@ -18,7 +18,7 @@ bool IsSymmetric (Mat A);
 bool IsSkewSymmetric(Mat A);
 bool IsEqual (Mat A, Mat B);
 
-Mat Inverse(Mat A);
+Mat Inverse (Mat A);
 void toInverse (Mat* A);
 void toTransposed_square (Mat A);
 Mat Transposed (Mat A);
@@ -29,7 +29,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B);
 Mat MatMul_strassen (Mat A, Mat B);
 Mat MatMul_strassen_optimized (Mat A, Mat B);
 
-size_t fixSize (size_t Size);
+size_t _fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
 void matMul (Mat *A, Mat B);
 
@@ -44,21 +44,21 @@ double InfinityNorm (Mat A);
 double EuclideanNorm (Mat A);
 double ConditionNumber (Mat A);
 
-// 'templates' for element-wise funcNametions
-#define for_i(A) for (size_t i = 0; i < A->rowsCount; i++)
-#define for_j(A) for (size_t j = 0; j < A->colsCount; j++)
+// 'templates' for element-wise functions
+#define for_i$(A) for (size_t i = 0; i < A->rowsCount; i++)
+#define for_j$(A) for (size_t j = 0; j < A->colsCount; j++)
 
-#define tElementWise2(funcName, operator)							        \
-	void __##funcName (Mat A, Mat B) {							            \
-	for_i(A) for_j(A) A->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
-void __add(); void __sub(); void __mul(); void __div();	
+#define TElementWise_MatrixMatrix1$(funcName, operator)						  \
+	void _mm1_##funcName (Mat A, Mat B) {							          \
+	for_i$(A) for_j$(A) A->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
+void _mm1_add(); void _mm1_sub(); void _mm1_mul(); void _mm1_div();
 
-#define tElementWise3(funcName, operator)							        \
-	void ___##funcName (Mat A, Mat B, Mat C) {							    \
-	for_i(A) for_j(B) C->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
-void ___add(); void ___sub(); void ___mul(); void ___div();
+#define TElementWise_MatrixMatrix2$(funcName, operator)						  \
+	void _mm2_##funcName (Mat A, Mat B, Mat C) {							  \
+	for_i$(A) for_j$(B) C->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
+void _mm2_add(); void _mm2_sub(); void _mm2_mul(); void _mm2_div();
 
-#define tScalar(funcName, operator)                                  \
-	void _s##funcName (Mat A, double x) {				       	     \
-	for_i(A) for_j(A) A->a[i][j] = A->a[i][j] operator (x); return; }\
-void _sadd(); void _ssub(); void _smul(); void _sdiv();	 
+#define TElementWise_MatrixScalar$(funcName, operator)                 \
+	void _ms_##funcName (Mat A, double x) {				       	       \
+	for_i$(A) for_j$(A) A->a[i][j] = A->a[i][j] operator (x); return; }\
+void _ms_add(); void _ms_sub(); void _ms_mul(); void _ms_div();

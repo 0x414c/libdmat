@@ -13,8 +13,8 @@
 \brief	Makes next combination over the index array while it can be made.
 \date	15-May-14
 \param [in,out]	index	If non-null, * to index array.
-\param	k				 	The K.
-\param	n				 	The N.
+\param	k				The K.
+\param	n				The N.
 \return	true if next combination is generated, false if no possible combinations left.
 */
 bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
@@ -37,34 +37,34 @@ bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 /**
  \fn	bool exists_d (long double *c, size_t s, long double x)
 
- \brief	Check if element x is exists in array c of size s.
+ \brief	Check$ if element x is exists in array c of size s.
 
  \date	20-May-14
 
  \param [in]	c	If non-null, the * to array process.
- \param	s		 	The array size to process.
- \param	x		 	The element value.
+ \param	start		The array size to process.
+ \param	value		The element value.
 
  \return	true if success, else false.
  */
-bool exists_d (long double *c, size_t s, long double x) {
-	for (size_t i = 0; i < s; i++) {
-		if (equal_ld(c[i], x)) {
-			return 1;
+bool exists_d (long double *c, size_t start, long double value) {
+	for (size_t i = 0; i < start; i++) {
+		if (equals_ld(c[i], value)) {
+			return true;
 		}
 	}
 
-	return 0;
+	return false;
 }
 
-bool exists_u (size_t *c, size_t s, size_t e, size_t x) {
-	for (size_t i = e; i < s; i++) {
-		if (c[i] == x) {
-			return 1;
+bool exists_u (size_t *c, size_t start, size_t end, size_t value) {
+	for (size_t i = end; i < start; i++) {
+		if (c[i] == value) {
+			return true;
 		}
 	}
 
-	return 0;
+	return false;
 }
 #pragma endregion "Search in array"
 
@@ -72,7 +72,7 @@ bool exists_u (size_t *c, size_t s, size_t e, size_t x) {
 #pragma region "Allocation routines"
 
 /**
- \fn	int64_t *iAllocVec (size_t Size)
+ \fn	int64_t *AllocVec_i (size_t Size)
 
  \brief	Allocate vector.
 
@@ -80,17 +80,17 @@ bool exists_u (size_t *c, size_t s, size_t e, size_t x) {
 
  \return	null if it fails, else an int64_t*.
  */
-int64_t *iAllocVec (size_t Size) {
+int64_t *AllocVec_i(size_t Size) {
 	int64_t *v;
 	v = ((int64_t *) malloc(sizeof(int64_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
-	Assert(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate.");
 
 	return v;
 }
 
 /**
- \fn	size_t *uAllocVec (size_t Size)
+ \fn	size_t *AllocVec_u (size_t Size)
 
  \brief	Allocate vector.
 
@@ -98,17 +98,17 @@ int64_t *iAllocVec (size_t Size) {
 
  \return	null if it fails, else a size_t*.
  */
-size_t *uAllocVec (size_t Size) {
+size_t *AllocVec_u(size_t Size) {
 	size_t *v;
 	v = ((size_t *) malloc(sizeof(size_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
-	Assert(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate.");
 
 	return v;
 }
 
 /**
- \fn	long double *ldAllocVec (size_t Size)
+ \fn	long double *AllocVec_ld (size_t Size)
 
  \brief	Ld allocate vector.
 
@@ -116,18 +116,18 @@ size_t *uAllocVec (size_t Size) {
 
  \return	null if it fails, else a double*.
  */
-long double *ldAllocVec (size_t Size) {
+long double *AllocVec_ld(size_t Size) {
 	long double *v;
 	v = ((long double *) malloc(sizeof(long double) * Size));
 	//v = ((long double *) calloc(Size, sizeof(long double)));
-	Assert(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate.");
 
 	return v;
 }
 #pragma endregion "Allocation routines"
 
 /**
- \fn	void fillIndex(size_t *index, size_t size, size_t start)
+ \fn	void fillSequential_u(size_t *index, size_t size, size_t start)
 
  \brief	Fills index array.
 
@@ -135,7 +135,7 @@ long double *ldAllocVec (size_t Size) {
  \param	size			 	The array size.
  \param	start			 	The starting value.
  */
-void fillIndex(size_t *index, size_t size, size_t start) {
+void fillSequential_u(size_t *index, size_t size, size_t start) {
 	for (size_t i = 0; i < size; i++) {
 		index[i] = start++;
 	}

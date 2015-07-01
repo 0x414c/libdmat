@@ -25,7 +25,7 @@
  \return	A Lower Triangular form of A.
  */
 Mat CholeskyDcmp (Mat A) {
-	Assert(isSquare(A), "Matrix is not square.");
+	Assert$(isSquare$(A), "Matrix is not square.");
 
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
 	bool isSPD = true;
@@ -39,7 +39,7 @@ Mat CholeskyDcmp (Mat A) {
 			}
 			L->a[j][k] = s = (A->a[j][k] - s) / L->a[k][k];
 			d += s*s;
-			isSPD = isSPD && (equal_d(A->a[k][j], A->a[j][k]));
+			isSPD = isSPD && (equals_d(A->a[k][j], A->a[j][k]));
 		}
 		d = A->a[j][j] - d;
 		isSPD = isSPD && (d > EPS);
@@ -68,8 +68,8 @@ Mat CholeskyDcmp (Mat A) {
  \return	Matrix contatining solution as column-vector.
  */
 Mat Solve_cholesky (Mat L, Mat B) {
-	Assert(L->isSPD, "Matrix is not symmetric positive definite.");
-	Assert(L->rowsCount == B->rowsCount, "Rows count mismatch.");
+	Assert$(L->isSPD, "Matrix is not symmetric positive definite.");
+	Assert$(L->rowsCount == B->rowsCount, "Rows count mismatch.");
 
 	Mat X = DeepCopy(B);
 

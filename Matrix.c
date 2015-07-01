@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <float.h>
 #include <math.h>
 
 #include "Matrix.h"
@@ -34,19 +35,19 @@
 Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
 	Mat A = NULL;
 
-	Assert(((RowsCount != 0) && (ColumnsCount != 0)), "Matrix size can't be set to zero.");
+	Assert$(((RowsCount != 0) && (ColumnsCount != 0)), "Matrix size can't be set to zero.");
 
 	A = (Mat) malloc(sizeof(*A));
-	Assert(A != NULL, "No space for matrix");
+	Assert$(A != NULL, "No space for matrix");
 	
 	A->a = NULL;
 	A->a = (double**) calloc(RowsCount, sizeof(double*));
-	Assert(A->a != NULL, "No space for row pointers");
+	Assert$(A->a != NULL, "No space for row pointers");
 	
 	for (size_t i = 0; i < RowsCount; i++) {
 		A->a[i] = NULL;
 		A->a[i] = (double*) calloc(ColumnsCount, sizeof(double));
-		Assert(A->a[i] != NULL, "No space for rows");
+		Assert$(A->a[i] != NULL, "No space for rows");
 	}
 
 	A->rowsCount = RowsCount;
@@ -74,9 +75,9 @@ Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
  \return	NULL pointer. //TODO:
  */
 void freeMat (Mat *A) {
-	Assert(*A != NULL, "Cannot free Mat.");
-	Assert(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Invalid size.");
-	Assert((*A)->a != NULL, "Seems that there exists no contents to free...");
+	Assert$(*A != NULL, "Cannot free Mat.");
+	Assert$(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Invalid size.");
+	Assert$((*A)->a != NULL, "Seems that there exists no contents to free...");
 	
 	for (size_t i = 0; i < (*A)->rowsCount; i++) {
 		free((*A)->a[i]);
@@ -97,12 +98,12 @@ void freeMat (Mat *A) {
  \return	Deallocated matrices count.
  */
 size_t freeMats (Mat A, ...) {
-	Assert(A != NULL, "Cannot free.");
+	Assert$(A != NULL, "Cannot free.");
 	size_t n = 0;
 	va_list vl;
 	va_start(vl, A);
 	for (Mat T = A; T; T = va_arg(vl, Mat), n++) {
-		FreeMat(T);
+		freeMat$(T);
 	}
 	va_end(vl);
 
@@ -137,20 +138,20 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	//	Invalid read from 'A->a', (outside its readable range)			132
 
 
-	Assert(A != NULL, "Cannot resize.");
-	Assert((newRows != 0 && newCols != 0), "Rows or columns count can't be set to 0.");
+	Assert$(A != NULL, "Cannot resize.");
+	Assert$((newRows != 0 && newCols != 0), "Rows or columns count can't be set to 0.");
 	if ((A->rowsCount == newRows) && (A->colsCount == newCols)) {
-		Check(0, "Resizing has no effect.");
+		Check$(0, "Resizing has no effect.");
 		return;
 	}
 
 	double **newA = (double**) realloc(A->a, newRows*sizeof(double*));
-	Assert(newA != NULL, "Reallocating space for row pointers failed.");
+	Assert$(newA != NULL, "Reallocating space for row pointers failed.");
 	A->a = newA;
 
 	for (size_t i = 0; i < ((newRows < A->rowsCount)? newRows: A->rowsCount); i++) {
 		double *newAi = (double*) realloc(A->a[i], newCols*sizeof(double));
-		Assert(newAi != NULL, "Reallocating space for rows failed.");
+		Assert$(newAi != NULL, "Reallocating space for rows failed.");
 		A->a[i] = newAi;
 		if (newCols > A->colsCount)	{
 			memset(A->a[i] + A->colsCount, 0, sizeof(double) * (newCols - A->colsCount));
@@ -160,7 +161,7 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	if (newRows > A->rowsCount)	{
 		for (size_t i = A->rowsCount; i < newRows; i++) {
 			A->a[i] = (double*) calloc(newCols, sizeof(double));
-			Assert(A->a[i] != NULL, "Allocating space for rows failed.");
+			Assert$(A->a[i] != NULL, "Allocating space for rows failed.");
 		}
 	}
 
@@ -179,7 +180,7 @@ void resize (Mat A, size_t newRows, size_t newCols) {
  \param	B	The source Mat B to process.
  */
 void concat (Mat A, Mat B) {
-	Assert((A != NULL) && (B != NULL), "Cannot join matrices.");
+	Assert$((A != NULL) && (B != NULL), "Cannot join matrices.");
 
 	resize(A, max(A->rowsCount, B->rowsCount), A->colsCount + B->colsCount);
 
@@ -198,7 +199,7 @@ void concat (Mat A, Mat B) {
 
 #pragma region "Printing"
 /**
- \fn	void printMatrixToFile (Mat A, FILE *file, char *format)
+ \fn	void printMatToFile (Mat A, FILE *file, char *format)
 
  \brief	Prints matrix to file.
 
@@ -209,8 +210,8 @@ void concat (Mat A, Mat B) {
  \param [in]	format	If non-null, the format string.
  */
 void printMatrixToFile (Mat A, FILE *file, char *format) {
-	Assert(file != NULL, "File reading error");
-	Assert(A != NULL, "Cannot print.");
+	Assert$(file != NULL, "File reading error");
+	Assert$(A != NULL, "Cannot print.");
 
 	double **a = A->a;
 #ifdef PRETTYOUTPUT
@@ -221,6 +222,9 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 #ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
+            buf[PRINTBUFSZ-1] = '\0';
+//            double tm = a[i][j];
+//            printf ("\n>>>%f\n", a[i][j]);
 			_cleanTrailingZeroes(buf);
 			fprintf(file, "%s", buf);
 #else
@@ -243,13 +247,13 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
  \return	Printed matrices count.
  */
 size_t printMatricesToFile (Mat A, ...) {
-	Assert(A != NULL, "Cannot print.");
+	Assert$(A != NULL, "Cannot print.");
 	size_t n = 0;
 	va_list vl;
 	va_start(vl, A);
 	for (Mat T = A; T; T = va_arg(vl, Mat), n++) {
 		printf(" >>Mat[%Iu]\n", n);
-		printMat(T);
+		printMat$(T);
 	}
 	va_end(vl);
 
@@ -266,8 +270,8 @@ size_t printMatricesToFile (Mat A, ...) {
  \param [in]	format	If non-null, the format string.
  */
 void toString (Mat A, FILE *file, char *format) {
-	Assert(file != NULL, "File reading error");
-	Assert(A != NULL, "Cannot print.");
+	Assert$(file != NULL, "File reading error");
+	Assert$(A != NULL, "Cannot print.");
 
 	double **a = A->a;
 #ifdef PRETTYOUTPUT
@@ -302,10 +306,13 @@ void toString (Mat A, FILE *file, char *format) {
  \param [in,out]	str	If non-null, the string to process.
  */
 static void _cleanTrailingZeroes (char *str) {
-	Assert(str != NULL, "");
+	Assert$(str != NULL, "");
 
-	char *s;
+	char *s = NULL;
 	char *start = strchr(str, '.');
+	if (start == NULL) {
+//		return;
+	}
 	s = strrchr(start, '0');
 	if ((s) && (*(s + 1) == '\0')) {
 		while ((*s != '.')) {
@@ -343,10 +350,10 @@ static void _cleanTrailingZeroes (char *str) {
 \return	Deep copy of source Matrix.
 */
 Mat DeepCopy (Mat A) {
-	Assert(A != NULL, "Cannot copy NULL...");
+	Assert$(A != NULL, "Cannot copy NULL...");
 	double **a = A->a;
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
-	Assert(B != NULL, "");
+	Assert$(B != NULL, "");
 	double **b = B->a;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
@@ -435,7 +442,7 @@ Mat Identity (size_t Size) {
  \return	Minor.
  */
 Mat Minor (Mat A, size_t d) { //TODO: 
-	Assert(A->rowsCount <= d, "");
+	Assert$(A->rowsCount <= d, "");
 	Mat M = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < d; i++)	{
@@ -466,13 +473,13 @@ Mat Minor (Mat A, size_t d) { //TODO:
  \return	Number of read items.
  */
 size_t fillFromFile (Mat A, FILE *file) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 	double **a = A->a;
 	double tmp = 0.0;
 	size_t r = 0;
 
-	Assert(A->rowsCount != 0 && A->colsCount != 0, "Invalid size.");
-	Assert(file != NULL, "File reading error");
+	Assert$(A->rowsCount != 0 && A->colsCount != 0, "Invalid size.");
+	Assert$(file != NULL, "File reading error");
 
 	while (!(feof(file)) && !(ferror(file))) {
 		spinActivityIndicator();
@@ -498,7 +505,7 @@ size_t fillFromFile (Mat A, FILE *file) {
  \param	A	The Mat to process.
  */
 void fillRandom (Mat A) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	double **a = A->a;
 
@@ -512,7 +519,7 @@ void fillRandom (Mat A) {
 }
 
 /**
- \fn	void fillZero (Mat A)
+ \fn	void fillZeroes (Mat A)
 
  \brief	Fills double-valued matrix with zeroes.
 
@@ -520,8 +527,8 @@ void fillRandom (Mat A) {
 
  \param	A	The Mat to process.
  */
-void fillZero (Mat A) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+void fillZeroes(Mat A) {
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	double **a = A->a;
 
@@ -535,15 +542,15 @@ void fillZero (Mat A) {
 }
 
 /**
- \fn	void fillNumbers (Mat A, int64_t start)
+ \fn	void fillSequential (Mat A, int64_t start)
 
  \brief	Fill Matrix A with sequential numbers starting from some value.
 
  \param	A	 	The Mat to process.
  \param	start	The start value.
  */
-void fillNumbers (Mat A, int64_t start) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+void fillSequential(Mat A, int64_t start) {
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	double **a = A->a;
 	
@@ -565,10 +572,10 @@ void fillNumbers (Mat A, int64_t start) {
  \param	start	The start value.
  */
 void fillSpiral (Mat A, int64_t start) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	size_t sideLen = A->rowsCount;
-	size_t numConcentricSquares = (size_t) (ceil((double)(sideLen) / 2.0));
+	size_t numConcentricSquares = (size_t) (ceil(((double) (sideLen)) / 2.0));
 
 	for (size_t i = 0; i < numConcentricSquares; i++) {
 		// do top side
@@ -605,7 +612,7 @@ void fillSpiral (Mat A, int64_t start) {
  \param	start	The start value.
  */
 void fillZigZag (Mat A, int64_t start) {
-	Assert(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	size_t lastValue = A->rowsCount * A->rowsCount - 1;
 	size_t currDiag = 0;

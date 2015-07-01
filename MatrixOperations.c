@@ -11,11 +11,11 @@
 
 
 #pragma region "Entrywise operations"
-tElementWise2(add, +); tElementWise2(sub, -); tElementWise2(mul, *); tElementWise2(div, /);
-tScalar(add, +); tScalar(sub, -); tScalar(mul, *); tScalar(div, / );
-tElementWise3(add, +); tElementWise3(sub, -); tElementWise3(mul, *); tElementWise3(div, /);
+TElementWise_MatrixMatrix1$(add, +); TElementWise_MatrixMatrix1$(sub, -); TElementWise_MatrixMatrix1$(mul, *); TElementWise_MatrixMatrix1$(div, /);
+TElementWise_MatrixScalar$(add, +); TElementWise_MatrixScalar$(sub, -); TElementWise_MatrixScalar$(mul, *); TElementWise_MatrixScalar$(div, / );
+TElementWise_MatrixMatrix2$(add, +); TElementWise_MatrixMatrix2$(sub, -); TElementWise_MatrixMatrix2$(mul, *); TElementWise_MatrixMatrix2$(div, /);
 
-Mat MatLerp (Mat A, Mat B, double t) {
+Mat MatEntryWiseLerp(Mat A, Mat B, double t) {
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
@@ -52,7 +52,7 @@ bool IsEqual (Mat A, Mat B) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			if (!equal_d(a[i][j], b[i][j])) {
+			if (!equals_d(a[i][j], b[i][j])) {
 				return false;
 			}
 		}
@@ -64,7 +64,7 @@ bool IsEqual (Mat A, Mat B) {
 /**
  \fn	bool IsIdentity (Mat A)
 
- \brief	Check if matrix A is an identity matrix.
+ \brief	Check$ if matrix A is an identity matrix.
 
  \date	17-May-14
 
@@ -80,7 +80,7 @@ bool IsIdentity (Mat A) {
 			if ((i != j) && (fabs(a[i][j]) > EPS)) {
 				return false;
 			} else {
-				if ((i == j) && (equal_d(a[i][j], 1.0))) {
+				if ((i == j) && (equals_d(a[i][j], 1.0))) {
 					return false;
 				}
 			}
@@ -97,7 +97,7 @@ bool IsSingular (Mat A) {
 		Mat T = DeepCopy(A);
 		toRowEchelonForm(T);
 		bool r = T->isSingular;
-		FreeMat(T);
+		freeMat$(T);
 		A->isSingular = r;
 		return r;
 	}
@@ -113,13 +113,13 @@ bool IsSingular (Mat A) {
  \return	true or false.
  */
 bool IsSymmetric (Mat A) {
-	if (!isSquare(A)) {
+	if (!isSquare$(A)) {
 		return false;
 	}
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equal_d(A->a[i][j], A->a[j][i])) {
+			if (!equals_d(A->a[i][j], A->a[j][i])) {
 				return false;
 			}
 		}
@@ -129,13 +129,13 @@ bool IsSymmetric (Mat A) {
 }
 
 bool IsSkewSymmetric (Mat A) {
-	if (!isSquare(A)) {
+	if (!isSquare$(A)) {
 		return false;
 	}
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equal_d(A->a[i][j], -A->a[j][i])) {
+			if (!equals_d(A->a[i][j], -A->a[j][i])) {
 				return false;
 			}
 		}
@@ -158,7 +158,7 @@ bool IsSkewSymmetric (Mat A) {
  \param	A	The Mat to process.
  */
 void toTransposed_square (Mat A) {
-	Assert(isSquare(A), "Cannot transpose non-square matrix with this func.");
+	Assert$(isSquare$(A), "Cannot transpose non-square matrix with this func.");
 
 	for (size_t i = 0; i < A->rowsCount - 1; i++) {
 		for (size_t j = i + 1; j < A->rowsCount; j++) {
@@ -206,9 +206,9 @@ void toTransposed (Mat *A) {
 		toTransposed_square(*A);
 	} else {
 		Mat T = Transposed(*A);
-		FreeMat(*A);
+		freeMat$(*A);
 		*A = DeepCopy(T);
-		FreeMat(T);
+		freeMat$(T);
 	}
 
 	return;
@@ -217,17 +217,21 @@ void toTransposed (Mat *A) {
 /**
  \fn	Mat Inverse (Mat A)
 
- \brief	Returns Inverse of the given Matrix A.
+ \brief	Returns the Inverse matrix of the given Matrix A.
 
  \param	A	The Mat to process.
 
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare(A))) {
-		puts("Cannot invert singular matrix.");
-		return NULL;
-	}
+//	if ((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))) {
+//		return NULL;
+//	}
+
+    if (!Check$(!((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))),
+               "Cannot invert singular matrix.")) {
+        return NULL;
+    }
 
 	double **a = A->a;
 	Mat R = NULL, I = NULL;
@@ -244,12 +248,12 @@ Mat Inverse (Mat A) {
 			R->a[0][1] = a[0][1] * -1.0;
 			R->a[0][0] = a[1][1];
 			R->a[1][1] = a[0][0];
-			_smul(R, 1.0 / A->det); //HACK: A->det is already computed at the very beginning of func when 
+			_ms_mul(R, 1.0 / A->det); //TODO: A->det is already computed at the very beginning of func when
 			                        //it checks for matrix singularity. So if checks are disabled, 
 			                        //you need to compute Det(A) manually)  
-			return R;
-			break;
-		case 3:
+            return R;
+            break;
+        case 3:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
 			R->a[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
@@ -260,7 +264,7 @@ Mat Inverse (Mat A) {
 			R->a[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1];
 			R->a[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
 			R->a[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
-			_smul(R, 1.0 / A->det);
+			_ms_mul(R, 1.0 / A->det);
 			return R;
 			break;
 		case 4:
@@ -281,7 +285,7 @@ Mat Inverse (Mat A) {
 			R->a[3][1] = a[0][1] * a[2][2] * a[3][0] - a[0][2] * a[2][1] * a[3][0] + a[0][2] * a[2][0] * a[3][1] - a[0][0] * a[2][2] * a[3][1] - a[0][1] * a[2][0] * a[3][2] + a[0][0] * a[2][1] * a[3][2];
 			R->a[3][2] = a[0][2] * a[1][1] * a[3][0] - a[0][1] * a[1][2] * a[3][0] - a[0][2] * a[1][0] * a[3][1] + a[0][0] * a[1][2] * a[3][1] + a[0][1] * a[1][0] * a[3][2] - a[0][0] * a[1][1] * a[3][2];
 			R->a[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
-			_smul(R, 1.0 / A->det);
+			_ms_mul(R, 1.0 / A->det);
 			return R;
 			break;
 		default:
@@ -297,7 +301,7 @@ Mat Inverse (Mat A) {
 				}
 			}
 
-			FreeMat(R);
+			freeMat$(R);
 			return I;
 			break;
 	}
@@ -315,7 +319,7 @@ Mat Inverse (Mat A) {
  */
 void toInverse (Mat *A) {	
 	Mat I = Inverse(*A);
-	FreeMat(*A);
+	freeMat$(*A);
 	*A = I;
 
 	return;
@@ -338,15 +342,15 @@ void toInverse (Mat *A) {
  \return	Matrix product of A & B.
  */
 Mat MatMul_naive (Mat A, Mat B) {
-	Assert(A->colsCount == B->rowsCount, "Cannot multiply.");
+	Assert$(A->colsCount == B->rowsCount, "Cannot multiply.");
 
 	Mat C = AllocMat(A->rowsCount, B->colsCount);
 
-	if ((isSquare(A)) && (A->rowsCount == 1) && (isSquare(B))) {
+	if ((isSquare$(A)) && (A->rowsCount == 1) && (isSquare$(B))) {
 		C->a[0][0] = A->a[0][0] * B->a[0][0];
 		return C;
 	} else {
-		if ((isSquare(A)) && (A->rowsCount == 2) && (isSquare(B))) {
+		if ((isSquare$(A)) && (A->rowsCount == 2) && (isSquare$(B))) {
 			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
 			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
 			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
@@ -404,7 +408,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 		} else {
-			if (A->rowsCount < MUL_THRESHOLD) {
+			if (A->rowsCount < MM_SIZE_THRESHOLD) {
 				C = MatMul_naive(A, B);
 				return C;
 			} else {
@@ -442,23 +446,23 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				//TODO: C22 can be used as temporary, so no tmp_1 needed!)
 				tmp_1 = MatMul_naive_recursive(A12, B21);
 				Mat C11 = MatMul_naive_recursive(A11, B11);
-				__add(C11, tmp_1);
-				FreeMat(tmp_1);
+				_mm1_add(C11, tmp_1);
+				freeMat$(tmp_1);
 
 				tmp_1 = MatMul_naive_recursive(A12, B22);
 				Mat C12 = MatMul_naive_recursive(A11, B12);
-				__add(C12, tmp_1);
-				FreeMat(tmp_1);
+				_mm1_add(C12, tmp_1);
+				freeMat$(tmp_1);
 
 				tmp_1 = MatMul_naive_recursive(A22, B21);
 				Mat C21 = MatMul_naive_recursive(A21, B11);
-				__add(C21, tmp_1);
-				FreeMat(tmp_1);
+				_mm1_add(C21, tmp_1);
+				freeMat$(tmp_1);
 
 				tmp_1 = MatMul_naive_recursive(A22, B22);
 				Mat C22 = MatMul_naive_recursive(A21, B12);
-				__add(C22, tmp_1);
-				FreeMat(tmp_1);
+				_mm1_add(C22, tmp_1);
+				freeMat$(tmp_1);
 
 				for (size_t i = 0; i < Size; i++) {
 					for (size_t j = 0; j < Size; j++) {
@@ -488,13 +492,13 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
  \param	B	The Mat B to process.
  */
 void matMul (Mat *A, Mat B) {
-	Assert((*A)->colsCount == B->rowsCount,
+	Assert$((*A)->colsCount == B->rowsCount,
 		"Cannot multiply matrices\n(Number of columns of A must be equal to number of rows of B).");
 
 	Mat P = MatMul(*A, B);
-	FreeMat(*A);
+	freeMat$(*A);
 	*A = DeepCopy(P);
-	FreeMat(P);
+	freeMat$(P);
 
 	return;
 }
@@ -513,8 +517,8 @@ void matMul (Mat *A, Mat B) {
  \return	A^n.
  */
 Mat MatPow (Mat A, size_t pow) {
-	Assert(pow != 0, "Cannot raise power.");
-	Assert(isSquare(A), "Cannot raise power of non-square matrix.");
+	Assert$(pow != 0, "Cannot raise power.");
+	Assert$(isSquare$(A), "Cannot raise power of non-square matrix.");
 
 	size_t c = 0;
 	Mat R;
@@ -684,7 +688,7 @@ double ConditionNumber (Mat A) {
 	Mat Ai = DeepCopy(A);
 	toInverse(&Ai);
 	double r = InfinityNorm(A) * InfinityNorm(Ai);
-	FreeMat(Ai);
+	freeMat$(Ai);
 
 	return r;
 }
@@ -730,17 +734,17 @@ Mat KroneckerProd (Mat A, Mat B) {
  \return	A(+)B.
  */
 Mat KroneckerSum (Mat A, Mat B) {
-	Assert(isSquare(A) && isSquare(B), "");
+	Assert$(isSquare$(A) && isSquare$(B), "A and B isn't square.");
 	Mat Ib = Identity(B->rowsCount);
 	Mat Ia = Identity(A->rowsCount);
 	Mat AI = KroneckerProd(A, Ib);
 	Mat IB = KroneckerProd(Ia, B);
 	Mat KS = AllocMat(A->rowsCount*B->rowsCount, A->colsCount*B->colsCount);
-	___add(AI, IB, KS);
-	FreeMat(IB);
-	FreeMat(Ia); 
-	FreeMat(AI);
-	FreeMat(Ib);
+	_mm2_add(AI, IB, KS);
+	freeMat$(IB);
+	freeMat$(Ia);
+	freeMat$(AI);
+	freeMat$(Ib);
 
 	return KS;
 }
@@ -749,7 +753,7 @@ Mat KroneckerSum (Mat A, Mat B) {
 
 #pragma region "Strassen"
 /**
- \fn	size_t fixSize (size_t Size)
+ \fn	size_t _fixSize (size_t Size)
 
  \brief	Fix size.
 
@@ -757,8 +761,8 @@ Mat KroneckerSum (Mat A, Mat B) {
 
  \return	A size_t.
  */
-size_t fixSize (size_t Size) {
-	if (!(Check(powerof2(Size), "Matrix size is not a power of 2."))) {
+size_t _fixSize(size_t Size) {
+	if (!(Check$(ispowerof2_i(Size), "Matrix size is not a power of 2."))) {
 		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(Size)))); //-V113
 	}
 	return Size;
@@ -804,10 +808,10 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
 			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
-			return C;
-			break;
-		case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges upd(seems that it is GCC extension or smth)
-			C = MatMul(A, B);							//TODO: use MUL_THRESHOLD
+            return C;
+            break;
+        case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges upd(seems that it is GCC extension or smth)
+			C = MatMul(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
 			break;
 		default:
@@ -848,40 +852,40 @@ Mat MatMul_strassen (Mat A, Mat B) {
 				}
 			}
 
-			___add(A11, A22, A_tmp); // A11 + A22
-			___add(B11, B22, B_tmp); // B11 + B22
+            _mm2_add(A11, A22, A_tmp); // A11 + A22
+            _mm2_add(B11, B22, B_tmp); // B11 + B22
 			Mat p1 = MatMul_strassen(A_tmp, B_tmp); // p1 = (A11+A22) * (B11+B22)
 
-			___add(A21, A22, A_tmp); // A21 + A22
+			_mm2_add(A21, A22, A_tmp); // A21 + A22
 			Mat p2 = MatMul_strassen(A_tmp, B11); // p2 = (A21+A22) * (B11)
 
-			___sub(B12, B22, B_tmp); // B12 - B22
+            _mm2_sub(B12, B22, B_tmp); // B12 - B22
 			Mat p3 = MatMul_strassen(A11, B_tmp); // p3 = (A11) * (B12 - B22)
 
-			___sub(B21, B11, B_tmp); // B21 - B11
+            _mm2_sub(B21, B11, B_tmp); // B21 - B11
 			Mat p4 = MatMul_strassen(A22, B_tmp); // p4 = (A22) * (B21 - B11)
 
-			___add(A11, A12, A_tmp); // A11 + A12
+            _mm2_add(A11, A12, A_tmp); // A11 + A12
 			Mat p5 = MatMul_strassen(A_tmp, B22); // p5 = (A11+A12) * (B22)   
 
-			___sub(A21, A11, A_tmp); // A21 - A11
-			___add(B11, B12, B_tmp); // B11 + B12
+            _mm2_sub(A21, A11, A_tmp); // A21 - A11
+            _mm2_add(B11, B12, B_tmp); // B11 + B12
 			Mat p6 = MatMul_strassen(A_tmp, B_tmp); // p6 = (A21-A11) * (B11+B12)
 
-			___sub(A12, A22, A_tmp); // A12 - A22
-			___add(B21, B22, B_tmp); // B21 + B22
+            _mm2_sub(A12, A22, A_tmp); // A12 - A22
+            _mm2_add(B21, B22, B_tmp); // B21 + B22
 			Mat p7 = MatMul_strassen(A_tmp, B_tmp); // p7 = (A12-A22) * (B21+B22)
 
-			___add(p3, p5, C12); // c12 = p3 + p5
-			___add(p2, p4, C21); // c21 = p2 + p4
+            _mm2_add(p3, p5, C12); // c12 = p3 + p5
+            _mm2_add(p2, p4, C21); // c21 = p2 + p4
 
-			___add(p1, p4, A_tmp); // p1 + p4
-			___add(A_tmp, p7, B_tmp); // p1 + p4 + p7
-			___sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
+            _mm2_add(p1, p4, A_tmp); // p1 + p4
+            _mm2_add(A_tmp, p7, B_tmp); // p1 + p4 + p7
+            _mm2_sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
 
-			___add(p1, p3, A_tmp); // p1 + p3
-			___add(A_tmp, p6, B_tmp); // p1 + p3 + p6
-			___sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
+            _mm2_add(p1, p3, A_tmp); // p1 + p3
+            _mm2_add(A_tmp, p6, B_tmp); // p1 + p3 + p6
+			_mm2_sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
 
 			// Join
 			for (size_t i = 0; i < Size; i++) {

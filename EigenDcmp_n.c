@@ -27,8 +27,8 @@ Mat *EigenDcmp_n (Mat A) {
 	size_t i = 0;
 	Mat *result = NULL;
 
-	Assert(A->rowsCount == A->colsCount, "This method is intended only for square matrices.");
-	Check(A->rowsCount <= 18, "This method is very slow on sizes > 18.");
+	Assert$(A->rowsCount == A->colsCount, "This method is intended only for square matrices.");
+	Check$(A->rowsCount <= 18, "This method is very slow on sizes > 18.");
 
 	int64_t *polynomialCoeffs = GetCharPolyCoeffs(A);
 	puts(">>>Characteristic equation:");
@@ -36,7 +36,7 @@ Mat *EigenDcmp_n (Mat A) {
 	
 	//TODO: error handling
 	for (i = 0; i < A->rowsCount; i++) {
-		Assert(LLONG_MAX - llabs(polynomialCoeffs[i]) >= 0, "Overflow.");
+		Assert$(LLONG_MAX - llabs(polynomialCoeffs[i]) >= 0, "Overflow.");
 	}
 
 	size_t rootsCount = 0;
@@ -44,7 +44,7 @@ Mat *EigenDcmp_n (Mat A) {
 	long double *polynomialRoots = GetPolynomialRoots(polynomialCoeffs, A->rowsCount, pRootsCount);
 
 	if (rootsCount != 0) {
-		size_t *k = uAllocVec(A->rowsCount);
+		size_t *k = AllocVec_u(A->rowsCount);
 		Mat dCopyA = DeepCopy(A);
 		size_t LIVectorsCounter = 0, valuesCount = 0;
 		Mat C = AllocMat(A->rowsCount, A->rowsCount);
@@ -54,14 +54,14 @@ Mat *EigenDcmp_n (Mat A) {
 
 			Mat eigenvectors = GetEigenvectors(dCopyA, polynomialRoots[i]);
 			printf(" >>Corresponding eigenvectors for v=%.2Lf (written as rows):\n", polynomialRoots[i]);
-			printMat(eigenvectors);
+			printMat$(eigenvectors);
 
 			LIVectorsCounter += eigenvectors->rowsCount;
 			valuesCount++;
 			k[i] = eigenvectors->rowsCount;
 			fillEigenvectorMatrix(eigenvectors, C, 0, LIVectorsCounter - eigenvectors->rowsCount); //TODO: use concat
 
-			FreeMat(eigenvectors);
+			freeMat$(eigenvectors);
 		}
 		//----------------------eigendecomposition--------------------------------------
 
@@ -71,7 +71,7 @@ Mat *EigenDcmp_n (Mat A) {
 		}
 
 		Mat *result = (Mat*) malloc(3 * sizeof(*result));
-		Assert(result != NULL, "Cannot allocate.");		
+		Assert$(result != NULL, "Cannot allocate.");
 
 		Mat D = AllocMat(A->rowsCount, A->rowsCount);
 		for (i = 0; i < valuesCount; i++) {
@@ -85,7 +85,7 @@ Mat *EigenDcmp_n (Mat A) {
 		result[1] = D;
 		result[2] = Ci;
 
-		FreeMat(dCopyA);
+		freeMat$(dCopyA);
 		free(k); k = NULL;
 
 		return result;
@@ -116,26 +116,26 @@ double SpectralRadius (Mat Sp) {
 }
 
 //void PrintEigendecomposition (EVD res) {
-//	Assert(res != NULL, "Cannot print.");
+//	Assert$(res != NULL, "Cannot print.");
 //
 //	printf(" >>Matrix C:\n");
-//	printMat(res->C);
+//	printMat$(res->C);
 //
 //	printf(" >>Matrix D:\n");
-//	printMat(res->D);
+//	printMat$(res->D);
 //
 //	printf(" >>Matrix C^(-1):\n");
-//	printMat(res->Ci);
+//	printMat$(res->Ci);
 //
 //	return;
 //}
 //
 //void FreeEigendecomposition (EVD res) {
-//	Assert(res != NULL, "Cannot free.");
+//	Assert$(res != NULL, "Cannot free.");
 //
-//	FreeMat(res->C);
-//	FreeMat(res->D);
-//	FreeMat(res->Ci);
+//	freeMat$(res->C);
+//	freeMat$(res->D);
+//	freeMat$(res->Ci);
 //	free(res); res = NULL;
 //
 //	return;
@@ -153,8 +153,8 @@ Mat EDMatPow (Mat *evd, size_t n) {
 	Mat CDP = MatMul(evd[0], DP);
 	Mat CDPC_ = MatMul(CDP, evd[2]);
 
-	FreeMat(DP);
-	FreeMat(CDP);
+	freeMat$(DP);
+	freeMat$(CDP);
 
 	return CDPC_;
 }
@@ -236,8 +236,8 @@ void strikeOut (Mat A, size_t d) {
 */
 int64_t GetPrincipalMinorsSum (Mat A, size_t order) {
 	int64_t sum = 0;
-	size_t *index = uAllocVec(A->rowsCount);
-	fillIndex(index, A->rowsCount, 1);
+	size_t *index = AllocVec_u(A->rowsCount);
+	fillSequential_u(index, A->rowsCount, 1);
 
 	do {
 		Mat M = DeepCopy(A);
@@ -246,7 +246,7 @@ int64_t GetPrincipalMinorsSum (Mat A, size_t order) {
 			strikeOut(M, index[d] - 1);
 		}
 		sum += round(Det_gauss(M));
-		FreeMat(M);
+		freeMat$(M);
 	} while (nextCombination(index, A->rowsCount - order, A->rowsCount));
 	clearActivityIndicator();
 	

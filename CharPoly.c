@@ -24,7 +24,7 @@
  \return	null if it fails, else the * to array of polynomial coeffs.
  */
 int64_t *GetCharPolyCoeffs (Mat A) {
-	int64_t *coeffs = iAllocVec(A->rowsCount);
+	int64_t *coeffs = AllocVec_i(A->rowsCount);
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		coeffs[i] = GetPrincipalMinorsSum(A, i + 1);
@@ -48,8 +48,8 @@ int64_t *GetCharPolyCoeffs (Mat A) {
  \param [out]	file	If non-null, the file.
  */
 void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
-	Assert(c != NULL, "");
-	Assert(file != NULL, "");
+	Assert$(c != NULL, "");
+	Assert$(file != NULL, "");
 
 	for (size_t i = 0; i < s; i++) {
 		fprintf(file, "x^%Iu", s - i);
@@ -110,7 +110,7 @@ long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t
 
 	for (size_t i = 0; i < maxIters; i++) {
 		root = (fA*b - fB*a) / (fA - fB);
-		if (equal_ld(a, b)) {
+		if (equals_ld(a, b)) {
 			//printf("# %f %f \n", a, b);
 			break;
 		}
@@ -152,14 +152,14 @@ long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t
 
  \return	null if it fails, else the * to array of polynomial roots.
  */
-long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
+long double *GetPolynomialRoots (int64_t *c, size_t size, size_t *rootsCount) {
 	long double a = START, b = a + DELTA, e = END;
 	long double root = 0.0;
-	long double *roots = ldAllocVec(s);
+	long double *roots = AllocVec_ld(size);
 	bool isValid = false;
 	size_t i = 0;
 
-	for (i = 0; i < s; i++) {
+	for (i = 0; i < size; i++) {
 		if (c[i] != 0) {
 			isValid = true;
 			break;
@@ -174,9 +174,9 @@ long double *GetPolynomialRoots (int64_t *c, size_t s, size_t *rootsCount) {
 
 	while (b < e) {
 		spinActivityIndicator();
-		root = round(FindRoot(c, s, a, b, MAXITERS)); //To round or not to round?
+		root = round(FindRoot(c, size, a, b, MAXITERS)); //To round or not to round?
 
-		if (fabsl(EvalPolyAt(root, c, s)) <= EPS) {
+		if (fabsl(EvalPolyAt(root, c, size)) <= EPS) {
 			if (!(exists_d(roots, i+1, root))) {
 				roots[i++] = (root);
 			}

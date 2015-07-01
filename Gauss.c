@@ -85,7 +85,7 @@ double Det_gauss (Mat A) {
 				det = 0.0;
 				A->isSingular = true;
 			}			
-			FreeMat(T);
+			freeMat$(T);
 			break;
 	}
 	//if (fabs(det) <= EPS) { A->isSingular = true; }
@@ -97,12 +97,12 @@ double Det_gauss (Mat A) {
 /**
  \fn	double Det_bareiss (Mat A)
 
- \brief	Computes Matrix determinant by Baeriss' algorithm.
+ \brief	Computes Matrix determinant by Bareiss' algorithm.
 		The Bareiss Algorithm is fraction-free method for determinant
 		computation.
 		However, it can also be thought of as a sophisticated form of row reduction.
 		Note that the divisions computed at any step are exact; thus Bareiss’ Algorithm is
-		indeed fraction-free. Entry a[n][n] is the determinant of A (after Bareiss and pivoting steps).
+		indeed fraction-free. Entry a[n][n] is the determinant of A (after `pivoting` and `main` steps).
 
  \param	A	The Mat to process.
 
@@ -129,7 +129,7 @@ double Det_bareiss (Mat A) {
 	
 	// Bareiss algorithm main step
 	for (size_t i = 0; i < T->rowsCount - 1; i++) {
-		//Assert(T->a[i][i] > EPS, "Singularity...");
+		//Assert$(T->a[i][i] > EPS, "Singularity...");
 		for (size_t j = i + 1; j < T->rowsCount; j++)
 			for (size_t k = i + 1; k < T->rowsCount; k++) {
 			T->a[j][k] = T->a[j][k]*T->a[i][i] - T->a[j][i]*T->a[i][k];
@@ -140,7 +140,7 @@ double Det_bareiss (Mat A) {
 	}
 
 	double det = T->a[T->rowsCount - 1][T->rowsCount - 1];
-	FreeMat(T);
+	freeMat$(T);
 
 	return det;
 }
@@ -179,7 +179,7 @@ void toRowEchelonForm (Mat A) {
 				}
 			} else {
 				A->isSingular = true;
-				Check(0, "toRowEchelonForm: singular mat.");
+				Check$(0, "toRowEchelonForm: singular mat.");
 				return;
 			}
 		}
@@ -209,7 +209,7 @@ void toRowEchelonForm_r (Mat A) {
 		}
 		if (fabs(a[pivot][k]) <= EPS) {
 			A->isSingular = true;
-			Check(0, "toRowEchelonForm_r: Singular matrix.");
+			Check$(0, "toRowEchelonForm_r: Singular matrix.");
 			return;
 		}
 		// Swap rows
@@ -303,14 +303,14 @@ void toReducedRowEchelonForm (Mat A) {
 
  \brief	Solves system of linear equations using Gauss-Jordan method.
 
- \param	A	Coeffs matrix.
+ \param	A	Coefficients matrix.
  \param	B	Right hand side.
 
  \return	Solution as column-vector.
  */
 Mat Solve_gaussjordan (Mat A, Mat B) {
-	Assert(B->colsCount == 1, "");
-	Assert(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
+	Assert$(B->colsCount == 1, "");
+	Assert$(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
 
 	Mat X = AllocMat(A->rowsCount, 1);
 	Mat AU = DeepCopy(A);
@@ -325,7 +325,7 @@ Mat Solve_gaussjordan (Mat A, Mat B) {
 		x[i][0] = au[i][AU->colsCount - 1];
 	}
 
-	FreeMat(AU);
+	freeMat$(AU);
 
 	return X;
 }
@@ -341,8 +341,8 @@ Mat Solve_gaussjordan (Mat A, Mat B) {
  \return	Solution as column-vector.
  */
 Mat Solve_gauss (Mat A, Mat B) {
-	Assert(B->colsCount == 1, "");
-	Assert(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
+	Assert$(B->colsCount == 1, "");
+	Assert$(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
 
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
 	Mat AU = DeepCopy(A);
@@ -361,7 +361,7 @@ Mat Solve_gauss (Mat A, Mat B) {
 		X->a[i][0] /= AU->a[i][i];
 	}
 
-	FreeMat(AU);
+	freeMat$(AU);
 
 	return X;
 }
@@ -405,7 +405,7 @@ void simpleSolver_h (double **a, size_t Size, double *x) {
  */
 void undeterminedSolver_h (Mat RREF, Mat A, Mat R) {
 	double **rref = RREF->a;
-	size_t *f = uAllocVec(A->rowsCount);
+	size_t *f = AllocVec_u(A->rowsCount);
 	size_t i, j, c = 0, row = 0;
 
 	for (i = 0; i < RREF->rowsCount; i++) {
@@ -438,7 +438,7 @@ void undeterminedSolver_h (Mat RREF, Mat A, Mat R) {
 			*(R->a[row] + i) = 0.0;
 		}
 		*(R->a[row] + (j--)) = 1.0;
-		FreeMat(Copy);
+		freeMat$(Copy);
 		row++;
 	} while (nextCombination(f, c-1, RREF->rowsCount-1));
 
@@ -466,14 +466,14 @@ Mat GaussianSolve_h (Mat A)	{
 	if (A->rank < A->rowsCount) {
 		Mat RES = AllocMat(A->rowsCount - A->rank, A->rowsCount);
 		undeterminedSolver_h(A, copyA, RES);					  
-		FreeMat(copyA);
-		FreeMat(A);
+		freeMat$(copyA);
+		freeMat$(A);
 		
 		return RES;
 	} else {
 		Mat RES = AllocMat(1, A->rowsCount);
 		simpleSolver_h(a, A->rowsCount, RES->a[0]);
-		FreeMat(A);
+		freeMat$(A);
 		
 		return RES;
 	}

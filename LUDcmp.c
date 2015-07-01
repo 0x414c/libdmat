@@ -28,7 +28,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	//double **p = P->a;
 	size_t cols = A->colsCount;
 	size_t rows = A->rowsCount;
-	//size_t *permutationVector = uAllocVec(m);
+	//size_t *permutationVector = AllocVec_u(m);
 	int permutationSign = 1;
 
 	// Pivoting //TODO: ?? one procedure to pivotize them all
@@ -80,12 +80,12 @@ Mat *LUDcmp_gauss (Mat A) {
 	}
 
 	Mat *result = (Mat*) malloc(3*sizeof(*result));
-	Assert(result != NULL, "Cannot allocate.");
+	Assert$(result != NULL, "Cannot allocate.");
 	result[0] = L;
 	result[1] = U;
 	result[2] = P;
 
-	FreeMat(LU);
+	freeMat$(LU);
 	//free(permutationVector);	
 
 	return result;
@@ -179,12 +179,12 @@ Mat *LUDcmp_crout (Mat A) {
 	}
 
 	Mat *result = (Mat*) malloc(3 * sizeof(*result));
-	Assert(result != NULL, "Cannot allocate.");
+	Assert$(result != NULL, "Cannot allocate.");
 	result[0] = L;
 	result[1] = U;
 	result[2] = P;
 
-	FreeMat(A_copy);
+	freeMat$(A_copy);
 	
 	return result;
 }
@@ -205,8 +205,8 @@ Mat *LUDcmp_crout (Mat A) {
  \return	Solution as column-vector.
  */
 Mat Solve_lup (Mat *lup, Mat B) {
-	Assert(lup[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
-	Check(isSingular_lup(lup) == false, "Cannot solve for singular matrix.");
+	Assert$(lup[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
+	Check$(isSingular_lup(lup) == false, "Cannot solve for singular matrix.");
 
 	double **l = lup[0]->a;
 	double **u = lup[1]->a;

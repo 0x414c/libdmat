@@ -3,13 +3,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "Config.h"
+
 
 /**
  \typedef	double entry_t
 
  \brief	Defines an alias representing the Matrix entry type.
  */
-typedef double entry_t; //TODO:
+typedef float entry_t; //TODO:
 
 /**
  \struct	_Mat_struct
@@ -35,7 +37,17 @@ struct _Mat_struct {
 	/**
 	 \brief	The rank of Matrix.
 	 */
-	size_t rank;	
+	size_t rank;
+
+	/**
+	 \brief	The trace of Matrix (sum of all the entries on main diagonal).
+	 */
+	entry_t trace;
+
+	/**
+	 \brief	The determinant of a Matrix.
+	 */
+	entry_t det;
 
 	/**
 	 \brief	true if this Matrix is singular.
@@ -56,22 +68,12 @@ struct _Mat_struct {
 	 \brief	The permutation sign (switches from 1 to -1 every time when rows being swapped).
 	 */
 	int permutationSign;
-
-	/**
-	 \brief	The trace of Matrix (sum of all the entries on main diagonal).
-	 */
-	entry_t trace;
-
-	/**
-	 \brief	The determinant of a Matrix.
-	 */
-	entry_t det;
 };
 
 /**
  \typedef	struct _Mat_struct *Mat
 
  \brief	Defines an alias representing the matrix.
-		The Matrix 'itself' is a ptr to _Mat_struct.
+		The `Mat` 'itself' is a ptr to _Mat_struct.
  */
 typedef struct _Mat_struct *Mat;

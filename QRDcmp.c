@@ -86,10 +86,10 @@ Mat *QRDcmp_householder (Mat A) {
 		}
 	}
 
-	FreeMat(QRMat);
+	freeMat$(QRMat);
 
 	Mat *result = (Mat*) malloc(2 * sizeof(*result));
-	Assert(result != NULL, "Cannot allocate.");
+	Assert$(result != NULL, "Cannot allocate.");
 	result[0] = Q;
 	result[1] = R;
 
@@ -109,8 +109,8 @@ double Det_qr (Mat *qr) {
 //Solve R*X=Q'*B
 //Solve A*X = B, when A represented by Q*R
 Mat Solve_qr (Mat *qr, Mat B) {
-	Assert(qr[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
-	Check(qr[1]->isRankDeficient == false, "Rank deficient system.");
+	Assert$(qr[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
+	Check$(qr[1]->isRankDeficient == false, "Rank deficient system.");
 
 	Mat Qt = Transposed(qr[0]);
 	matMul(&Qt, B);
