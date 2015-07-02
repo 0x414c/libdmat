@@ -2,15 +2,15 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "QRDcmp.h"
+#include "Dcmp_QR.h"
 #include "Matrix.h"
 #include "MatrixOperations.h"
-#include "Extra.h"
+#include "Extras.h"
 
 
 /*In linear algebra, a QR decomposition (also called a QR factorization) of a matrix
-is a decomposition of a matrix A into a product A = QR of an orthogonal matrix Q 
-and an upper triangular matrix R. 
+is a decomposition of a matrix A into a product A = QR of an orthogonal matrix Q
+and an upper triangular matrix R.
 QR decomposition is often used to solve the linear least squares problem,
 and is the basis for a particular eigenvalue algorithm, the QR algorithm.
 
@@ -18,7 +18,7 @@ If A has n linearly independent columns, then the first n columns of Q form an o
 More specifically, the first k columns of Q form an orthonormal basis for the span of the first k columns of A for any 1 ≤ k ≤ n.
 The fact that any column k of A only depends on the first k columns of Q is responsible for the triangular form of R.
 */
-Mat *QRDcmp_householder (Mat A) {
+Mat *Dcmp_QR_Householder(Mat A) {
 	size_t rows = A->rowsCount;
 	size_t columns = A->colsCount;
 
@@ -26,11 +26,11 @@ Mat *QRDcmp_householder (Mat A) {
 	Mat Q = AllocMat(rows, columns);
 	Mat R = AllocMat(rows, columns);
 
-	double **qrPtr = QRMat->a;
+	entry_t **qrPtr = QRMat->a;
 
 	for (size_t k = 0; k < columns; k++) {
 		// Compute 2-norm of k-th column without under/overflow.
-		double norm = 0;
+		entry_t norm = 0;
 		for (size_t i = k; i < rows; i++) {
 			norm = hypot(norm, qrPtr[i][k]);
 		}
@@ -54,7 +54,7 @@ Mat *QRDcmp_householder (Mat A) {
 				s = -s / qrPtr[k][k];
 				for (size_t i = k; i < rows; i++) {
 					qrPtr[i][j] += s*(qrPtr[i][k]);
-					
+
 					if (i < j) {
 						R->a[i][j] = qrPtr[i][j];
 					}
@@ -67,19 +67,19 @@ Mat *QRDcmp_householder (Mat A) {
 		}
 	}
 
-	for (ptrdiff_t k = columns - 1; k >= 0; k--) {
+	for (ssize_t k = columns - 1; k >= 0; k--) {
 		for (size_t i = 0; i < rows; i++) {
 			Q->a[i][k] = 0.0;
 		}
 		Q->a[k][k] = 1.0;
-		for (size_t j = k; j < columns; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
+		for (size_t j = k; j < columns; j++) {
 			if (fabs(qrPtr[k][k]) > EPS) {
 				double s = 0.0;
-				for (size_t i = k; i < rows; i++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
+				for (size_t i = k; i < rows; i++) {
 					s += qrPtr[i][k] * Q->a[i][j];
 				}
 				s = -s / qrPtr[k][k];
-				for (size_t i = k; i < rows; i++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
+				for (size_t i = k; i < rows; i++) {
 					Q->a[i][j] += s*(qrPtr[i][k]);
 				}
 			}
@@ -96,11 +96,11 @@ Mat *QRDcmp_householder (Mat A) {
 	return result;
 }
 
-double Det_qr (Mat *qr) {
-	double det = 1.0;
-	
-	for (size_t i = 0; i < qr[1]->rowsCount; i++) {
-		det *= qr[1]->a[i][i];
+entry_t Det_QR (Mat *QR) {
+	entry_t det = 1.0;
+
+	for (size_t i = 0; i < QR[1]->rowsCount; i++) {
+		det *= QR[1]->a[i][i];
 	}
 
 	return det;
@@ -108,20 +108,20 @@ double Det_qr (Mat *qr) {
 
 //Solve R*X=Q'*B
 //Solve A*X = B, when A represented by Q*R
-Mat Solve_qr (Mat *qr, Mat B) {
-	Assert$(qr[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
-	Check$(qr[1]->isRankDeficient == false, "Rank deficient system.");
+Mat Solve_QR (Mat *QR, Mat B) {
+	Assert$(QR[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
+	Check$(QR[1]->isRankDeficient == false, "Rank deficient system.");
 
-	Mat Qt = Transposed(qr[0]);
+	Mat Qt = Transposed(QR[0]);
 	matMul(&Qt, B);
 
-	for (ptrdiff_t k = qr[0]->colsCount - 1; k >= 0; k--) {
+	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
-			Qt->a[k][j] /= qr[1]->a[k][k];
+			Qt->a[k][j] /= QR[1]->a[k][k];
 		}
-		for (ptrdiff_t i = 0; i < k; i++) { //warning C4018: '<' : signed/unsigned mismatch
+		for (ssize_t i = 0; i < k; i++) {
 			for (size_t j = 0; j < B->colsCount; j++) {
-				Qt->a[i][j] -= Qt->a[k][j] * qr[1]->a[i][k];
+				Qt->a[i][j] -= Qt->a[k][j] * QR[1]->a[i][k];
 			}
 		}
 	}
@@ -129,4 +129,4 @@ Mat Solve_qr (Mat *qr, Mat B) {
 	return Qt;
 }
 
-//TODO: Solve X*A = B === A'*X' = B'	   
+//TODO: Solve X*A = B === A'*X' = B'

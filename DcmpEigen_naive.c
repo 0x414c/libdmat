@@ -3,24 +3,22 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "EigenDcmp_n.h"
-#include "Matrix.h"
-#include "CharPoly.h"
+#include "DcmpEigen_naive.h"
+#include "Polynomial.h"
 #include "Gauss.h"
-#include "Extra.h"
+#include "Extras.h"
 #include "SpinningIndicator.h"
 #include "MatrixOperations.h"
 
 
 /**
- \fn	void Eigendecomposition (dMat A, size_t n)			  
+ \fn	void Eigendecomposition (dMat A, size_t n)
  \brief	'Naive' implementation of eigenvalue algorithm.
- Constructs eigendecomposition of matrix A,
- using operator' characteristic polynomial roots as its eigenvalues.
- It is not efficient and/or stable method, but it's very
- simple & easy to understand
- So, use it only for reference, not real computations)
- \date	16-May-14											  
+ 		Constructs eigendecomposition of matrix A,
+ 		using operator' characteristic polynomial roots as its eigenvalues.
+ 		It is not efficient and/or stable method, but it's very simple & easy to understand.
+ 		So, use it only for reference, not real computations)
+ \date	16-May-14
  \param	A	The dMat to process.
  */
 Mat *EigenDcmp_n (Mat A) {
@@ -33,7 +31,7 @@ Mat *EigenDcmp_n (Mat A) {
 	int64_t *polynomialCoeffs = GetCharPolyCoeffs(A);
 	puts(">>>Characteristic equation:");
 	printCharacteristicEquation(polynomialCoeffs, A->rowsCount, stdout);
-	
+
 	//TODO: error handling
 	for (i = 0; i < A->rowsCount; i++) {
 		Assert$(LLONG_MAX - llabs(polynomialCoeffs[i]) >= 0, "Overflow.");
@@ -78,7 +76,7 @@ Mat *EigenDcmp_n (Mat A) {
 		for (i = 0; i < valuesCount; i++) {
 			fillEigenvalueMatrix(D, polynomialRoots, i, k[i]);
 		}
-		
+
 		Mat Ci = DeepCopy(C);
 		toInverse(&Ci);
 
@@ -116,43 +114,17 @@ double SpectralRadius (Mat Sp) {
 	return rad;
 }
 
-//void PrintEigendecomposition (EVD res) {
-//	Assert$(res != NULL, "Cannot print.");
-//
-//	printf(" >>Matrix C:\n");
-//	printMat$(res->C);
-//
-//	printf(" >>Matrix D:\n");
-//	printMat$(res->D);
-//
-//	printf(" >>Matrix C^(-1):\n");
-//	printMat$(res->Ci);
-//
-//	return;
-//}
-//
-//void FreeEigendecomposition (EVD res) {
-//	Assert$(res != NULL, "Cannot free.");
-//
-//	freeMat$(res->C);
-//	freeMat$(res->D);
-//	freeMat$(res->Ci);
-//	free(res); res = NULL;
-//
-//	return;
-//}
-
 /**
-\fn	dMat EDMatPow (EVD res, size_t n)	
-\brief Raise matrix A to power n with eigenvalue decomposition.		
-\date	04-Jun-14			   
-\param	res		Struct with decomposition results.
-\param	n		Power to raise to.
+ \fn	dMat EDMatPow (EVD res, size_t n)
+ \brief Raise matrix A to power n with eigenvalue decomposition.
+ \date	04-Jun-14
+ \param	res		Struct with decomposition results.
+ \param	n		Power to raise to.
 */
 Mat EDMatPow (Mat *evd, size_t n) {
 	Mat DP = MatPow(evd[1], n);
-	Mat CDP = MatMul(evd[0], DP);
-	Mat CDPC_ = MatMul(CDP, evd[2]);
+	Mat CDP = MatMul$(evd[0], DP);
+	Mat CDPC_ = MatMul$(CDP, evd[2]);
 
 	freeMat$(DP);
 	freeMat$(CDP);
@@ -164,8 +136,8 @@ Mat EDMatPow (Mat *evd, size_t n) {
 // A = Q*L*Q^-1
 // An n × n matrix A is diagonalizable if and only if the sum of the dimensions of the eigenspaces is n.
 void fillEigenvectorMatrix (Mat EV, Mat OUT, size_t s, size_t end) {
-	double **e = EV->a;
-	double **o = OUT->a;
+	entry_t **e = EV->a;
+	entry_t **o = OUT->a;
 
 	for (size_t i = s; i < EV->rowsCount; i++) {
 		for (size_t j = s; j < EV->colsCount; j++) {
@@ -177,7 +149,7 @@ void fillEigenvectorMatrix (Mat EV, Mat OUT, size_t s, size_t end) {
 }
 
 void fillEigenvalueMatrix (Mat OUT, long double *eValues, size_t c, size_t k) {
-	double **o = OUT->a;
+	entry_t **o = OUT->a;
 
 	for (size_t i = c; i < k+1; i++) {
         o[i][i] = eValues[c]; //TODO: Values of type 'long double' may not fit into the receiver type 'double'
@@ -187,16 +159,16 @@ void fillEigenvalueMatrix (Mat OUT, long double *eValues, size_t c, size_t k) {
 }
 
 /**
-\fn	double *GetEigenvector (dMat A, int eigenValue)	 
-\brief	Computes eigenvector of matrix A associated with given eigenvalue.	
-\date	15-May-14											  
-\param	A		  	The double-valued matrix to process.
-\param	eigenvalue	The eigenvalue.				   
-\return	null if it fails, else the matrix with eigenvectors.
+ \fn	double *GetEigenvector (dMat A, int eigenValue)
+ \brief	Computes eigenvector of matrix A associated with given eigenvalue.
+ \date	15-May-14
+ \param	A		  	The double-valued matrix to process.
+ \param	eigenvalue	The eigenvalue.
+ \return	null if it fails, else the matrix with eigenvectors.
 */
 Mat GetEigenvectors (Mat A, long double eigenvalue) {
 	Mat R = DeepCopy(A);
-	double **r = R->a;
+	entry_t **r = R->a;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		r[i][i] -= eigenvalue;
@@ -206,16 +178,16 @@ Mat GetEigenvectors (Mat A, long double eigenvalue) {
 }
 
 /**
-\fn	void StrikeOut (dMat A, size_t d)	
-\brief	Strikes out dth row & column (to make principal minor).
-TODO: rewrite?			
-\date	15-May-14	 
-\param	A   	The double-valued matrix to process.
-\param	Size	The matrix size.
-\param	d   	The D value.
+ \fn	void StrikeOut (dMat A, size_t d)
+ \brief	Strikes out dth row & column (to make principal minor).
+ 		TODO: rewrite?
+ \date	15-May-14
+ \param	A   	The double-valued matrix to process.
+ \param	Size	The matrix size.
+ \param	d   	The D value.
 */
 void strikeOut (Mat A, size_t d) {
-	double **a = A->a;
+	entry_t **a = A->a;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		a[i][d] = 0.0;
@@ -227,13 +199,13 @@ void strikeOut (Mat A, size_t d) {
 }
 
 /**
-\fn	int GetPrincipalMinorsSum (dMat A, size_t order)  
-\brief	Calculates sum of all the principal minors of order K in matrix A.	 
-\date	15-May-14															 
-\param	A	 	The integer-valued matrix to process.
-\param	Size 	The matrix size.
-\param	order	The minors order.											 
-\return	The principal minors sum.
+ \fn	int GetPrincipalMinorsSum (dMat A, size_t order)
+ \brief	Calculates sum of all the principal minors of order K in matrix A.
+ \date	15-May-14
+ \param	A	 	The integer-valued matrix to process.
+ \param	Size 	The matrix size.
+ \param	order	The minors order.
+ \return	The principal minors sum.
 */
 int64_t GetPrincipalMinorsSum (Mat A, size_t order) {
 	int64_t sum = 0;
@@ -242,16 +214,16 @@ int64_t GetPrincipalMinorsSum (Mat A, size_t order) {
 
 	do {
 		Mat M = DeepCopy(A);
-		spinActivityIndicator(); 
+		spinActivityIndicator();
 		for (size_t d = 0; d < A->rowsCount - order; d++) {
 			strikeOut(M, index[d] - 1);
 		}
-		sum += round(Det_gauss(M));
+		sum += round(Det_Gauss(M));
 		freeMat$(M);
-	} while (nextCombination(index, A->rowsCount - order, A->rowsCount));
+	} while (nextPermutation(index, A->rowsCount - order, A->rowsCount));
 	clearActivityIndicator();
-	
-	free(index); index = NULL;
+
+	free$(index);
 
 	return sum;
 }

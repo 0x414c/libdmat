@@ -10,12 +10,12 @@
 
 
 size_t Rank (Mat RREF);
-double Trace (Mat A);
+entry_t Trace (Mat A);
 
 bool IsIdentity (Mat A);
 bool IsSingular (Mat A);
 bool IsSymmetric (Mat A);
-bool IsSkewSymmetric(Mat A);
+bool IsSkewSymmetric (Mat A);
 bool IsEqual (Mat A, Mat B);
 
 Mat Inverse (Mat A);
@@ -33,16 +33,16 @@ size_t _fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
 void matMul (Mat *A, Mat B);
 
-#define MatMul(A,B) MatMul_naive(A,B)
+#define MatMul$(A,B) MatMul_naive(A,B)
 
 Mat KroneckerProd (Mat A, Mat B);
 Mat KroneckerSum (Mat A, Mat B);
 
-double OneNorm (Mat A);
-double TwoNorm (Mat A);
-double InfinityNorm (Mat A);
-double EuclideanNorm (Mat A);
-double ConditionNumber (Mat A);
+entry_t OneNorm (Mat A);
+entry_t TwoNorm (Mat A);
+entry_t InfinityNorm (Mat A);
+entry_t EuclideanNorm (Mat A);
+entry_t ConditionNumber (Mat A);
 
 // 'templates' for element-wise functions
 #define for_i$(A) for (size_t i = 0; i < A->rowsCount; i++)
@@ -59,6 +59,6 @@ void _mm1_add(); void _mm1_sub(); void _mm1_mul(); void _mm1_div();
 void _mm2_add(); void _mm2_sub(); void _mm2_mul(); void _mm2_div();
 
 #define TElementWise_MatrixScalar$(funcName, operator)                 \
-	void _ms_##funcName (Mat A, double x) {				       	       \
+	void _ms_##funcName (Mat A, double x) {				       		   \
 	for_i$(A) for_j$(A) A->a[i][j] = A->a[i][j] operator (x); return; }\
 void _ms_add(); void _ms_sub(); void _ms_mul(); void _ms_div();

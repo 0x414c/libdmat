@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "CharPoly.h"
+#include "Polynomial.h"
 #include "Matrix.h"
-#include "Extra.h"
-#include "EigenDcmp_n.h"
+#include "Extras.h"
+#include "DcmpEigen_naive.h"
 #include "Const.h"
 #include "Config.h"
 #include "SpinningIndicator.h"
@@ -67,7 +67,7 @@ void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
 /**
  \fn	long double EvalPolyAt (long double x, int64_t *c, size_t s)
 
- \brief	Evaluates polynomial value at point X using Horner's method.  
+ \brief	Evaluates polynomial value at point X using Horner's method.
 
  \date	14-May-14
 

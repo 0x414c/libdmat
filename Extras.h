@@ -16,7 +16,7 @@
 #endif // CHECKS_ENABLED
 
 #ifdef ASSERTS_ENABLED
-#define Assert$(c,m)  ( (c)?(1):( fprintf(stderr, "Warning: assertion `%s` failed ==> `%s`\n\tin `%s` \n\tat <%s>:%d\n", #c, m, __FUNCTION__, __FILE__, __LINE__), abort(), 0) )
+#define Assert$(c,m)  ( (c)?(1):( fprintf(stderr, "Warning: assertion `%s` failed ==> `%s`\n\tin `%s` \n\tin file %s\n\tat line %d\n", #c, m, __FUNCTION__, __FILE__, __LINE__), abort(), 0) )
 #else
 #define Assert$(c,m)
 #endif // ASSERTS_ENABLED
@@ -26,7 +26,7 @@
 bool exists_d (long double *c, size_t start, long double value);
 bool exists_u (size_t *c, size_t start, size_t end, size_t value);
 
-bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n);
+bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n);
 
 int64_t *AllocVec_i (size_t Size);
 size_t *AllocVec_u (size_t Size);

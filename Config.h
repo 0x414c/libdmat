@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Const.h"
+
+
 /**
  \def	DOUBLE_PRECISION
 
@@ -8,12 +11,14 @@
  */
 #define DOUBLE_PRECISION
 
+
 /**
  \def	CHECKS_ENABLED
 
  \brief	Enable various checks?
  */
 #define CHECKS_ENABLED
+
 
 /**
  \def	ASSERTS_ENABLED
@@ -22,12 +27,14 @@
  */
 #define ASSERTS_ENABLED
 
+
 /**
  \def	PRINTING_ENABLED();
 
  \brief	Will otutput be produced?
  */
 #define PRINTING_ENABLED
+
 
 /**
  \def	OUTFILE();
@@ -36,12 +43,14 @@
  */
 #define OUTFILE stdout
 
+
 /**
  \def	PRETTYOUTPUT();
 
  \brief	Will output be formatted to easy-readable form?
  */
-//#define PRETTYOUTPUT
+#define PRETTYOUTPUT
+
 
 #ifdef PRETTYOUTPUT
 /**
@@ -50,8 +59,9 @@
  \brief	Size of printing buffer.
         Note that buffer must be capable to hold string defined by FMT_FLT
  */
-#define PRINTBUFSZ 1280
+#define PRINTBUFSZ (1280)
 #endif // PRETTYOUTPUT
+
 
 /**
  \def	FMT_INT();
@@ -60,26 +70,34 @@
  */
 #define FMT_INT	"%5d"
 
+
 /**
  \def	FMT_FLT();
 
  \brief	Format string for floats.
  */
-#define FMT_FLT	"%20.3f"
+#define FMT_FLT	"%17.3f"
+
 
 /**
  \def	FMT_FLT_STR();
 
  \brief	Format string for floats (used in printStr$()).
  */
-#define FMT_FLT_STR		"% .e"
+#define FMT_FLT_STR		"% .10f"
+
 
 /**
  \def	FMT_FLT_INPUT();
 
- \brief	Format string for filling from file containing floats (fillFromFile()).
+ \brief	Format string for filling from file containing floats (fill_fromFile()).
  */
+#ifdef DOUBLE_PRECISION
 #define FMT_FLT_INPUT   "%lf"
+#else
+#define FMT_FLT_INPUT   "%f"
+#endif // DOUBLE_PRECISION
+
 
 #ifdef _MSC_VER
 /**

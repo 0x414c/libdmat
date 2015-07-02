@@ -4,15 +4,15 @@
 
 
 void toRowEchelonForm (Mat A);
-void toRowEchelonForm_r (Mat A);
+void toRowEchelonForm_reference (Mat A);
 void toReducedRowEchelonForm (Mat A);
 
-double Det_gauss (Mat A);
-double Det_bareiss (Mat A);
+entry_t Det_Gauss (Mat A);
+entry_t Det_Bareiss (Mat A);
 
-Mat Solve_gaussjordan (Mat A, Mat B);
-Mat Solve_gauss (Mat A, Mat B);
+Mat Solve_GaussJordan (Mat A, Mat B);
+Mat Solve_Gauss (Mat A, Mat B);
 
 Mat GaussianSolve_h (Mat A);
-void simpleSolver_h (double **a, size_t size, double *x);
+void simpleSolver_h (entry_t **a, size_t size, entry_t *x);
 void undeterminedSolver_h (Mat RREF, Mat A, Mat R);

@@ -5,11 +5,11 @@
 #include <math.h>
 
 #include "Const.h"
-#include "Extra.h"
+#include "Extras.h"
 
 
 /**
-\fn	bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n)
+\fn	bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n)
 \brief	Makes next combination over the index array while it can be made.
 \date	15-May-14
 \param [in,out]	index	If non-null, * to index array.
@@ -17,7 +17,7 @@
 \param	n				The N.
 \return	true if next combination is generated, false if no possible combinations left.
 */
-bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
+bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 	for (ptrdiff_t i = k - 1; i >= 0; --i) {
 		if (index[i] < n - k + i + 1) {	//warning C4018: '<' : signed/unsigned mismatch
 			++index[i];
@@ -37,7 +37,7 @@ bool nextCombination (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 /**
  \fn	bool exists_d (long double *c, size_t s, long double x)
 
- \brief	Check$ if element x is exists in array c of size s.
+ \brief	Checks if element x is exists in array c of size s.
 
  \date	20-May-14
 
@@ -78,9 +78,9 @@ bool exists_u (size_t *c, size_t start, size_t end, size_t value) {
 
  \param	Size	The size.
 
- \return	null if it fails, else an int64_t*.
+ \return		null if it fails, else an int64_t pointer.
  */
-int64_t *AllocVec_i(size_t Size) {
+int64_t *AllocVec_i (size_t Size) {
 	int64_t *v;
 	v = ((int64_t *) malloc(sizeof(int64_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
@@ -96,9 +96,9 @@ int64_t *AllocVec_i(size_t Size) {
 
  \param	Size	The size.
 
- \return	null if it fails, else a size_t*.
+ \return	null if it fails, else a size_t pointer.
  */
-size_t *AllocVec_u(size_t Size) {
+size_t *AllocVec_u (size_t Size) {
 	size_t *v;
 	v = ((size_t *) malloc(sizeof(size_t) * (Size)));
 	//v = ((int *) calloc(Size, sizeof(int)));
@@ -114,9 +114,9 @@ size_t *AllocVec_u(size_t Size) {
 
  \param	Size	The size.
 
- \return	null if it fails, else a double*.
+ \return	null if it fails, else a double pointer.
  */
-long double *AllocVec_ld(size_t Size) {
+long double *AllocVec_ld (size_t Size) {
 	long double *v;
 	v = ((long double *) malloc(sizeof(long double) * Size));
 	//v = ((long double *) calloc(Size, sizeof(long double)));
@@ -135,7 +135,7 @@ long double *AllocVec_ld(size_t Size) {
  \param	size			 	The array size.
  \param	start			 	The starting value.
  */
-void fillSequential_u(size_t *index, size_t size, size_t start) {
+void fillSequential_u (size_t *index, size_t size, size_t start) {
 	for (size_t i = 0; i < size; i++) {
 		index[i] = start++;
 	}

@@ -1,11 +1,11 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "LUDcmp.h"
+#include "Dcmp_LUP.h"
 #include "Matrix.h"
 #include "MatrixOperations.h"
 #include "Gauss.h"
-#include "Extra.h"
+#include "Extras.h"
 
 
 #pragma region "Gauss"
@@ -13,17 +13,18 @@
  \fn	Mat *LUDcmp_gauss (Mat A)
 
  \brief	The Gaussian elimination algorithm (with partial (row) pivoting)
-		for obtaining LU decomposition of Matrix A. 
+		for obtaining LU decomposition of Matrix A.
 		NOTE: L and U can be stored in one matrix LU where diagonal
 		(containing only 1.0's) of L is omitted.
 
  \param	A	The Mat to process.
 
- \return	The * to Matrices array containing L, U &amp; P. \[0] is L, [1] is U, [2] is P. \.
+ \return	The * to Matrices array containing L, U &amp; P.
+ 			\[0] is L, [1] is U, [2] is P. \.
  */
 Mat *LUDcmp_gauss (Mat A) {
 	Mat LU = DeepCopy(A);
-	double **lu = LU->a;
+	entry_t **lu = LU->a;
 	Mat P = Identity(A->rowsCount);
 	//double **p = P->a;
 	size_t cols = A->colsCount;
@@ -31,7 +32,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	//size_t *permutationVector = AllocVec_u(m);
 	int permutationSign = 1;
 
-	// Pivoting //TODO: ?? one procedure to pivotize them all
+	// Pivoting //TODO: one procedure to pivotize them all
 	for (size_t k = 0; k < cols; k++) {
 		// Find pivot.
 		size_t pivot = k;
@@ -63,7 +64,7 @@ Mat *LUDcmp_gauss (Mat A) {
 
 	// fill L
 	Mat L = Identity(rows);
-	double **l = L->a;
+	entry_t **l = L->a;
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = 0; j < i; j++) {
 			l[i][j] = lu[i][j];
@@ -72,7 +73,7 @@ Mat *LUDcmp_gauss (Mat A) {
 
 	// fill U
 	Mat U = AllocMat(rows, cols);
-	double **u = U->a;
+	entry_t **u = U->a;
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = i; j < cols; j++) {
 			u[i][j] = lu[i][j];
@@ -86,7 +87,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	result[2] = P;
 
 	freeMat$(LU);
-	//free(permutationVector);	
+	//free(permutationVector);
 
 	return result;
 }
@@ -95,7 +96,7 @@ Mat *LUDcmp_gauss (Mat A) {
 
 #pragma region "Crout"
 /**
- \fn	Mat LUPivotize (Mat A)
+ \fn	Mat Pivotize_LU (Mat A)
 
  \brief	Pivotize matrix for further using in LUP decomposition process.
 
@@ -103,10 +104,10 @@ Mat *LUDcmp_gauss (Mat A) {
 
  \return	Pivoting matrix.
  */
-Mat LUPivotize (Mat A) {
+Mat Pivotize_LU (Mat A) {
 	Mat P = Identity(A->rowsCount);
-	double **a = A->a;
-	double **p = P->a;
+	entry_t **a = A->a;
+	entry_t **p = P->a;
 	int permutationSign = 1;
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
@@ -136,7 +137,7 @@ Mat LUPivotize (Mat A) {
 		(has elements only on the diagonal and below) and U is upper triangular (has elements
 		only on the diagonal and above). P is the permutation matrix of A produced by partial
 		(row) pivoting method. Non-pivoted matrices can lead this algorithm to numerical
-		instability (division by 0 or such shit). 
+		instability (division by 0 or such shit).
 		NOTE: L and U can be stored in one matrix LU
 		where diagonal (containing only 1.0's) of L is omitted.
 
@@ -155,12 +156,12 @@ Mat *LUDcmp_crout (Mat A) {
 	U = AllocMat(A->rowsCount, A->colsCount);
 	A_copy = DeepCopy(A);
 
-	P = LUPivotize(A_copy);
+	P = Pivotize_LU(A_copy);
 
-	double **l = L->a;
-	double **u = U->a;
-	double **a = A_copy->a;
-	
+	entry_t **l = L->a;
+	entry_t **u = U->a;
+	entry_t **a = A_copy->a;
+
 	for (size_t j = 0; j < n; j++) {
 		for (size_t i = 0; i <= j; i++) {
 			double sum = 0.0;
@@ -185,38 +186,38 @@ Mat *LUDcmp_crout (Mat A) {
 	result[2] = P;
 
 	freeMat$(A_copy);
-	
+
 	return result;
 }
 #pragma endregion "Crout"
 
 
 /**
- \fn	Mat Solve_lup (Mat *lup, Mat B)
+ \fn	Mat Solve_LUP (Mat *lup, Mat B)
 
  \brief	Solves system of linear equations using LUP decomposition. System can be solved
 		directly by forward and backward substitution without using the Gaussian elimination
 		process (however we do need this process or equivalent to compute the LU decomposition
 		itself).
 
- \param [in]	lup	* to Matrices array containing L, U &amp; P.
+ \param [in] lup	* to Matrices array containing L, U &amp; P.
  \param	B		  	Right hand side.
 
- \return	Solution as column-vector.
+ \return			Solution as column-vector.
  */
-Mat Solve_lup (Mat *lup, Mat B) {
+Mat Solve_LUP (Mat *lup, Mat B) {
 	Assert$(lup[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
-	Check$(isSingular_lup(lup) == false, "Cannot solve for singular matrix.");
+	Check$(isSingular_LUP(lup) == false, "Cannot solve for singular matrix.");
 
-	double **l = lup[0]->a;
-	double **u = lup[1]->a;
-	Mat PB = MatMul(lup[2], B);
-	double **b = PB->a;
+	entry_t **l = lup[0]->a;
+	entry_t **u = lup[1]->a;
+	Mat PB = MatMul$(lup[2], B);
+	entry_t **b = PB->a;
 
 	Mat Y = AllocMat(B->rowsCount, B->colsCount);
-	double **y = Y->a;
+	entry_t **y = Y->a;
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
-	double **x = X->a;
+	entry_t **x = X->a;
 
 	for (size_t c = 0; c < B->colsCount; c++) {
 		// forward solve Ly = b
@@ -230,7 +231,7 @@ Mat Solve_lup (Mat *lup, Mat B) {
 		// backward solve Ux=y
 		for (ptrdiff_t i = lup[1]->rowsCount - 1; i >= 0; i--) {
 			x[i][c] = y[i][c];
-			for (size_t j = i + 1; j < lup[1]->colsCount; j++) { //TODO: Using 'size_t' for signed values of type 'ptrdiff_t'
+			for (size_t j = i + 1; j < lup[1]->colsCount; j++) {
 				x[i][c] -= u[i][j] * x[j][c];
 			}
 			x[i][c] /= u[i][i];
@@ -243,21 +244,21 @@ Mat Solve_lup (Mat *lup, Mat B) {
 }
 
 /**
- \fn	double Det_lup (Mat *lup)
+ \fn	double Det_LUP (Mat *lup)
 
  \brief	Calculates matrix determinant using LU decomposition.
 
  \date	12-Jun-14
 
- \param [in]	lup	* to Matrices array containing L, U &amp; P.
+ \param [in] lup	* to Matrices array containing L, U &amp; P.
 
- \return	Determinant value.
+ \return			Determinant value.
  */
-double Det_lup (Mat *lup) {
-	double** u = lup[1]->a;
-	double det = lup[2]->permutationSign;
+double Det_LUP (Mat *LUP) {
+	entry_t **u = LUP[1]->a;
+	entry_t det = LUP[2]->permutationSign;
 
-	for (size_t i = 0; i < lup[1]->rowsCount; i++) {
+	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
 		det *= u[i][i];
 	}
 
@@ -265,20 +266,20 @@ double Det_lup (Mat *lup) {
 }
 
 /**
- \fn	bool isSingular_lup (Mat *lup)
+ \fn	bool isSingular_LUP (Mat *lup)
 
  \brief	Checks if matrix is singular.
 
- \param [in]	lup	* to Matrices array containing L, U &amp; P.
+ \param [in] LUP	* to Matrices array containing L, U &amp; P.
 
- \return	true if singular, false if not.
+ \return			`true` if Matrix A singular, `false` if it is not.
  */
-bool isSingular_lup (Mat *lup) {
-	for (size_t i = 0; i < lup[1]->rowsCount; i++) {
-		if (fabs(lup[1]->a[i][i]) <= EPS) {
+bool isSingular_LUP (Mat *LUP) {
+	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
+		if (fabs(LUP[1]->a[i][i]) <= EPS) {
 			return true;
 		}
 	}
 
 	return false;
-} 
+}

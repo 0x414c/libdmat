@@ -10,7 +10,7 @@
 /**
  \typedef	double entry_t
 
- \brief	Defines an alias representing the Matrix entry type.
+ \brief		Defines an alias representing the Matrix entry type.
  */
 #ifdef DOUBLE_PRECISION
 typedef double_t entry_t;

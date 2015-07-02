@@ -6,13 +6,13 @@
 #include "Matrix.h"
 #include "Gauss.h"
 #include "Const.h"
-#include "Extra.h"
+#include "Extras.h"
 #include "SpinningIndicator.h"
 
 
 #pragma region "Entrywise operations"
 TElementWise_MatrixMatrix1$(add, +); TElementWise_MatrixMatrix1$(sub, -); TElementWise_MatrixMatrix1$(mul, *); TElementWise_MatrixMatrix1$(div, /);
-TElementWise_MatrixScalar$(add, +); TElementWise_MatrixScalar$(sub, -); TElementWise_MatrixScalar$(mul, *); TElementWise_MatrixScalar$(div, / );
+TElementWise_MatrixScalar$(add, +); TElementWise_MatrixScalar$(sub, -); TElementWise_MatrixScalar$(mul, *); TElementWise_MatrixScalar$(div, /);
 TElementWise_MatrixMatrix2$(add, +); TElementWise_MatrixMatrix2$(sub, -); TElementWise_MatrixMatrix2$(mul, *); TElementWise_MatrixMatrix2$(div, /);
 
 Mat MatEntryWiseLerp(Mat A, Mat B, double t) {
@@ -43,8 +43,8 @@ Mat MatEntryWiseLerp(Mat A, Mat B, double t) {
  \return	true if equal, else false.
  */
 bool IsEqual (Mat A, Mat B) {
-	double **a = A->a;
-	double **b = B->a;
+	entry_t **a = A->a;
+	entry_t **b = B->a;
 
 	if ((A->rowsCount != B->rowsCount) || (A->colsCount != B->colsCount)) {
 		return false;
@@ -64,30 +64,40 @@ bool IsEqual (Mat A, Mat B) {
 /**
  \fn	bool IsIdentity (Mat A)
 
- \brief	Check$ if matrix A is an identity matrix.
+ \brief	Checks if Matrix A is an identity matrix.
 
  \date	17-May-14
 
- \param	A	The Mat to process.
+ \param	A	The Matrix to process.
 
  \return	Checking result (true or false).
  */
 bool IsIdentity (Mat A) {
-	double **a = A->a;
+    Assert$ (A->rowsCount == A->colsCount, "Matrix A must be square");
+    entry_t **a = A->a;
 
-	for (size_t i = 0; i < A->rowsCount; i++) {
-		for (size_t j = 0; j < A->colsCount; j++) {
-			if ((i != j) && (fabs(a[i][j]) > EPS)) {
-				return false;
-			} else {
-				if ((i == j) && (equals_d(a[i][j], 1.0))) {
-					return false;
-				}
-			}
-		}
-	}
+    switch (A->rowsCount) {
+        case 0:
+            return false;
+        case 1:
+            return equals_d(a[0][0], 1.0);
+        case 2:
+            return equals_d(a[0][0], 1.0) && fabs(a[0][1]) < EPS && fabs(a[1][0]) < EPS && equals_d(a[1][1], 1.0);
+        default:
+            for (size_t i = 0; i < A->rowsCount; i++) {
+                for (size_t j = 0; j < A->colsCount; j++) {
+                    if ((i != j) && (fabs(a[i][j]) > EPS)) {
+                        return false;
+                    } else {
+                        if ((i == j) && (!(equals_d(a[i][j], 1.0)))) {
+                            return false;
+                        }
+                    }
+                }
+            }
 
-	return true;
+            return true;
+    }
 }
 
 bool IsSingular (Mat A) {
@@ -113,7 +123,7 @@ bool IsSingular (Mat A) {
  \return	true or false.
  */
 bool IsSymmetric (Mat A) {
-	if (!isSquare$(A)) {
+	if (!IsSquare$(A)) {
 		return false;
 	}
 
@@ -129,7 +139,7 @@ bool IsSymmetric (Mat A) {
 }
 
 bool IsSkewSymmetric (Mat A) {
-	if (!isSquare$(A)) {
+	if (!IsSquare$(A)) {
 		return false;
 	}
 
@@ -158,7 +168,7 @@ bool IsSkewSymmetric (Mat A) {
  \param	A	The Mat to process.
  */
 void toTransposed_square (Mat A) {
-	Assert$(isSquare$(A), "Cannot transpose non-square matrix with this func.");
+	Assert$(IsSquare$(A), "Cannot transpose non-square matrix with this function. Use toTransposed instead.");
 
 	for (size_t i = 0; i < A->rowsCount - 1; i++) {
 		for (size_t j = i + 1; j < A->rowsCount; j++) {
@@ -178,12 +188,12 @@ void toTransposed_square (Mat A) {
 
  \param	A	The Mat to process.
 
- \return	A transposed.
+ \return	Matrix A transposed.
  */
 Mat Transposed (Mat A) {
-	double **a = A->a;
+	entry_t **a = A->a;
 	Mat T = AllocMat(A->colsCount, A->rowsCount);
-	double **t = T->a;
+	entry_t **t = T->a;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -224,11 +234,11 @@ void toTransposed (Mat *A) {
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-    if (!Check$(!((A->isSingular) || (fabs(Det_gauss(A)) <= EPS) || (!isSquare$(A))), "Cannot invert singular matrix.")) {
+    if (!Check$(!((A->isSingular) || (fabs(Det_Gauss(A)) <= EPS) || (!IsSquare$(A))), "Cannot invert singular matrix.")) {
         return NULL;
     }
 
-	double **a = A->a;
+	entry_t **a = A->a;
 	Mat R = NULL, I = NULL;
 
 	switch (A->rowsCount) {
@@ -337,15 +347,16 @@ void toInverse (Mat *A) {
  \return	Matrix product of A & B.
  */
 Mat MatMul_naive (Mat A, Mat B) {
-	Assert$(A->colsCount == B->rowsCount, "Cannot multiply.");
+    Assert$(A != NULL && B != NULL, "");
+	Assert$(A->colsCount == B->rowsCount, "Cannot multiply. Number of columns in A must be equal to number of rows in B.");
 
 	Mat C = AllocMat(A->rowsCount, B->colsCount);
 
-	if ((isSquare$(A)) && (A->rowsCount == 1) && (isSquare$(B))) {
+	if ((IsSquare$(A)) && (A->rowsCount == 1) && (IsSquare$(B))) {
 		C->a[0][0] = A->a[0][0] * B->a[0][0];
 		return C;
 	} else {
-		if ((isSquare$(A)) && (A->rowsCount == 2) && (isSquare$(B))) {
+		if ((IsSquare$(A)) && (A->rowsCount == 2) && (IsSquare$(B))) {
 			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
 			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
 			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
@@ -354,7 +365,7 @@ Mat MatMul_naive (Mat A, Mat B) {
 		} else {
 			for (size_t i = 0; i < A->rowsCount; ++i) {
 				for (size_t k = 0; k < A->colsCount; ++k) {
-					double s = A->a[i][k];
+					entry_t s = A->a[i][k];
 					for (size_t j = 0; j < B->colsCount; ++j) {
 						C->a[i][j] += s * B->a[k][j];
 					}
@@ -490,7 +501,7 @@ void matMul (Mat *A, Mat B) {
 	Assert$((*A)->colsCount == B->rowsCount,
 		"Cannot multiply matrices. Number of columns of A must be equal to number of rows of B.");
 
-	Mat P = MatMul(*A, B);
+	Mat P = MatMul$(*A, B);
 	freeMat$(*A);
 	*A = DeepCopy(P);
 	freeMat$(P);
@@ -512,8 +523,8 @@ void matMul (Mat *A, Mat B) {
  \return	A^n.
  */
 Mat MatPow (Mat A, size_t pow) {
-	Assert$(pow >= 0, "Cannot raise power.");
-	Assert$(isSquare$(A), "Cannot raise power of non-square matrix.");
+//	Assert$(pow >= 0, "Cannot raise into negative power.");
+	Assert$(IsSquare$(A), "Cannot raise power of non-square matrix.");
 
 	size_t c = 0;
 	Mat R;
@@ -553,7 +564,7 @@ Mat MatPow (Mat A, size_t pow) {
 /**
  \fn	size_t Rank (Mat A)
 
- \brief	Calculates Rank of matrix A in RREF form.
+ \brief	Computes Rank of Matrix A in RREF form.
 
  \date	17-May-14
 
@@ -564,7 +575,7 @@ Mat MatPow (Mat A, size_t pow) {
 size_t Rank (Mat A) {
 	size_t rank = 0;
 	size_t i, j;
-	double **r = A->a;
+	entry_t **r = A->a;
 
 	for (i = 0; i < A->rowsCount; i++) {
 		for (j = 0; j < A->colsCount; j++) {
@@ -587,9 +598,9 @@ size_t Rank (Mat A) {
 
  \return	Trace value.
  */
-double Trace (Mat A) {
-	double **a = A->a;
-	double tr = 0.0;
+entry_t Trace (Mat A) {
+	entry_t **a = A->a;
+	entry_t tr = 0.0;
 
 	for (size_t i = 0; i < min(A->rowsCount, A->colsCount); i++) {
 		tr += a[i][i];
@@ -608,11 +619,11 @@ double Trace (Mat A) {
 
  \return	1-norm.
  */
-double OneNorm (Mat A) {
-	double norm = 0.0;
+entry_t OneNorm (Mat A) {
+	entry_t norm = 0.0;
 
 	for (size_t i = 0; i < A->colsCount; i++) {
-		double sum = 0.0;
+        entry_t sum = 0.0;
 		for (size_t j = 0; j < A->rowsCount; j++) {
 			sum += fabs(A->a[j][i]);
 		}
@@ -622,8 +633,10 @@ double OneNorm (Mat A) {
 	return norm;
 }
 
-double TwoNorm (Mat A) {
-	return 0.0; //TODO:
+entry_t TwoNorm (Mat A) {
+	Assert$(false, "Not Implemented."); //TODO:
+
+    return 0.0;
 }
 
 /**
@@ -635,11 +648,11 @@ double TwoNorm (Mat A) {
 
  \return	Inf-norm.
  */
-double InfinityNorm (Mat A) {
-	double norm = 0.0;
+entry_t InfinityNorm (Mat A) {
+    entry_t norm = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
-		double sum = 0.0;
+        entry_t sum = 0.0;
 		for (size_t j = 0; j < A->colsCount; j++) {
 			sum += fabs(A->a[i][j]);
 		}
@@ -656,10 +669,10 @@ double InfinityNorm (Mat A) {
 
  \param	A	The Mat to process.
 
- \return	Eucl. norm.
+ \return	Euclidean norm.
  */
-double EuclideanNorm (Mat A) {
-	double sum = 0.0;
+entry_t EuclideanNorm (Mat A) {
+    entry_t sum = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -679,7 +692,7 @@ double EuclideanNorm (Mat A) {
 
  \return	Condition number.
  */
-double ConditionNumber (Mat A) {
+entry_t ConditionNumber (Mat A) {
 	Mat Ai = DeepCopy(A);
 	toInverse(&Ai);
 	double c = InfinityNorm(A) * InfinityNorm(Ai);
@@ -700,18 +713,18 @@ double ConditionNumber (Mat A) {
  \param	A	The Mat A to process.
  \param	B	The Mat B to process.
 
- \return	A(x)B.
+ \return	A (⨯) B.
  */
 Mat KroneckerProd (Mat A, Mat B) {
-	Mat K = AllocMat(A->rowsCount*B->rowsCount, A->colsCount*B->colsCount);
-	double **a = A->a;
-	double **b = B->a;
-	double **k = K->a;
+	Mat K = AllocMat(A->rowsCount * B->rowsCount, A->colsCount * B->colsCount);
+	entry_t **a = A->a;
+	entry_t **b = B->a;
+	entry_t **k = K->a;
 
 	for (size_t i = 0; i < K->rowsCount; i++) {
 		for (size_t j = 0; j < K->colsCount; j++) {
-			k[i][j] = (a[i/A->rowsCount][j/A->colsCount] *
-				b[i%B->rowsCount][j%B->colsCount]);
+			k[i][j] = (a[i / A->rowsCount][j / A->colsCount] *
+				b[i % B->rowsCount][j % B->colsCount]);
 		}
 	}
 
@@ -726,15 +739,16 @@ Mat KroneckerProd (Mat A, Mat B) {
  \param	A	The Mat A to process.
  \param	B	The Mat B to process.
 
- \return	A(+)B.
+ \return	A (+) B.
  */
 Mat KroneckerSum (Mat A, Mat B) {
-	Assert$(isSquare$(A) && isSquare$(B), "A and B isn't square.");
+	Assert$(IsSquare$(A) && IsSquare$(B), "A and B must be square.");
+
 	Mat Ib = Identity(B->rowsCount);
 	Mat Ia = Identity(A->rowsCount);
 	Mat AI = KroneckerProd(A, Ib);
 	Mat IB = KroneckerProd(Ia, B);
-	Mat KS = AllocMat(A->rowsCount*B->rowsCount, A->colsCount*B->colsCount);
+	Mat KS = AllocMat(A->rowsCount * B->rowsCount, A->colsCount * B->colsCount);
 	_mm2_add(AI, IB, KS);
 	freeMat$(IB);
 	freeMat$(Ia);
@@ -754,9 +768,9 @@ Mat KroneckerSum (Mat A, Mat B) {
 
  \param	Size	The size.
 
- \return	A size_t.
+ \return		Fixed Size value.
  */
-size_t _fixSize(size_t Size) {
+size_t _fixSize (size_t Size) {
 	if (!(Check$(ispowerof2_i(Size), "Matrix size is not a power of 2."))) {
 		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(Size)))); //-V113 //TODO: get rid of FP operations here
 	}
@@ -771,7 +785,7 @@ size_t _fixSize(size_t Size) {
  and this algorithm repeated recursively until blocks become numbers.
  (or when size of blocks reaches some threshold value when naive algorithm will be used).
  Complexity: O(n^2.8)
- TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix if matrices')
+ TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix of matrices')
 		M1 := (A1,1 + A2,2)(B1,1 + B2,2)
 		M2 := (A2,1 + A2,2)B1,1
 		M3 := A1,1(B1,2 − B2,2)
@@ -809,7 +823,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
             break;
         case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges.
 																												// upd.: seems that it is actually an GCC extension or smth.
-			C = MatMul(A, B);							//TODO: use MM_SIZE_THRESHOLD
+			C = MatMul$(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
 			break;
 		default:
