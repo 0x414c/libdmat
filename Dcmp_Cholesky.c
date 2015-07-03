@@ -3,6 +3,7 @@
 
 #include "Dcmp_Cholesky.h"
 #include "Extras.h"
+#include "Maths.h"
 
 
 /**
@@ -69,7 +70,7 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 	Assert$(L->isSPD, "Matrix A must be symmetric positive definite.");
 	Assert$(L->rowsCount == B->rowsCount, "Rows count in A and B must be equal.");
 
-	Mat X = Copy(B);
+	Mat X = DeepCopy(B);
 
 	// Solve L*Y = B;
 	for (size_t k = 0; k < L->rowsCount; k++) {

@@ -2,11 +2,12 @@
 #include <stddef.h>
 #include <math.h>
 
-#include "MatrixOperations.h"
+#include "MatrixOps.h"
 #include "Matrix.h"
-#include "Gauss.h"
 #include "Const.h"
+#include "Gauss.h"
 #include "Extras.h"
+#include "Maths.h"
 #include "SpinningIndicator.h"
 
 
@@ -246,7 +247,6 @@ Mat Inverse (Mat A) {
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = 1.0 / a[0][0];
 			return R;
-			break;
 		case 2:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[1][0] = a[1][0] * -1.0;
@@ -256,8 +256,7 @@ Mat Inverse (Mat A) {
 			_ms_mul(R, 1.0 / A->det); //TODO: A->det is already computed at the very beginning of func when
 			                          //it checks for matrix singularity. So if checks are disabled,
 			                          //you need to compute Det(A) manually)
-      return R;
-      break;
+			return R;
     case 3:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
@@ -271,7 +270,6 @@ Mat Inverse (Mat A) {
 			R->a[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
 			_ms_mul(R, 1.0 / A->det);
 			return R;
-			break;
 		case 4:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = a[1][2] * a[2][3] * a[3][1] - a[1][3] * a[2][2] * a[3][1] + a[1][3] * a[2][1] * a[3][2] - a[1][1] * a[2][3] * a[3][2] - a[1][2] * a[2][1] * a[3][3] + a[1][1] * a[2][2] * a[3][3];
@@ -292,7 +290,6 @@ Mat Inverse (Mat A) {
 			R->a[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
 			_ms_mul(R, 1.0 / A->det);
 			return R;
-			break;
 		default:
 			R = DeepCopy(A);
 			I = Identity(A->rowsCount);
@@ -308,7 +305,6 @@ Mat Inverse (Mat A) {
 
 			freeMat$(R);
 			return I;
-			break;
 	}
 }
 
@@ -666,6 +662,7 @@ entry_t InfinityNorm (Mat A) {
  \fn	double EuclideanNorm (Mat A)
 
  \brief	Euclidean norm of A.
+ 		Aka Frobenius norm.
 
  \param	A	The Mat to process.
 
@@ -680,7 +677,7 @@ entry_t EuclideanNorm (Mat A) {
 		}
 	}
 
-	return sqrt(sum);
+	return (entry_t) sqrt(sum);
 }
 
 /**
@@ -699,6 +696,15 @@ entry_t ConditionNumber (Mat A) {
 	freeMat$(Ai);
 
 	return c;
+}
+
+entry_t DiagProd (Mat A) {
+	entry_t prod = 1.0;
+	for (int i = 0; i < A->rowsCount; ++i) {
+		prod *= A->a[i][i];
+	}
+
+	return prod;
 }
 #pragma endregion "Norms, etc."
 
@@ -822,7 +828,7 @@ Mat MatMul_strassen (Mat A, Mat B) {
             return C;
             break;
         case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges.
-																												// upd.: seems that it is actually an GCC extension or smth.
+														// upd.: seems that it is actually an GCC extension or smth.
 			C = MatMul$(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
 			break;

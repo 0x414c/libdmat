@@ -8,16 +8,17 @@
 #include <float.h>
 #include <math.h>
 
+#include "Matrix.h"
 #include "Config.h"
 #include "Const.h"
-#include "Matrix.h"
 #include "Extras.h"
+#include "Maths.h"
 #include "SpinningIndicator.h"
 
 
 #pragma region "Alloc & dealloc"
 /**
- \fn	Mat AllocMat (size_t RowsCount, size_t ColumnsCount)
+ \fn	Mat AllocMat (size_t rowsCount, size_t columnsCount)
 
  \brief	Allocate double-valued MxN matrix and fill it w/ zeroes.
 
@@ -28,33 +29,33 @@
 
  \return	Pointer to _Mat struct.
  */
-Mat AllocMat (size_t RowsCount, size_t ColumnsCount) {
+Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	Mat A = NULL;
 
-	Assert$(((RowsCount != 0) && (ColumnsCount != 0)), "Matrix size can't be set to zero.");
+	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Matrix size can't be set to zero.");
 
 	A = (Mat) malloc(sizeof(*A));
 	Assert$(A != NULL, "No space for matrix");
 
 	A->a = NULL;
-	A->a = (entry_t**) calloc(RowsCount, sizeof(entry_t*));
+	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
 	Assert$(A->a != NULL, "No space for row pointers");
 
-	for (size_t i = 0; i < RowsCount; i++) {
+	for (size_t i = 0; i < rowsCount; i++) {
 		A->a[i] = NULL;
-		A->a[i] = (entry_t*) calloc(ColumnsCount, sizeof(entry_t));
+		A->a[i] = (entry_t*) calloc(columnsCount, sizeof(entry_t));
 		Assert$(A->a[i] != NULL, "No space for rows");
 	}
 
-	A->rowsCount = RowsCount;
-	A->colsCount = ColumnsCount;
+	A->rowsCount = rowsCount;
+	A->colsCount = columnsCount;
 	A->rank = A->rowsCount;
 	A->trace = 0.0;
 	A->det = 0.0;
+	A->permutationSign = 1;
 	A->isSingular = false;
 	A->isSPD = false;
 	A->isRankDeficient = false;
-	A->permutationSign = 1;
 
 	return A;
 }
@@ -85,7 +86,7 @@ void freeMat (Mat *A) {
 /**
  \fn	size_t freeMats (Mat A, ...)
 
- \brief	Deallocates many Mats...
+ \brief	Deallocates many Matrices.
 
  \param	A	The Mat to process.
 
@@ -205,25 +206,26 @@ void concat (Mat A, Mat B) {
  */
 void printMatrixToFile (Mat A, FILE *file, char *format) {
 	Assert$(file != NULL, "File reading error");
-	Assert$(A != NULL, "Cannot print.");
+	Assert$(A != NULL, "Cannot print. Pointer is NULL.");
 
 	entry_t **a = A->a;
 #ifdef PRETTYOUTPUT
-	char buf[PRINTBUFSZ];
+	static char buf[PRINTBUFSZ];
 #endif // PRETTYOUTPUT
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
+		fprintf(file, "[");
 		for (size_t j = 0; j < A->colsCount; j++) {
 #ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
-			_cleanTrailingZeroes(buf);
-			fprintf(file, "%s", buf);
+			_trimTrailingZeroes(buf);
+			fprintf(file, "%s|", buf);
 #else
 			fprintf(file, format, a[i][j]);
 #endif
 		}
-		fprintf(file, "\n");
+		fprintf(file, "\b]\n");
 	}
 
 	return;
@@ -244,8 +246,7 @@ size_t printMatricesToFile (Mat A, ...) {
 	va_list vl;
 	va_start(vl, A);
 	for (Mat T = A; T; T = va_arg(vl, Mat), n++) {
-//		printf(" >>Mat[%zu]\n", n);
-        printf(" >>Mat[" FMT_SIZET "]\n", n);
+        printf(" >>Mat["FMT_SIZET"]\n", n);
 		printMat$(T);
 	}
 	va_end(vl);
@@ -267,21 +268,22 @@ void toString (Mat A, FILE *file, char *format) {
 	Assert$(A != NULL, "Cannot print.");
 
 	entry_t **a = A->a;
-#ifdef PRETTYOUTPUT
-	char buf[PRINTBUFSZ];
-#endif // PRETTYOUTPUT
+//#ifdef PRETTYOUTPUT
+//	char buf[PRINTBUFSZ];
+//#endif // PRETTYOUTPUT
 
 	fprintf(file, "{");
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf (file, "\n{");
 		for (size_t j = 0; j < A->colsCount; j++) {
-#ifdef PRETTYOUTPUT
-			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
-			//_cleanTrailingZeroes(buf); //TODO: buffer overflow
-			fprintf(file, "%s,", buf);
-#else
+//#ifdef PRETTYOUTPUT
+//			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
+//			_trimTrailingZeroes(buf); //TODO: buffer overflow
+//			fprintf(file, "%s,", buf);
+//#else
 			fprintf(file, format, a[i][j]);
-#endif // PRETTYOUTPUT
+			fprintf(file, ",");
+//#endif // PRETTYOUTPUT
 		}
 		fprintf(file, "\b},");
 	}
@@ -292,39 +294,41 @@ void toString (Mat A, FILE *file, char *format) {
 
 #ifdef PRETTYOUTPUT
 /**
- \fn	void _cleanTrailingZeroes (char *str)
+ \fn	void _trimTrailingZeroes (char *str)
 
- \brief	Cleans trailing zeroes in string containing floating-point number.
+ \brief	Trims trailing zeroes in string containing decimal floating-point number.
 
- \param [in,out]	str	If non-null, the string to process.
+ \param [in,out] str	If non-null, the string to process.
  */
-void _cleanTrailingZeroes (char *str) {
+void _trimTrailingZeroes (char *str) {
 	Assert$(str != NULL, "");
 
-	char *s = NULL;
-	char *start = strchr(str, '.');
-	if (start == NULL) {
-//		return; // TODO:
+	char *point = strchr(str, '.');
+	if (point == NULL) {
+		return;
 	}
-	s = strrchr(start, '0');
-	if ((s) && (*(s + 1) == '\0')) {
-		while ((*s != '.')) {
-			if (*s == '0') {
-				memcpy(s--, " ", 1);
+	char *lastZero = strrchr(point, '\0') - 1;
+	if (lastZero != NULL) {
+		while (*lastZero != '.') {
+			if (*lastZero == '0') {
+				memcpy(lastZero--, " ", 1);
 			} else {
 				break;
 			}
 		}
+		if (*lastZero == '.') {
+			memcpy(lastZero, " ", 1);
+		}
 	}
-	s = strstr(str, "-0. ");
-	if (s) {
+	char *s = strstr(str, "-0 ");
+	if (s != NULL) {
 		memcpy(s, " ", 1);
 	}
 
 	return;
 }
 //#else
-//#define _cleanTrailingZeroes
+//#define _trimTrailingZeroes
 #endif // PRETTYOUTPUT
 #pragma endregion "Printing"
 
@@ -493,7 +497,7 @@ Mat Minor (Mat A, size_t d) { //TODO:
 
  \return	Number of read items.
  */
-size_t fill_fromFile(Mat A, FILE *file) {
+size_t fill_fromFile (Mat A, FILE *file) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 	entry_t **a = A->a;
 	entry_t tmp = 0.0;
@@ -525,7 +529,7 @@ size_t fill_fromFile(Mat A, FILE *file) {
 
  \param	A	The Mat to process.
  */
-void fill_random(Mat A) {
+void fill_random (Mat A) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
 	entry_t **a = A->a;
@@ -548,7 +552,7 @@ void fill_random(Mat A) {
 
  \param	A	The Mat to process.
  */
-void fill_zeroes(Mat A) {
+void fill_zeroes (Mat A) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
     entry_t **a = A->a;
@@ -556,6 +560,20 @@ void fill_zeroes(Mat A) {
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 			a[i][j] = 0.0;
+		}
+	}
+
+	return;
+}
+
+void fill_ones (Mat A) {
+	Assert$(A != NULL, "Cannot fill. It is NULL.");
+
+	entry_t **a = A->a;
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		for (size_t j = 0; j < A->colsCount; j++) {
+			a[i][j] = 1.0;
 		}
 	}
 

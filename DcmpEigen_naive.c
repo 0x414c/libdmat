@@ -4,11 +4,12 @@
 #include <math.h>
 
 #include "DcmpEigen_naive.h"
+#include "MatrixOps.h"
 #include "Polynomial.h"
 #include "Gauss.h"
 #include "Extras.h"
+#include "Maths.h"
 #include "SpinningIndicator.h"
-#include "MatrixOperations.h"
 
 
 /**

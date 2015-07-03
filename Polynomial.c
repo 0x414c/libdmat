@@ -6,11 +6,12 @@
 
 #include "Polynomial.h"
 #include "Matrix.h"
-#include "Extras.h"
-#include "DcmpEigen_naive.h"
 #include "Const.h"
 #include "Config.h"
+#include "Extras.h"
+#include "Maths.h"
 #include "SpinningIndicator.h"
+#include "DcmpEigen_naive.h"
 
 
 /**
@@ -62,7 +63,7 @@ void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
 }
 
 
-#pragma region "Evaluation & root finding"
+#pragma region "Polynomial evaluation & root finding"
 
 /**
  \fn	long double EvalPolyAt (long double x, int64_t *c, size_t s)
@@ -196,4 +197,4 @@ long double *GetPolynomialRoots (int64_t *c, size_t size, size_t *rootsCount) {
 
 	return roots;
 }
-#pragma endregion "Evaluation & root finding"
+#pragma endregion "Polynomial evaluation & root finding"

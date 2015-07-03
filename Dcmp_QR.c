@@ -4,7 +4,7 @@
 
 #include "Dcmp_QR.h"
 #include "Matrix.h"
-#include "MatrixOperations.h"
+#include "MatrixOps.h"
 #include "Extras.h"
 
 

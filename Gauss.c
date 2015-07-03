@@ -3,10 +3,11 @@
 #include <math.h>
 #include <limits.h>
 
-#include "Matrix.h"
-#include "MatrixOperations.h"
-#include "Extras.h"
 #include "Gauss.h"
+#include "Matrix.h"
+#include "MatrixOps.h"
+#include "Maths.h"
+#include "Extras.h"
 
 
 #pragma region "Determinant computation"
@@ -104,38 +105,43 @@ entry_t Det_Gauss (Mat A) {
 
  \return	Determinant of Matrix A.
  */
-entry_t Det_Bareiss (Mat A) {
+entry_t Det_Bareiss (Mat A) { //TODO: move to another file
 	Mat T = DeepCopy(A);
+	entry_t **a = T->a;
 
 	// Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		for (size_t i = k; i < A->rowsCount; i++) {
-			if (fabs(T->a[i][k]) > fabs(T->a[pivot][k])) {
+			if (fabs(a[i][k]) > fabs(a[pivot][k])) {
 				pivot = i;
 			}
 		}
 		if (pivot != k) {
+//			for (size_t j = 0; j < A->colsCount; j++) {
+//				swap_d(T->a[k][j], T->a[pivot][j]);
+//			}
+			entry_t *a_pivot = a[pivot];
+			a[pivot] = a[k];
+			a[k] = a_pivot;
 			T->permutationSign *= -1; //-V127
-			for (size_t j = 0; j < A->colsCount; j++) {
-				swap_d(T->a[k][j], T->a[pivot][j]);
-			}
 		}
 	}
 
 	// Bareiss algorithm main step
 	for (size_t i = 0; i < T->rowsCount - 1; i++) {
-		//Assert$(T->a[i][i] > EPS, "Singularity...");
-		for (size_t j = i + 1; j < T->rowsCount; j++)
+		Check$(fabs(a[i][i]) > EPS, "Singularity...");
+		for (size_t j = i + 1; j < T->rowsCount; j++) {
 			for (size_t k = i + 1; k < T->rowsCount; k++) {
-			T->a[j][k] = T->a[j][k]*T->a[i][i] - T->a[j][i]*T->a[i][k];
-			if (i) {
-				T->a[j][k] /= T->a[i-1][i-1];
+				a[j][k] = a[j][k] * a[i][i] - a[j][i] * a[i][k];
+				if (i != 0) {
+					a[j][k] /= a[i-1][i-1];
+				}
 			}
 		}
 	}
 
-	entry_t det = T->a[T->rowsCount - 1][T->rowsCount - 1];
+	entry_t det = a[T->rowsCount - 1][T->rowsCount - 1] * T->permutationSign;
 	freeMat$(T);
 
 	return det;
@@ -148,38 +154,46 @@ entry_t Det_Bareiss (Mat A) {
 /**
  \fn		void toRowEchelonForm (Mat A)
 
- \brief		Transforms matrix A into a row echelon form.
+ \brief		Transforms matrix A into a row echelon form. Optimized implementation.
 
- \param	A	The Mat to process.
+ \param	A	The Matrix to process.
  */
 void toRowEchelonForm (Mat A) {
 	entry_t **a = A->a;
+//	size_t _ic = 0;
 
-	//optimized? with immediate rows swapping
+	// W/ immediate rows swapping
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		// Pivotize
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-				if (fabs(a[i][k]) > EPS) {
-					for (size_t j = 0; j < A->colsCount; j++) {
-						swap_d(a[k][j], a[i][j]);
-					}
-					A->permutationSign *= -1; //-V127
-				}
+			if (fabs(a[i][k]) > fabs(a[k][k]))
+			if (fabs(a[i][k]) > EPS) {
+//				for (size_t j = 0; j < A->colsCount; j++) {
+//					swap_d(a[k][j], a[i][j]);
+//				}
+//				_ic++;
+				entry_t *a_i = a[i];
+				a[i] = a[k];
+				a[k] = a_i;
+				A->permutationSign *= -1; //-V127
+			}
 		}
 		// Eliminate
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			if (fabs(a[k][k]) > EPS) {
-				double factor = a[i][k] / a[k][k];
-				for (size_t j = k + 0; j < A->colsCount; j++) { //no need to set lower diag to 0
+				entry_t factor = a[i][k] / a[k][k];
+				for (size_t j = k; j < A->colsCount; j++) {
 					a[i][j] -= factor * a[k][j];
 				}
 			} else {
 				A->isSingular = true;
-				Check$(0, "toRowEchelonForm: singular mat.");
+				Check$(false, "Singular matrix.");
 				return;
 			}
 		}
 	}
+
+//	printf("O:%zu\n", _ic);
 
 	return;
 }
@@ -187,15 +201,16 @@ void toRowEchelonForm (Mat A) {
 /**
  \fn		void toRowEchelonForm_reference (Mat A)
 
- \brief		Transforms A to a row echelon form
+ \brief		Transforms Matrix A into a row echelon form.
  			Reference implementation.
 
- \param	A	The Mat to process.
+ \param	A	The Matrix to process.
  */
 void toRowEchelonForm_reference (Mat A) {
 	entry_t **a = A->a;
+//	size_t _ic = 0;
 
-	//reference implementation of pivoting algorithm
+	// Reference implementation of pivoting algorithm
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		// Find pivot
@@ -206,30 +221,35 @@ void toRowEchelonForm_reference (Mat A) {
 		}
 		if (fabs(a[pivot][k]) <= EPS) {
 			A->isSingular = true;
-			Check$(0, "toRowEchelonForm_reference: Singular matrix.");
+			Check$(false, "Singular matrix.");
 			return;
 		}
 		// Swap rows
 		if (pivot != k) {
-			for (size_t i = 0; i < A->colsCount; i++) {
-				swap_d(a[k][i], a[pivot][i]);
-			}
+//			for (size_t j = 0; j < A->colsCount; j++) {
+//				swap_d(a[k][j], a[pivot][j]);
+//			}
+//			_ic++;
+			entry_t *a_pivot = a[pivot];
+			a[pivot] = a[k];
+			a[k] = a_pivot;
 			A->permutationSign *= -1; //-V127
 		}
-		// Eliminate
-		//if (fabs(a[k][k]) > EPS) {
+		// Calculate factor, eliminate k-th column
+		if (fabs(a[k][k]) > EPS) {
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
-				//a[i][k] /= a[k][k];
-				double f = a[i][k] / a[k][k];
-				for (size_t j = k + 0; j < A->colsCount; j++) {
-					//a[i][j] -= a[i][k] * a[k][j];
+				entry_t f = a[i][k] / a[k][k];
+//				a[i][k] /= a[k][k];
+				for (size_t j = k; j < A->colsCount; j++) {
 					a[i][j] -= f * a[k][j];
-					//a[i][j] -= a[k][j] * (a[i][k] / a[k][k]);
+//					a[i][j] -= a[i][k] * a[k][j];
+//					a[i][j] -= a[k][j] * (a[i][k] / a[k][k]);
 				}
-				//a[i][k] = 0.0;
 			}
-		//}
+		}
 	}
+
+//	printf("R:%zu\n", _ic);
 
 	return;
 }
@@ -244,7 +264,7 @@ void toRowEchelonForm_reference (Mat A) {
 
  \date		13-May-14
 
- \param	A	The double-valued matrix to process.
+ \param	A	The Matrix to process.
  */
 void toReducedRowEchelonForm (Mat A) {
 	entry_t **a = A->a;
@@ -272,14 +292,14 @@ void toReducedRowEchelonForm (Mat A) {
 			swap_d(a[i][j], a[r][j]);
 		}
 		if (fabs(a[r][pivotCol]) > EPS) {
-			double divisor = a[r][pivotCol];
+			entry_t divisor = a[r][pivotCol];
 			for (j = 0; j < colsCount; j++) {
 				a[r][j] /= divisor;
 			}
 		}
 		for (j = 0; j < rowsCount; j++) {
 			if (j != r)	{
-				double sub = a[j][pivotCol];
+				entry_t sub = a[j][pivotCol];
 				for (k = 0; k < colsCount; k++) {
 					a[j][k] -= (sub * a[r][k]);
 				}
@@ -310,7 +330,7 @@ Mat Solve_GaussJordan (Mat A, Mat B) {
 	Assert$(A->rowsCount == B->rowsCount, "Number of equations doesn't equal to number of unknown variables.");
 
 	Mat X = AllocMat(A->rowsCount, 1);
-	Mat AU = Copy(A);
+	Mat AU = DeepCopy(A);
 
 	concat(AU, B);
     entry_t **au = AU->a;
@@ -342,7 +362,7 @@ Mat Solve_Gauss (Mat A, Mat B) {
 	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to number of unknown variables.");
 
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
-	Mat AU = Copy(A);
+	Mat AU = DeepCopy(A);
 
 	concat(AU, B);
 

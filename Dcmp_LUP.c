@@ -3,8 +3,9 @@
 
 #include "Dcmp_LUP.h"
 #include "Matrix.h"
-#include "MatrixOperations.h"
+#include "MatrixOps.h"
 #include "Gauss.h"
+#include "Maths.h"
 #include "Extras.h"
 
 
@@ -32,7 +33,8 @@ Mat *LUDcmp_gauss (Mat A) {
 	//size_t *permutationVector = AllocVec_u(m);
 	int permutationSign = 1;
 
-	// Pivoting //TODO: one procedure to pivotize them all
+	// Pivoting
+	// TODO: one procedure to pivotize them all
 	for (size_t k = 0; k < cols; k++) {
 		// Find pivot.
 		size_t pivot = k;

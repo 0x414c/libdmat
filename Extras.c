@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "Const.h"
+#include "Maths.h"
 #include "Extras.h"
 
 
@@ -141,15 +142,4 @@ void fillSequential_u (size_t *index, size_t size, size_t start) {
 	}
 
 	return;
-}
-
-int64_t GCD_euclid (int64_t a, int64_t b) {
-	int64_t t = 0;
-	while (b) {
-		t = a;
-		a = b;
-		b = t % b;
-	}
-
-	return llabs(a);
 }

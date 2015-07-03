@@ -44,6 +44,8 @@ entry_t InfinityNorm (Mat A);
 entry_t EuclideanNorm (Mat A);
 entry_t ConditionNumber (Mat A);
 
+entry_t DiagProd (Mat A);
+
 // 'templates' for element-wise functions
 #define for_i$(A) for (size_t i = 0; i < A->rowsCount; i++)
 #define for_j$(A) for (size_t j = 0; j < A->colsCount; j++)

@@ -6,8 +6,7 @@
 /**
  \def	DOUBLE_PRECISION
 
- \brief	Enable double precision?
-        Experimental. Do not touch!
+ \brief	Enable double precision computations?
  */
 #define DOUBLE_PRECISION
 
@@ -59,7 +58,7 @@
  \brief	Size of printing buffer.
         Note that buffer must be capable to hold string defined by FMT_FLT
  */
-#define PRINTBUFSZ (1280)
+#define PRINTBUFSZ (320)
 #endif // PRETTYOUTPUT
 
 
@@ -76,7 +75,7 @@
 
  \brief	Format string for floats.
  */
-#define FMT_FLT	"%17.3f"
+#define FMT_FLT	"%14.3f"
 
 
 /**
@@ -84,7 +83,7 @@
 
  \brief	Format string for floats (used in printStr$()).
  */
-#define FMT_FLT_STR		"% .10f"
+#define FMT_FLT_STR		"% .3g"
 
 
 /**
