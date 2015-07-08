@@ -9,7 +9,7 @@
 #define D_EPS (DBL_EPSILON)
 #define F_EPS (FLT_EPSILON)
 
-#ifdef DOUBLE_PRECISION
+#ifndef DOUBLE_PRECISION
 #define EPS (D_EPS)
 #else
 #define EPS (F_EPS)

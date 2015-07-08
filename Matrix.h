@@ -13,7 +13,7 @@
 
 Mat AllocMat (size_t rowsCount, size_t columnsCount);
 void freeMat (Mat *A);
-#define freeMat$(p) ( (p) ? (freeMat(&(p)), (p) = NULL) : (printf("Cannot free..."), NULL) )
+#define freeMat$(p) ( (p!=NULL)?(freeMat(&(p)),(p)=NULL,true):(printf("Cannot free memory."),false) )
 size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);
@@ -21,8 +21,10 @@ void concat (Mat A, Mat B);
 
 Mat Copy (Mat A);
 Mat DeepCopy (Mat A);
-Mat Identity (size_t Size);
+Mat Identity (size_t size);
+Mat Zeroes (size_t size);
 Mat Diag (Mat A);
+Mat SubMatrix (Mat A, size_t row, size_t col);
 Mat Minor (Mat A, size_t d);
 
 size_t fill_fromFile (Mat A, FILE *file);
@@ -49,7 +51,7 @@ extern void _trimTrailingZeroes (char *str);
 #ifdef PRINTING_ENABLED
 #define printMat$(a)       printMatrixToFile(a, OUTFILE, FMT_FLT)
 #define printMats$(a, ...) printMatricesToFile(a, __VA_ARGS__)
-#define printAsStr$(a)       toString(a, OUTFILE, FMT_FLT_STR)
+#define printAsStr$(a)     toString(a, OUTFILE, FMT_FLT_STR)
 #else
 #define printMat$(a)
 #define printMats$(a, ...)

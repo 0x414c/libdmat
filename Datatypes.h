@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
 
@@ -19,15 +20,15 @@ typedef float_t entry_t;
 #endif
 
 /**
- \struct	_Mat_struct
+ \struct	__Mat_struct
 
  \brief	A matrix structure.
  */
-struct _Mat_struct {
+struct __Mat_struct {
 	/**
 	 \brief	The entry_t**.
 	 */
-	entry_t **a;	
+	entry_t **a;
 
 	/**
 	 \brief	Number of rows.
@@ -72,13 +73,13 @@ struct _Mat_struct {
 	/**
 	 \brief	The permutation sign (switches from 1 to -1 every time when rows being swapped).
 	 */
-	int permutationSign;
+	int8_t permutationSign;
 };
 
 /**
- \typedef	struct _Mat_struct *Mat
+ \typedef	struct __Mat_struct *Mat
 
  \brief	Defines an alias representing the matrix.
-		The `Mat` 'itself' is a ptr to _Mat_struct.
+		The `Mat` 'itself' is a ptr to __Mat_struct.
  */
-typedef struct _Mat_struct *Mat;
+typedef struct __Mat_struct *Mat;

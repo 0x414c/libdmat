@@ -12,11 +12,23 @@
 
 
 #pragma region "Entrywise operations"
-TElementWise_MatrixMatrix1$(add, +); TElementWise_MatrixMatrix1$(sub, -); TElementWise_MatrixMatrix1$(mul, *); TElementWise_MatrixMatrix1$(div, /);
-TElementWise_MatrixScalar$(add, +); TElementWise_MatrixScalar$(sub, -); TElementWise_MatrixScalar$(mul, *); TElementWise_MatrixScalar$(div, /);
-TElementWise_MatrixMatrix2$(add, +); TElementWise_MatrixMatrix2$(sub, -); TElementWise_MatrixMatrix2$(mul, *); TElementWise_MatrixMatrix2$(div, /);
+TElementWise_MatrixMatrix1$(add, +)
+TElementWise_MatrixMatrix1$(sub, -)
+TElementWise_MatrixMatrix1$(mul, *)
+TElementWise_MatrixMatrix1$(div, /)
 
-Mat MatEntryWiseLerp(Mat A, Mat B, double t) {
+TElementWise_MatrixMatrix2$(add, +)
+TElementWise_MatrixMatrix2$(sub, -)
+TElementWise_MatrixMatrix2$(mul, *)
+TElementWise_MatrixMatrix2$(div, /)
+
+TElementWise_MatrixScalar$(add, +)
+TElementWise_MatrixScalar$(sub, -)
+TElementWise_MatrixScalar$(mul, *)
+TElementWise_MatrixScalar$(div, /)
+
+
+Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
@@ -53,7 +65,7 @@ bool IsEqual (Mat A, Mat B) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			if (!equals(a[i][j], b[i][j])) {
+			if (!(equals(a[i][j], b[i][j]))) {
 				return false;
 			}
 		}
@@ -192,9 +204,9 @@ void toTransposed_square (Mat A) {
  \return	Matrix A transposed.
  */
 Mat Transposed (Mat A) {
-	entry_t **a = A->a;
 	Mat T = AllocMat(A->colsCount, A->rowsCount);
 	entry_t **t = T->a;
+	entry_t **a = A->a;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -245,12 +257,12 @@ Mat Inverse (Mat A) {
 	switch (A->rowsCount) {
 		case 1:
 			R = AllocMat(A->rowsCount, A->colsCount);
-			R->a[0][0] = 1.0 / a[0][0];
+			R->a[0][0] = ((entry_t) 1.0) / a[0][0];
 			return R;
 		case 2:
 			R = AllocMat(A->rowsCount, A->colsCount);
-			R->a[1][0] = a[1][0] * -1.0;
-			R->a[0][1] = a[0][1] * -1.0;
+			R->a[1][0] = -a[1][0];
+			R->a[0][1] = -a[0][1];
 			R->a[0][0] = a[1][1];
 			R->a[1][1] = a[0][0];
 			_ms_mul(R, 1.0 / A->det); //TODO: A->det is already computed at the very beginning of func when
@@ -359,6 +371,7 @@ Mat MatMul_naive (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
 			return C;
 		} else {
+			fill_zeroes(C);
 			for (size_t i = 0; i < A->rowsCount; ++i) {
 				for (size_t k = 0; k < A->colsCount; ++k) {
 					entry_t s = A->a[i][k];
@@ -673,7 +686,7 @@ entry_t EuclideanNorm (Mat A) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			sum += square_d(A->a[i][j]); //TODO: check for overflow
+			sum += square_fd(A->a[i][j]); //TODO: check for overflow
 		}
 	}
 
@@ -784,7 +797,7 @@ size_t _fixSize (size_t Size) {
 }
 
 /**
- \fn	Mat MatMul_strassen (Mat A, Mat B)
+ \fn	Mat MatMul_Strassen (Mat A, Mat B)
 
  \brief	Finds product of A & B using Strassen algorithm.
  Source matrices A, B & its product C will be divided into 4 square blocks (submatrices),
@@ -809,7 +822,7 @@ size_t _fixSize (size_t Size) {
 
  \return	Product of A & B.
  */
-Mat MatMul_strassen (Mat A, Mat B) {
+Mat MatMul_Strassen (Mat A, Mat B) {
 	Mat C = NULL;
 	size_t Size = A->rowsCount;
 
@@ -818,7 +831,6 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C = AllocMat(Size, Size);
 			C->a[0][0] = A->a[0][0] * B->a[0][0];
 			return C;
-			break;
 		case 2:
 			C = AllocMat(Size, Size);
 			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
@@ -826,12 +838,10 @@ Mat MatMul_strassen (Mat A, Mat B) {
 			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
             return C;
-            break;
         case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges.
 														// upd.: seems that it is actually an GCC extension or smth.
 			C = MatMul$(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
-			break;
 		default:
 			C = AllocMat(Size, Size);
 
@@ -870,68 +880,67 @@ Mat MatMul_strassen (Mat A, Mat B) {
 				}
 			}
 
-      _mm2_add(A11, A22, A_tmp); // A11 + A22
-      _mm2_add(B11, B22, B_tmp); // B11 + B22
-			Mat p1 = MatMul_strassen(A_tmp, B_tmp); // p1 = (A11+A22) * (B11+B22)
+            _mm2_add(A11, A22, A_tmp); // A11 + A22
+            _mm2_add(B11, B22, B_tmp); // B11 + B22
+            Mat p1 = MatMul_Strassen(A_tmp, B_tmp); // p1 = (A11+A22) * (B11+B22)
 
-			_mm2_add(A21, A22, A_tmp); // A21 + A22
-			Mat p2 = MatMul_strassen(A_tmp, B11); // p2 = (A21+A22) * (B11)
+            _mm2_add(A21, A22, A_tmp); // A21 + A22
+            Mat p2 = MatMul_Strassen(A_tmp, B11); // p2 = (A21+A22) * (B11)
 
-      _mm2_sub(B12, B22, B_tmp); // B12 - B22
-			Mat p3 = MatMul_strassen(A11, B_tmp); // p3 = (A11) * (B12 - B22)
+            _mm2_sub(B12, B22, B_tmp); // B12 - B22
+            Mat p3 = MatMul_Strassen(A11, B_tmp); // p3 = (A11) * (B12 - B22)
 
-      _mm2_sub(B21, B11, B_tmp); // B21 - B11
-			Mat p4 = MatMul_strassen(A22, B_tmp); // p4 = (A22) * (B21 - B11)
+            _mm2_sub(B21, B11, B_tmp); // B21 - B11
+            Mat p4 = MatMul_Strassen(A22, B_tmp); // p4 = (A22) * (B21 - B11)
 
-      _mm2_add(A11, A12, A_tmp); // A11 + A12
-			Mat p5 = MatMul_strassen(A_tmp, B22); // p5 = (A11+A12) * (B22)
+            _mm2_add(A11, A12, A_tmp); // A11 + A12
+            Mat p5 = MatMul_Strassen(A_tmp, B22); // p5 = (A11+A12) * (B22)
 
-      _mm2_sub(A21, A11, A_tmp); // A21 - A11
-      _mm2_add(B11, B12, B_tmp); // B11 + B12
-			Mat p6 = MatMul_strassen(A_tmp, B_tmp); // p6 = (A21-A11) * (B11+B12)
+            _mm2_sub(A21, A11, A_tmp); // A21 - A11
+            _mm2_add(B11, B12, B_tmp); // B11 + B12
+            Mat p6 = MatMul_Strassen(A_tmp, B_tmp); // p6 = (A21-A11) * (B11+B12)
 
-      _mm2_sub(A12, A22, A_tmp); // A12 - A22
-      _mm2_add(B21, B22, B_tmp); // B21 + B22
-			Mat p7 = MatMul_strassen(A_tmp, B_tmp); // p7 = (A12-A22) * (B21+B22)
+            _mm2_sub(A12, A22, A_tmp); // A12 - A22
+            _mm2_add(B21, B22, B_tmp); // B21 + B22
+            Mat p7 = MatMul_Strassen(A_tmp, B_tmp); // p7 = (A12-A22) * (B21+B22)
 
-      _mm2_add(p3, p5, C12); // c12 = p3 + p5
-      _mm2_add(p2, p4, C21); // c21 = p2 + p4
+            _mm2_add(p3, p5, C12); // c12 = p3 + p5
+            _mm2_add(p2, p4, C21); // c21 = p2 + p4
 
-      _mm2_add(p1, p4, A_tmp); // p1 + p4
-      _mm2_add(A_tmp, p7, B_tmp); // p1 + p4 + p7
-      _mm2_sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
+            _mm2_add(p1, p4, A_tmp); // p1 + p4
+            _mm2_add(A_tmp, p7, B_tmp); // p1 + p4 + p7
+            _mm2_sub(B_tmp, p5, C11); // c11 = p1 + p4 - p5 + p7
 
-      _mm2_add(p1, p3, A_tmp); // p1 + p3
-      _mm2_add(A_tmp, p6, B_tmp); // p1 + p3 + p6
-			_mm2_sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
+            _mm2_add(p1, p3, A_tmp); // p1 + p3
+            _mm2_add(A_tmp, p6, B_tmp); // p1 + p3 + p6
+            _mm2_sub(B_tmp, p2, C22); // c22 = p1 + p3 - p2 + p6
 
-			// Join
-			for (size_t i = 0; i < Size; i++) {
-				for (size_t j = 0; j < Size; j++) {
-					C->a[i][j] = C11->a[i][j];
-					C->a[i][j + Size] = C12->a[i][j];
-					C->a[i + Size][j] = C21->a[i][j];
-					C->a[i + Size][j + Size] = C22->a[i][j];
-				}
-			}
+            // Join
+            for (size_t i = 0; i < Size; i++) {
+                for (size_t j = 0; j < Size; j++) {
+                    C->a[i][j] = C11->a[i][j];
+                    C->a[i][j + Size] = C12->a[i][j];
+                    C->a[i + Size][j] = C21->a[i][j];
+                    C->a[i + Size][j + Size] = C22->a[i][j];
+                }
+            }
 
-			freeMats(A11, A12, A21, A22, B11, B12, B21, B22, C11, C12, C21, C22,
-				A_tmp, B_tmp, p1, p2, p3, p4, p5, p6, p7, NULL);
+            freeMats(A11, A12, A21, A22, B11, B12, B21, B22, C11, C12, C21, C22,
+                A_tmp, B_tmp, p1, p2, p3, p4, p5, p6, p7, NULL);
 
-			return C;
-			break;
+            return C;
 	}
 }
 
 /**
- \fn	Mat MatMul_strassen_optimized (Mat A, Mat B)
+ \fn	Mat MatMul_Strassen_optimized (Mat A, Mat B)
 
  \brief	P1 = (A01+A10)(B10+B01)
 		P2 = (A10+A11)B10
 		P3 = A01(B11-B01)
 		P4 = A10(B00-B10)
 		P5 = (A01+A00)B01
-		 P6 = (A11-A01)(B10+B11)
+		P6 = (A11-A01)(B10+B11)
 		P7 = (A00-A10)(B00+B01)
 		C00 = P1+P4-P5+P7
 		C01 = P3+P5
@@ -941,9 +950,9 @@ Mat MatMul_strassen (Mat A, Mat B) {
  \param	A	The Mat to process.
  \param	B	The Mat to process.
 
- \return	A Mat.
+ \return	A . B.
  */
-Mat MatMul_strassen_optimized (Mat A, Mat B) {
-	return MatMul_strassen(A, B); //TODO:
+Mat MatMul_Strassen_optimized (Mat A, Mat B) {
+	return MatMul_Strassen(A, B); //TODO:
 }
 #pragma endregion "Strassen"

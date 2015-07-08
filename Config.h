@@ -29,6 +29,14 @@
 
 
 /**
+ \def	MM_SIZE_THRESHOLD
+
+ \brief
+ */
+#define MM_SIZE_THRESHOLD (16)
+
+
+/**
  \def	CHECKS_ENABLED
 
  \brief	Enable checks?
@@ -100,7 +108,7 @@
 
  \brief	Format string for floats (used in printAsStr$()).
  */
-#define FMT_FLT_STR		"% .13f"
+#define FMT_FLT_STR		"% .10f"
 
 
 /**

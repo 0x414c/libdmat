@@ -21,9 +21,9 @@ bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 
 #pragma region "Search in array"
 
-bool exists_d (long double *c, size_t start, long double value) {
+bool exists_d (double *c, size_t start, double value) {
     for (size_t i = 0; i < start; i++) {
-        if (equals_ld(c[i], value)) {
+        if (equals_d(c[i], value)) {
             return true;
         }
     }
@@ -78,7 +78,7 @@ size_t *AllocVec_u (size_t size) {
 }
 
 /**
- \fn	long double *AllocVec_ld (size_t size)
+ \fn	long double *AllocVec_d (size_t size)
 
  \brief	Ld allocate vector.
 
@@ -86,10 +86,10 @@ size_t *AllocVec_u (size_t size) {
 
  \return	null if it fails, else a double pointer.
  */
-long double *AllocVec_ld (size_t size) {
-    long double *v = NULL;
-    v = ((long double *) malloc(sizeof(long double) * size));
-    //v = ((long double *) calloc(Size, sizeof(long double)));
+double *AllocVec_d (size_t size) {
+    double *v = NULL;
+    v = ((double *) malloc(sizeof(double) * size));
+    //v = ((double *) calloc(Size, sizeof(double)));
     Assert$(v != NULL, "Cannot allocate.");
 
     return v;

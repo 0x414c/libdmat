@@ -4,9 +4,7 @@
 #include <stdbool.h>
 
 #include "Matrix.h"
-
-
-#define MM_SIZE_THRESHOLD 16
+#include "Config.h"
 
 
 size_t Rank (Mat RREF);
@@ -26,14 +24,14 @@ void toTransposed (Mat *A);
 
 Mat MatMul_naive (Mat A, Mat B);
 Mat MatMul_naive_recursive (Mat A, Mat B);
-Mat MatMul_strassen (Mat A, Mat B);
-Mat MatMul_strassen_optimized (Mat A, Mat B);
+Mat MatMul_Strassen (Mat A, Mat B);
+Mat MatMul_Strassen_optimized (Mat A, Mat B);
 
 size_t _fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
 void matMul (Mat *A, Mat B);
 
-#define MatMul$(A,B) MatMul_naive(A,B)
+#define MatMul$(A,B) MatMul_naive((A),(B))
 
 Mat KroneckerProd (Mat A, Mat B);
 Mat KroneckerSum (Mat A, Mat B);
@@ -46,21 +44,40 @@ entry_t ConditionNumber (Mat A);
 
 entry_t DiagProd (Mat A);
 
+Mat MatLerp_entrywise (Mat A, Mat B, entry_t t);
+
 // 'templates' for element-wise functions
-#define for_i$(A) for (size_t i = 0; i < A->rowsCount; i++)
-#define for_j$(A) for (size_t j = 0; j < A->colsCount; j++)
+#define _foreach$(idx,mat,cmp)	for (size_t (idx) = 0; (idx) < (mat)->cmp; (idx)++)
 
-#define TElementWise_MatrixMatrix1$(funcName, operator)						  \
-	void _mm1_##funcName (Mat A, Mat B) {							          \
-	for_i$(A) for_j$(A) A->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
-void _mm1_add(); void _mm1_sub(); void _mm1_mul(); void _mm1_div();
+#define TElementWise_MatrixMatrix1$(funcName, operator)				\
+	void _mm1_##funcName (Mat A, Mat B) {							\
+		_foreach$(i,A,rowsCount)									\
+		_foreach$(j,A,colsCount) 									\
+		A->a[i][j] = A->a[i][j] operator B->a[i][j]; }				\
 
-#define TElementWise_MatrixMatrix2$(funcName, operator)						  \
-	void _mm2_##funcName (Mat A, Mat B, Mat C) {							  \
-	for_i$(A) for_j$(B) C->a[i][j] = A->a[i][j] operator B->a[i][j]; return; }\
-void _mm2_add(); void _mm2_sub(); void _mm2_mul(); void _mm2_div();
+extern void _mm1_add();
+extern void _mm1_sub();
+extern void _mm1_mul();
+extern void _mm1_div();
 
-#define TElementWise_MatrixScalar$(funcName, operator)                 \
-	void _ms_##funcName (Mat A, double x) {				       		   \
-	for_i$(A) for_j$(A) A->a[i][j] = A->a[i][j] operator (x); return; }\
-void _ms_add(); void _ms_sub(); void _ms_mul(); void _ms_div();
+#define TElementWise_MatrixMatrix2$(funcName, operator)				\
+	void _mm2_##funcName (Mat A, Mat B, Mat C) {					\
+		_foreach$(i,A,rowsCount)									\
+		_foreach$(j,A,colsCount)									\
+		(C->a[i][j]) = (A->a[i][j]) operator (B->a[i][j]); }		\
+
+extern void _mm2_add();
+extern void _mm2_sub();
+extern void _mm2_mul();
+extern void _mm2_div();
+
+#define TElementWise_MatrixScalar$(funcName, operator)              \
+	void _ms_##funcName (Mat A, double x) {					    	\
+		_foreach$(i,A,rowsCount)									\
+		_foreach$(j,A,colsCount)									\
+		(A->a[i][j]) = (A->a[i][j]) operator (x); }					\
+
+extern void _ms_add();
+extern void _ms_sub();
+extern void _ms_mul();
+extern void _ms_div();

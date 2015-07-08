@@ -11,7 +11,7 @@
 
 #pragma region "Gauss"
 /**
- \fn	Mat *LUDcmp_gauss (Mat A)
+ \fn	Mat *Dcmp_LU_Gauss (Mat A)
 
  \brief	The Gaussian elimination algorithm (with partial (row) pivoting)
 		for obtaining LU decomposition of Matrix A.
@@ -23,15 +23,15 @@
  \return	The * to Matrices array containing L, U &amp; P.
  			\[0] is L, [1] is U, [2] is P. \.
  */
-Mat *LUDcmp_gauss (Mat A) {
+Mat *Dcmp_LU_Gauss (Mat A) {
 	Mat LU = DeepCopy(A);
 	entry_t **lu = LU->a;
 	Mat P = Identity(A->rowsCount);
-	//double **p = P->a;
+	entry_t **p = P->a;
 	size_t cols = A->colsCount;
 	size_t rows = A->rowsCount;
-	//size_t *permutationVector = AllocVec_u(m);
-	int permutationSign = 1;
+//	size_t *permutationVector = AllocVec_u(rows);
+	int8_t permutationSign = 1;
 
 	// Pivoting
 	// TODO: one procedure to pivotize them all
@@ -47,7 +47,7 @@ Mat *LUDcmp_gauss (Mat A) {
 		if (pivot != k) {
 			for (size_t j = 0; j < cols; j++) {
 				swap_d(lu[pivot][j], lu[k][j]);
-				swap_d(P->a[pivot][j], P->a[k][j]);
+				swap_d(p[pivot][j], p[k][j]);
 			}
 			//swap_i(permutationVector[pivot], permutationVector[k]);
 			permutationSign *= -1; //-V127
@@ -75,6 +75,7 @@ Mat *LUDcmp_gauss (Mat A) {
 
 	// fill U
 	Mat U = AllocMat(rows, cols);
+	fill_zeroes(U);
 	entry_t **u = U->a;
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = i; j < cols; j++) {
@@ -89,7 +90,7 @@ Mat *LUDcmp_gauss (Mat A) {
 	result[2] = P;
 
 	freeMat$(LU);
-	//free(permutationVector);
+	//free$(permutationVector);
 
 	return result;
 }
@@ -110,7 +111,7 @@ Mat Pivotize_LU (Mat A) {
 	Mat P = Identity(A->rowsCount);
 	entry_t **a = A->a;
 	entry_t **p = P->a;
-	int permutationSign = 1;
+	int8_t permutationSign = 1;
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
@@ -123,7 +124,7 @@ Mat Pivotize_LU (Mat A) {
 			permutationSign *= -1; //-V127
 			for (size_t j = 0; j < A->colsCount; j++) {
 				swap(p[k][j], p[pivot][j]);
-				swap(A->a[k][j], A->a[pivot][j]);
+				swap(a[k][j], a[pivot][j]);
 			}
 		}
 	}
@@ -133,7 +134,7 @@ Mat Pivotize_LU (Mat A) {
 }
 
 /**
- \fn	Mat *LUDcmp_crout (Mat A)
+ \fn	Mat *Dcmp_LU_Crout (Mat A)
 
  \brief	LUP decomposition using Crout's method with partial pivoting, where L is lower triangular
 		(has elements only on the diagonal and below) and U is upper triangular (has elements
@@ -149,15 +150,15 @@ Mat Pivotize_LU (Mat A) {
 
  \return	The * to Matrices array containing L, U &amp; P. \[0] is L, [1] is U, [2] is P. \.
  */
-Mat *LUDcmp_crout (Mat A) {
+Mat *Dcmp_LU_Crout (Mat A) {
 	Mat A_copy;
 	Mat L, U, P;
 	size_t n = A->rowsCount;
 
 	L = Identity(A->rowsCount);
 	U = AllocMat(A->rowsCount, A->colsCount);
+	fill_zeroes(U);
 	A_copy = DeepCopy(A);
-
 	P = Pivotize_LU(A_copy);
 
 	entry_t **l = L->a;
@@ -166,14 +167,14 @@ Mat *LUDcmp_crout (Mat A) {
 
 	for (size_t j = 0; j < n; j++) {
 		for (size_t i = 0; i <= j; i++) {
-			double sum = 0.0;
+			entry_t sum = 0.0;
 			for (size_t k = 0; k < i; k++) {
 				sum += u[k][j] * l[i][k];
 			}
 			u[i][j] = a[i][j] - sum;
 		}
 		for (size_t i = j; i < n; i++) {
-			double sum = 0.0;
+			entry_t sum = 0.0;
 			for (size_t k = 0; k < j; k++) {
 				sum += u[k][j] * l[i][k];
 			}
@@ -207,13 +208,13 @@ Mat *LUDcmp_crout (Mat A) {
 
  \return			Solution as column-vector.
  */
-Mat Solve_LUP (Mat *lup, Mat B) {
-	Assert$(lup[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
-	Check$(isSingular_LUP(lup) == false, "Cannot solve for singular matrix.");
+Mat Solve_LUP (Mat *LUP, Mat B) {
+	Assert$(LUP[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
+	Check$(isSingular_LUP(LUP) == false, "Cannot solve for singular matrix.");
 
-	entry_t **l = lup[0]->a;
-	entry_t **u = lup[1]->a;
-	Mat PB = MatMul$(lup[2], B);
+	entry_t **l = LUP[0]->a;
+	entry_t **u = LUP[1]->a;
+	Mat PB = MatMul$(LUP[2], B);
 	entry_t **b = PB->a;
 
 	Mat Y = AllocMat(B->rowsCount, B->colsCount);
@@ -223,7 +224,7 @@ Mat Solve_LUP (Mat *lup, Mat B) {
 
 	for (size_t c = 0; c < B->colsCount; c++) {
 		// forward solve Ly = b
-		for (size_t i = 0; i < lup[0]->rowsCount; i++) {
+		for (size_t i = 0; i < LUP[0]->rowsCount; i++) {
 			y[i][c] = b[i][c];
 			for (size_t j = 0; j < i; j++) {
 				y[i][c] -= l[i][j] * y[j][c];
@@ -231,9 +232,9 @@ Mat Solve_LUP (Mat *lup, Mat B) {
 			//y[i][c] /= l[i][i];
 		}
 		// backward solve Ux=y
-		for (ptrdiff_t i = lup[1]->rowsCount - 1; i >= 0; i--) {
+		for (ptrdiff_t i = LUP[1]->rowsCount - 1; i >= 0; i--) {
 			x[i][c] = y[i][c];
-			for (size_t j = i + 1; j < lup[1]->colsCount; j++) {
+			for (size_t j = i + 1; j < LUP[1]->colsCount; j++) {
 				x[i][c] -= u[i][j] * x[j][c];
 			}
 			x[i][c] /= u[i][i];

@@ -26,6 +26,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 	Mat QR = DeepCopy(A);
 	Mat Q = AllocMat(rows, columns);
 	Mat R = AllocMat(rows, columns);
+	fill_zeroes(R);
 
 	entry_t **qr = QR->a;
 
@@ -81,7 +82,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 				}
 				s = -s / qr[k][k];
 				for (size_t i = k; i < rows; i++) {
-					Q->a[i][j] += s*(qr[i][k]);
+					Q->a[i][j] += s * qr[i][k];
 				}
 			}
 		}
@@ -108,21 +109,22 @@ entry_t Det_QR (Mat *QR) {
 }
 
 //Solve R*X=Q'*B
-//Solve A*X = B, when A represented by Q*R
+//Solve A*X = B, when A is represented by Q*R
 Mat Solve_QR (Mat *QR, Mat B) {
 	Assert$(QR[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
 	Check$(QR[1]->isRankDeficient == false, "Rank deficient system.");
 
 	Mat Qt = Transposed(QR[0]);
 	matMul(&Qt, B);
+	entry_t **qt = Qt->a;
 
 	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
-			Qt->a[k][j] /= QR[1]->a[k][k];
+			qt[k][j] /= QR[1]->a[k][k];
 		}
 		for (ssize_t i = 0; i < k; i++) {
 			for (size_t j = 0; j < B->colsCount; j++) {
-				Qt->a[i][j] -= Qt->a[k][j] * QR[1]->a[i][k];
+				qt[i][j] -= qt[k][j] * QR[1]->a[i][k];
 			}
 		}
 	}

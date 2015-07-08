@@ -39,7 +39,6 @@
 //#endif // __MINGW32__
 
 #ifdef __MINGW32__
-#include <stdio.h>
 #define printf __mingw_printf
 #define fprintf __mingw_fprintf
 #endif // __MINGW32__

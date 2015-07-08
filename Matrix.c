@@ -20,31 +20,33 @@
 /**
  \fn	Mat AllocMat (size_t rowsCount, size_t columnsCount)
 
- \brief	Allocate double-valued MxN matrix and fill it w/ zeroes.
+ \brief	Allocate memory for Matrix w/ specified number of rows and columns.
 
  \date	17-May-14
 
- \param	RowsCount   	The rows count.
- \param	ColumnsCount	The columns count.
+ \param	rowsCount   	The rows count.
+ \param	columnsCount	The columns count.
 
- \return	Pointer to _Mat struct.
+ \return	Pointer to __Mat_struct if allocation was successful, NULL otherwise.
  */
 Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	Mat A = NULL;
 
-	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Matrix size can't be set to zero.");
+	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Rows and/or columns count can't be set to zero");
 
 	A = (Mat) malloc(sizeof(*A));
-	Assert$(A != NULL, "No space for matrix");
+	Assert$(A != NULL, "Cannot allocate memory for __Mat_struct");
 
 	A->a = NULL;
-	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
-	Assert$(A->a != NULL, "No space for row pointers");
+//	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
+	A->a = (entry_t**) malloc(rowsCount * sizeof(entry_t*));
+	Assert$(A->a != NULL, "Cannot allocate memory for row pointers");
 
 	for (size_t i = 0; i < rowsCount; i++) {
 		A->a[i] = NULL;
-		A->a[i] = (entry_t*) calloc(columnsCount, sizeof(entry_t));
-		Assert$(A->a[i] != NULL, "No space for rows");
+//		A->a[i] = (entry_t*) calloc(columnsCount, sizeof(entry_t));
+		A->a[i] = (entry_t*) malloc(columnsCount * sizeof(entry_t));
+		Assert$(A->a[i] != NULL, "Cannot allocate memory for row");
 	}
 
 	A->rowsCount = rowsCount;
@@ -133,29 +135,33 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	//	Invalid read from 'A->a', (outside its readable range)			132
 
 
-	Assert$(A != NULL, "Cannot resize.");
-	Assert$((newRows != 0 && newCols != 0), "Rows or columns count can't be set to 0.");
+	Assert$(A != NULL, "Cannot resize");
+	Assert$((newRows != 0 && newCols != 0), "Rows and/or columns count can't be set to 0");
 	if ((A->rowsCount == newRows) && (A->colsCount == newCols)) {
-		Check$(0, "Resizing has no effect because sizes difference is 0.");
+		Check$(0, "Resizing has no effect because size difference is 0");
 		return;
 	}
 
 	entry_t **newA = (entry_t**) realloc(A->a, newRows*sizeof(entry_t*));
-	Assert$(newA != NULL, "Reallocating space for row pointers failed.");
+	Assert$(newA != NULL, "Reallocating space for row pointers failed");
 	A->a = newA;
 
-	for (size_t i = 0; i < ((newRows < A->rowsCount)? newRows: A->rowsCount); i++) {
+	for (size_t i = 0; i < ((newRows < A->rowsCount) ? newRows : A->rowsCount); i++) {
 		entry_t *newAi = (entry_t*) realloc(A->a[i], newCols*sizeof(entry_t));
-		Assert$(newAi != NULL, "Reallocating space for rows failed.");
+		Assert$(newAi != NULL, "Reallocating space for rows failed");
 		A->a[i] = newAi;
+#ifdef __STDC_IEC_559__
 		if (newCols > A->colsCount)	{
+			//NOTE: memsetting double array w/ 0 will be UB if double isn't IEEE754-compliant.
 			memset(A->a[i] + A->colsCount, 0, sizeof(entry_t) * (newCols - A->colsCount));
 		}
+#endif // __STDC_IEC_559__
 	}
 
 	if (newRows > A->rowsCount)	{
 		for (size_t i = A->rowsCount; i < newRows; i++) {
-			A->a[i] = (entry_t*) calloc(newCols, sizeof(entry_t));
+//			A->a[i] = (entry_t*) calloc(newCols, sizeof(entry_t));
+			A->a[i] = (entry_t*) malloc(newCols * sizeof(entry_t));
 			Assert$(A->a[i] != NULL, "Allocating space for rows failed.");
 		}
 	}
@@ -264,7 +270,7 @@ size_t printMatricesToFile (Mat A, ...) {
  \param [in]	format	If non-null, the format string.
  */
 void toString (Mat A, FILE *file, char *format) {
-	Assert$(file != NULL, "File reading error");
+	Assert$(file != NULL, "File access error.");
 	Assert$(A != NULL, "Cannot print.");
 
 	entry_t **a = A->a;
@@ -407,9 +413,10 @@ Mat Copy (Mat A) {
  \return	Main diagonal of Matrix A.
  */
 Mat Diag (Mat A) {
+	Mat D = AllocMat(1, A->rowsCount);
 	entry_t **a = A->a;
-	Mat D = AllocMat(1, A->colsCount);
 	entry_t **d = D->a;
+
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		d[0][i] = a[i][i];
 	}
@@ -428,7 +435,7 @@ Mat Diag (Mat A) {
 
  \return	A Mat.
  */
-Mat Sub (Mat A, size_t row, size_t col) {
+Mat SubMatrix (Mat A, size_t row, size_t col) {
 	Assert$(false, "Not implemented"); //TODO:
 
 	return NULL;
@@ -445,15 +452,28 @@ Mat Sub (Mat A, size_t row, size_t col) {
 
  \return	Identity Matrix.
  */
-Mat Identity (size_t Size) {
-	Mat I = AllocMat(Size, Size);
+Mat Identity (size_t size) {
+	Mat E = AllocMat(size, size);
+	entry_t **e = E->a;
 
-	for (size_t i = 0; i < Size; i++) {
-		*(I->a[i] + i) = 1.0;
+	for (size_t i = 0; i < size; i++) {
+		for (size_t j = 0; j < size; j++) {
+			if (i != j) {
+				e[i][j] = 0.0;
+			} else {
+				e[i][j] = 1.0;
+			}
+		}
 	}
-	I->det = 1.0;
 
-	return I;
+	return E;
+}
+
+Mat Zeroes (size_t size) {
+	Mat Z = AllocMat(size, size);
+	fill_zeroes(Z);
+
+	return Z;
 }
 
 /**
