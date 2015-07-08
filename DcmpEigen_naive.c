@@ -10,6 +10,7 @@
 #include "Extras.h"
 #include "Maths.h"
 #include "SpinningIndicator.h"
+#include "Vector.h"
 
 
 /**
@@ -109,7 +110,7 @@ Mat Spectrum(Mat *evd) {
 double SpectralRadius (Mat Sp) {
 	double rad = 0.0;
 	for (size_t i = 0; i < Sp->colsCount; i++) {
-		rad = max(rad, fabs(Sp->a[0][i]));
+		rad = max(rad, abs(Sp->a[0][i]));
 	}
 
 	return rad;

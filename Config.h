@@ -1,20 +1,37 @@
 #pragma once
 
+#include "PlatformDependent.h"
 #include "Const.h"
 
 
 /**
  \def	DOUBLE_PRECISION
 
- \brief	Enable double precision computations?
+ \brief	Enable double precision storage?
+        If defined, Matrix entry type `entry_t` will be defined as `double_t`,
+        `float_t` otherwise.
+        Computations will follow rules defined by `FLT_EVAL_METHOD`:
+            -x  (not including `-1`) Implementation-defined.
+            -1  Indeterminate.
+             0  Evaluate all operations and constants just to the range and
+                precision of the corresponding types.
+                `float_t` and `double_t` are equivalent to `float` and `double` respectively.
+             1  Evaluate operations and constants of type `float` and `double`
+                to the range and precision of the `double` type,
+                evaluate `long double` operations and constants to the range and
+                precision of the `long double` type.
+                Both `float_t` and `double_t` are equivalent to `double`.
+             2  Evaluate all operations and constants to the range and
+                precision of the `long double` type.
+                Both `float_t` and `double_t` are equivalent to `long double`.
  */
-#define DOUBLE_PRECISION
+//#define DOUBLE_PRECISION
 
 
 /**
  \def	CHECKS_ENABLED
 
- \brief	Enable various checks?
+ \brief	Enable checks?
  */
 #define CHECKS_ENABLED
 
@@ -30,7 +47,7 @@
 /**
  \def	PRINTING_ENABLED();
 
- \brief	Will otutput be produced?
+ \brief	Will output be produced?
  */
 #define PRINTING_ENABLED
 
@@ -38,7 +55,7 @@
 /**
  \def	OUTFILE();
 
- \brief	Output file used in printing.
+ \brief	Output file used in printing functions.
  */
 #define OUTFILE stdout
 
@@ -56,7 +73,7 @@
  \def	PRINTBUFSZ();
 
  \brief	Size of printing buffer.
-        Note that buffer must be capable to hold string defined by FMT_FLT
+        Note that buffer must be capable to hold string formatted w/ FMT_FLT
  */
 #define PRINTBUFSZ (320)
 #endif // PRETTYOUTPUT
@@ -81,66 +98,18 @@
 /**
  \def	FMT_FLT_STR();
 
- \brief	Format string for floats (used in printStr$()).
+ \brief	Format string for floats (used in printAsStr$()).
  */
-#define FMT_FLT_STR		"% .3g"
+#define FMT_FLT_STR		"% .13f"
 
 
 /**
  \def	FMT_FLT_INPUT();
 
- \brief	Format string for filling from file containing floats (fill_fromFile()).
+ \brief	Format string for filling from file containing floats (used in fill_fromFile()).
  */
 #ifdef DOUBLE_PRECISION
 #define FMT_FLT_INPUT   "%lf"
 #else
 #define FMT_FLT_INPUT   "%f"
 #endif // DOUBLE_PRECISION
-
-
-#ifdef _MSC_VER
-/**
- \def	FMT_SIZET();
-
- \brief	Format string for size_t on Windows.
- */
-#define FMT_SIZET "%Iu"
-
-/**
- \def	FMT_PTRDIFFT();
-
- \brief	Format string for ptrdiff_t on Windows. */
-#define FMT_PTRDIFFT "%Id"
-#else
-#ifdef __GNUC__
-/**
-\def	FMT_SIZET();
-
-\brief	Format string for size_t on Linux.
-*/
-#define FMT_SIZET "%zu"
-
-/**
-\def	FMT_PTRDIFFT();
-
-\brief	Format string for ptrdiff_t on Linux. */
-#define FMT_PTRDIFFT "%zd"
-
-#ifdef __MINGW32__
-#define __USE_MINGW_ANSI_STDIO 1 // TODO: doesn't work :C
-#endif // __MINGW32__
-#endif // __GNUC__
-#endif // _MSC_VER //TODO:
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif // _MSC_VER
-
-#ifdef __MINGW32__
-#include <stdio.h>
-#define printf __mingw_printf
-#endif // __MINGW32__
-
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#endif // _MSC_VER

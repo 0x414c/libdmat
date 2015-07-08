@@ -12,6 +12,7 @@
 #include "Maths.h"
 #include "SpinningIndicator.h"
 #include "DcmpEigen_naive.h"
+#include "Vector.h"
 
 
 /**
@@ -54,7 +55,7 @@ void printCharacteristicEquation (int64_t *c, size_t s, FILE *file) {
 	Assert$(file != NULL, "");
 
 	for (size_t i = 0; i < s; i++) {
-		fprintf(file, "x^" FMT_SIZET, s - i);
+		fprintf(file, "x^%" FMT_SIZET, s - i);
 		fprintf(file, " + (%lld)", c[i]);
 	}
 	fprintf(file, " = 0\n");
@@ -112,7 +113,7 @@ long double FindRoot (int64_t *c, size_t s, long double a, long double b, size_t
 	long double fB = EvalPolyAt(b, c, s);
 
 	for (size_t i = 0; i < maxIters; i++) {
-		root = (fA*b - fB*a) / (fA - fB);
+		root = (fA * b - fB * a) / (fA - fB);
 		if (equals_ld(a, b)) {
 			//printf("# %f %f \n", a, b);
 			break;
@@ -181,17 +182,17 @@ long double *GetPolynomialRoots (int64_t *c, size_t size, size_t *rootsCount) {
 
 		if (fabsl(EvalPolyAt(root, c, size)) <= EPS) {
 			if (!(exists_d(roots, i+1, root))) {
-				roots[i++] = (root);
+				roots[i++] = root;
 			}
 		}
-		a+=DELTA; b+=DELTA;
+		a += DELTA; b += DELTA;
 	}
 	clearActivityIndicator();
 
 	*rootsCount = i;
 	if (i == 0) {
 		printf("No eigenvalues found,\nbecause function failed to converge because of no integer roots exists\nor invalid roots search interval (you can change it in <Const.h>).\n");
-		free(roots); roots = NULL;
+		free$(roots);
 		return NULL;
 	}
 

@@ -38,10 +38,10 @@ Mat Dcmp_Cholesky (Mat A) {
 			}
 			L->a[j][k] = s = (A->a[j][k] - s) / L->a[k][k];
 			d += s * s;
-			isSPD = isSPD && (equals_d(A->a[k][j], A->a[j][k]));
+			isSPD = isSPD && (equals(A->a[k][j], A->a[j][k]));
 		}
 		d = A->a[j][j] - d;
-		isSPD = isSPD && (d > EPS);
+		isSPD = isSPD && isnotzero(d);
 		L->a[j][j] = sqrt(max(d, 0.0));
 		for (size_t k = j + 1; k < A->rowsCount; k++) {
 			L->a[j][k] = 0.0;

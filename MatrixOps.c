@@ -53,7 +53,7 @@ bool IsEqual (Mat A, Mat B) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			if (!equals_d(a[i][j], b[i][j])) {
+			if (!equals(a[i][j], b[i][j])) {
 				return false;
 			}
 		}
@@ -81,16 +81,16 @@ bool IsIdentity (Mat A) {
         case 0:
             return false;
         case 1:
-            return equals_d(a[0][0], 1.0);
+            return equals(a[0][0], 1.0);
         case 2:
-            return equals_d(a[0][0], 1.0) && fabs(a[0][1]) < EPS && fabs(a[1][0]) < EPS && equals_d(a[1][1], 1.0);
+            return equals(a[0][0], 1.0) && iszero(a[0][1]) && iszero(a[1][0]) && equals(a[1][1], 1.0);
         default:
             for (size_t i = 0; i < A->rowsCount; i++) {
                 for (size_t j = 0; j < A->colsCount; j++) {
-                    if ((i != j) && (fabs(a[i][j]) > EPS)) {
+                    if ((i != j) && (isnotzero(a[i][j]))) {
                         return false;
                     } else {
-                        if ((i == j) && (!(equals_d(a[i][j], 1.0)))) {
+                        if ((i == j) && (!(equals(a[i][j], 1.0)))) {
                             return false;
                         }
                     }
@@ -130,7 +130,7 @@ bool IsSymmetric (Mat A) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equals_d(A->a[i][j], A->a[j][i])) {
+			if (!equals(A->a[i][j], A->a[j][i])) {
 				return false;
 			}
 		}
@@ -146,7 +146,7 @@ bool IsSkewSymmetric (Mat A) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equals_d(A->a[i][j], -A->a[j][i])) {
+			if (!equals(A->a[i][j], -A->a[j][i])) {
 				return false;
 			}
 		}
@@ -235,7 +235,7 @@ void toTransposed (Mat *A) {
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-    if (!Check$(!((A->isSingular) || (fabs(Det_Gauss(A)) <= EPS) || (!IsSquare$(A))), "Cannot invert singular matrix.")) {
+    if (!Check$(!((A->isSingular) || (iszero(Det_Gauss(A))) || (!IsSquare$(A))), "Cannot invert singular matrix.")) {
         return NULL;
     }
 
@@ -575,7 +575,7 @@ size_t Rank (Mat A) {
 
 	for (i = 0; i < A->rowsCount; i++) {
 		for (j = 0; j < A->colsCount; j++) {
-			if (fabs(r[i][j]) > EPS) {
+			if (isnotzero(r[i][j])) {
 				rank++;
 				break;
 			}
@@ -621,7 +621,7 @@ entry_t OneNorm (Mat A) {
 	for (size_t i = 0; i < A->colsCount; i++) {
         entry_t sum = 0.0;
 		for (size_t j = 0; j < A->rowsCount; j++) {
-			sum += fabs(A->a[j][i]);
+			sum += abs(A->a[j][i]);
 		}
 		norm = max(norm, sum);
 	}
@@ -650,7 +650,7 @@ entry_t InfinityNorm (Mat A) {
 	for (size_t i = 0; i < A->rowsCount; i++) {
         entry_t sum = 0.0;
 		for (size_t j = 0; j < A->colsCount; j++) {
-			sum += fabs(A->a[i][j]);
+			sum += abs(A->a[i][j]);
 		}
 		norm = max(norm, sum);
 	}
@@ -673,7 +673,7 @@ entry_t EuclideanNorm (Mat A) {
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			sum += square_d(A->a[i][j]);
+			sum += square_d(A->a[i][j]); //TODO: check for overflow
 		}
 	}
 
@@ -700,7 +700,7 @@ entry_t ConditionNumber (Mat A) {
 
 entry_t DiagProd (Mat A) {
 	entry_t prod = 1.0;
-	for (int i = 0; i < A->rowsCount; ++i) {
+	for (size_t i = 0; i < A->rowsCount; ++i) {
 		prod *= A->a[i][i];
 	}
 

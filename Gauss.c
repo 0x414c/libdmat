@@ -8,6 +8,7 @@
 #include "MatrixOps.h"
 #include "Maths.h"
 #include "Extras.h"
+#include "Vector.h"
 
 
 #pragma region "Determinant computation"
@@ -69,7 +70,7 @@ entry_t Det_Gauss (Mat A) {
 		default:
 			T = DeepCopy(A);
 
-			toRowEchelonForm(T);
+			toRowEchelonForm_reference(T);
 
 			if (!(T->isSingular)) {
 				for (size_t i = 0; i < A->rowsCount; i++) {
@@ -86,7 +87,7 @@ entry_t Det_Gauss (Mat A) {
             return det;
 	}
 
-	if (fabs(det) <= EPS) { A->isSingular = true; }
+	if (iszero(det)) { A->isSingular = true; }
 	A->det = det;
 
 	return det;
@@ -98,7 +99,7 @@ entry_t Det_Gauss (Mat A) {
  \brief		Computes Matrix determinant by Bareiss' algorithm.
 			The Bareiss Algorithm is a fraction-free method for determinant computation.
 			However, it can also be thought of as a sophisticated form of row reduction.
-			Note that the divisions computed at any step are exact; thus Bareiss’ Algorithm is
+			Note that the divisions computed at any step are exact; thus Bareiss' Algorithm is
 			indeed fraction-free. Entry a[n][n] is the determinant of A (after `pivoting` and `main` steps).
 
  \param	A	The Mat to process.
@@ -113,7 +114,7 @@ entry_t Det_Bareiss (Mat A) { //TODO: move to another file
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		for (size_t i = k; i < A->rowsCount; i++) {
-			if (fabs(a[i][k]) > fabs(a[pivot][k])) {
+			if (abs(a[i][k]) > abs(a[pivot][k])) {
 				pivot = i;
 			}
 		}
@@ -121,16 +122,17 @@ entry_t Det_Bareiss (Mat A) { //TODO: move to another file
 //			for (size_t j = 0; j < A->colsCount; j++) {
 //				swap_d(T->a[k][j], T->a[pivot][j]);
 //			}
-			entry_t *a_pivot = a[pivot];
-			a[pivot] = a[k];
-			a[k] = a_pivot;
+//			entry_t *a_pivot = a[pivot];
+//			a[pivot] = a[k];
+//			a[k] = a_pivot;
+			swap$(a[pivot], a[k]);
 			T->permutationSign *= -1; //-V127
 		}
 	}
 
 	// Bareiss algorithm main step
 	for (size_t i = 0; i < T->rowsCount - 1; i++) {
-		Check$(fabs(a[i][i]) > EPS, "Singularity...");
+		Check$(isnotzero(a[i][i]), "Singularity...");
 		for (size_t j = i + 1; j < T->rowsCount; j++) {
 			for (size_t k = i + 1; k < T->rowsCount; k++) {
 				a[j][k] = a[j][k] * a[i][i] - a[j][i] * a[i][k];
@@ -160,40 +162,37 @@ entry_t Det_Bareiss (Mat A) { //TODO: move to another file
  */
 void toRowEchelonForm (Mat A) {
 	entry_t **a = A->a;
-//	size_t _ic = 0;
 
 	// W/ immediate rows swapping
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		// Pivotize
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			if (fabs(a[i][k]) > fabs(a[k][k]))
-			if (fabs(a[i][k]) > EPS) {
+			if (abs(a[i][k]) > abs(a[k][k]))
+			if (isnotzero(a[i][k])) {
 //				for (size_t j = 0; j < A->colsCount; j++) {
 //					swap_d(a[k][j], a[i][j]);
 //				}
-//				_ic++;
-				entry_t *a_i = a[i];
-				a[i] = a[k];
-				a[k] = a_i;
+//				entry_t *a_i = a[i];
+//				a[i] = a[k];
+//				a[k] = a_i;
+				swap$(a[i], a[k]);
 				A->permutationSign *= -1; //-V127
 			}
 		}
 		// Eliminate
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			if (fabs(a[k][k]) > EPS) {
+			if (isnotzero(a[k][k])) {
 				entry_t factor = a[i][k] / a[k][k];
 				for (size_t j = k; j < A->colsCount; j++) {
 					a[i][j] -= factor * a[k][j];
 				}
 			} else {
 				A->isSingular = true;
-				Check$(false, "Singular matrix.");
+				Check$(A->isSingular == false, "Singular matrix.");
 				return;
 			}
 		}
 	}
-
-//	printf("O:%zu\n", _ic);
 
 	return;
 }
@@ -208,20 +207,19 @@ void toRowEchelonForm (Mat A) {
  */
 void toRowEchelonForm_reference (Mat A) {
 	entry_t **a = A->a;
-//	size_t _ic = 0;
 
 	// Reference implementation of pivoting algorithm
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		// Find pivot
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			if (fabs(a[i][k]) > fabs(a[pivot][k])) {
+			if (abs(a[i][k]) > abs(a[pivot][k])) {
 				pivot = i;
 			}
 		}
-		if (fabs(a[pivot][k]) <= EPS) {
+		if (iszero(a[pivot][k])) {
 			A->isSingular = true;
-			Check$(false, "Singular matrix.");
+			Check$(A->isSingular == false, "Singular matrix.");
 			return;
 		}
 		// Swap rows
@@ -229,14 +227,14 @@ void toRowEchelonForm_reference (Mat A) {
 //			for (size_t j = 0; j < A->colsCount; j++) {
 //				swap_d(a[k][j], a[pivot][j]);
 //			}
-//			_ic++;
-			entry_t *a_pivot = a[pivot];
-			a[pivot] = a[k];
-			a[k] = a_pivot;
+//			entry_t *a_pivot = a[pivot];
+//			a[pivot] = a[k];
+//			a[k] = a_pivot;
+			swap$(a[pivot], a[k]);
 			A->permutationSign *= -1; //-V127
 		}
 		// Calculate factor, eliminate k-th column
-		if (fabs(a[k][k]) > EPS) {
+		if (isnotzero(a[k][k])) {
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = a[i][k] / a[k][k];
 //				a[i][k] /= a[k][k];
@@ -248,8 +246,6 @@ void toRowEchelonForm_reference (Mat A) {
 			}
 		}
 	}
-
-//	printf("R:%zu\n", _ic);
 
 	return;
 }
@@ -277,7 +273,7 @@ void toReducedRowEchelonForm (Mat A) {
 			break;
 		}
 		i = r;
-		while (fabs(a[i][pivotCol]) <= EPS) {
+		while (iszero(a[i][pivotCol])) {
 			i++;
 			if (i == rowsCount) {
 				i = r;
@@ -291,7 +287,7 @@ void toReducedRowEchelonForm (Mat A) {
 		for (j = 0; j < colsCount; j++) {
 			swap_d(a[i][j], a[r][j]);
 		}
-		if (fabs(a[r][pivotCol]) > EPS) {
+		if (isnotzero(a[r][pivotCol])) {
 			entry_t divisor = a[r][pivotCol];
 			for (j = 0; j < colsCount; j++) {
 				a[r][j] /= divisor;
@@ -321,7 +317,7 @@ void toReducedRowEchelonForm (Mat A) {
  \brief		Solves system of linear equations using Gauss-Jordan method.
 
  \param	A	Coefficients matrix.
- \param	B	Right hand side.
+ \param	B	Right hand side as column-vector.
 
  \return	Solution as column-vector.
  */
@@ -353,7 +349,7 @@ Mat Solve_GaussJordan (Mat A, Mat B) {
  \brief		Solves system of linear equations using Gauss elimination.
 
  \param	A	Coeffs matrix.
- \param	B	Right hand side.
+ \param	B	Right hand side as column-vector.
 
  \return	Solution as column-vector.
  */
@@ -405,7 +401,7 @@ void simpleSolver_h (entry_t **a, size_t size, entry_t *x) {
 		for (size_t j = i + 1; j < size; j++) {
 			x[i] -= a[i][j];
 		}
-		if ((fabs(x[i]) > EPS) && (fabs(a[i][i]) > EPS)) {
+		if (isnotzero(x[i]) && isnotzero(a[i][i])) {
 			x[i] /= a[i][i];
 		}
 	}
@@ -432,7 +428,7 @@ void undeterminedSolver_h (Mat RREF, Mat A, Mat R) {
 
 	for (i = 0; i < RREF->rowsCount; i++) {
 		for (j = 0; j < RREF->colsCount; j++) {
-			if (fabs(rref[i][j]) > EPS) {
+			if (isnotzero(rref[i][j])) {
 				f[c++] = i;
 				break;
 			}
@@ -464,7 +460,7 @@ void undeterminedSolver_h (Mat RREF, Mat A, Mat R) {
 		row++;
 	} while (nextPermutation(f, c - 1, RREF->rowsCount - 1));
 
-	free(f); f = NULL;
+	free$(f);
 
 	return;
 }

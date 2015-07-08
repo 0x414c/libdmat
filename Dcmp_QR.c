@@ -6,6 +6,7 @@
 #include "Matrix.h"
 #include "MatrixOps.h"
 #include "Extras.h"
+#include "Maths.h"
 
 
 /*In linear algebra, a QR decomposition (also called a QR factorization) of a matrix
@@ -18,51 +19,51 @@ If A has n linearly independent columns, then the first n columns of Q form an o
 More specifically, the first k columns of Q form an orthonormal basis for the span of the first k columns of A for any 1 ≤ k ≤ n.
 The fact that any column k of A only depends on the first k columns of Q is responsible for the triangular form of R.
 */
-Mat *Dcmp_QR_Householder(Mat A) {
+Mat *Dcmp_QR_Householder (Mat A) {
 	size_t rows = A->rowsCount;
 	size_t columns = A->colsCount;
 
-	Mat QRMat = DeepCopy(A);
+	Mat QR = DeepCopy(A);
 	Mat Q = AllocMat(rows, columns);
 	Mat R = AllocMat(rows, columns);
 
-	entry_t **qrPtr = QRMat->a;
+	entry_t **qr = QR->a;
 
 	for (size_t k = 0; k < columns; k++) {
 		// Compute 2-norm of k-th column without under/overflow.
 		entry_t norm = 0;
 		for (size_t i = k; i < rows; i++) {
-			norm = hypot(norm, qrPtr[i][k]);
+			norm = hypot(norm, qr[i][k]);
 		}
 
-		if (fabs(norm) > EPS) {
+		if (isnotzero(norm)) {
 			// Form k-th Householder vector.
-			if (qrPtr[k][k] < 0) {
+			if (qr[k][k] < 0) {
 				norm = -norm;
 			}
 			for (size_t i = k; i < rows; i++) {
-				qrPtr[i][k] /= norm;
+				qr[i][k] /= norm;
 			}
-			qrPtr[k][k] += 1.0;
+			qr[k][k] += 1.0;
 
 			// Apply transformation to remaining columns.
 			for (size_t j = k + 1; j < columns; j++) {
-				double s = 0.0;
+				entry_t s = 0.0;
 				for (size_t i = k; i < rows; i++) {
-					s += qrPtr[i][k] * qrPtr[i][j];
+					s += qr[i][k] * qr[i][j];
 				}
-				s = -s / qrPtr[k][k];
+				s = -s / qr[k][k];
 				for (size_t i = k; i < rows; i++) {
-					qrPtr[i][j] += s*(qrPtr[i][k]);
+					qr[i][j] += s*(qr[i][k]);
 
 					if (i < j) {
-						R->a[i][j] = qrPtr[i][j];
+						R->a[i][j] = qr[i][j];
 					}
 				}
 			}
 		}
 		R->a[k][k] = -norm;
-		if (fabs(R->a[k][k]) <= EPS) {
+		if (iszero(R->a[k][k])) {
 			R->isRankDeficient = true;
 		}
 	}
@@ -73,20 +74,20 @@ Mat *Dcmp_QR_Householder(Mat A) {
 		}
 		Q->a[k][k] = 1.0;
 		for (size_t j = k; j < columns; j++) {
-			if (fabs(qrPtr[k][k]) > EPS) {
-				double s = 0.0;
+			if (isnotzero(qr[k][k])) {
+				entry_t s = 0.0;
 				for (size_t i = k; i < rows; i++) {
-					s += qrPtr[i][k] * Q->a[i][j];
+					s += qr[i][k] * Q->a[i][j];
 				}
-				s = -s / qrPtr[k][k];
+				s = -s / qr[k][k];
 				for (size_t i = k; i < rows; i++) {
-					Q->a[i][j] += s*(qrPtr[i][k]);
+					Q->a[i][j] += s*(qr[i][k]);
 				}
 			}
 		}
 	}
 
-	freeMat$(QRMat);
+	freeMat$(QR);
 
 	Mat *result = (Mat*) malloc(2 * sizeof(*result));
 	Assert$(result != NULL, "Cannot allocate.");

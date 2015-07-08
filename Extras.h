@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Config.h"
 
@@ -21,18 +21,13 @@
 #define Assert$(c,m)
 #endif // ASSERTS_ENABLED
 
-#define free$(p)      do { free(p); p = NULL; } while (0)
 
-bool exists_d (long double *c, size_t start, long double value);
-bool exists_u (size_t *c, size_t start, size_t end, size_t value);
+#define free$(p)      do { free(p); p = NULL; } while (false)
 
-bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n);
+void __swap (void *x, void *y, void* tmp, size_t size);
 
-int64_t *AllocVec_i (size_t Size);
-size_t *AllocVec_u (size_t Size);
-long double *AllocVec_ld (size_t Size);
+#define swap$(a, b)   do { __swap(&(a), &(b), (char[(sizeof(a)==sizeof(b))?(ptrdiff_t)sizeof(a):-1]) {0}, sizeof(a)); } while (false)
 
-void fillSequential_u (size_t *index, size_t size, size_t start);
 
 #define CRLF$ puts("")
 #define HR$ puts("------------------------------------------------------------------------------")

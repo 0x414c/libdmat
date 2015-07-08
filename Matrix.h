@@ -49,9 +49,9 @@ extern void _trimTrailingZeroes (char *str);
 #ifdef PRINTING_ENABLED
 #define printMat$(a)       printMatrixToFile(a, OUTFILE, FMT_FLT)
 #define printMats$(a, ...) printMatricesToFile(a, __VA_ARGS__)
-#define printStr$(a)       toString(a, OUTFILE, FMT_FLT_STR)
+#define printAsStr$(a)       toString(a, OUTFILE, FMT_FLT_STR)
 #else
 #define printMat$(a)
 #define printMats$(a, ...)
-#define printStr$(a)
+#define printAsStr$(a)
 #endif

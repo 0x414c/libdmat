@@ -39,7 +39,7 @@ Mat *LUDcmp_gauss (Mat A) {
 		// Find pivot.
 		size_t pivot = k;
 		for (size_t i = k + 1; i < rows; i++) {
-			if (fabs(lu[i][k]) > fabs(lu[pivot][k])) {
+			if (abs(lu[i][k]) > abs(lu[pivot][k])) {
 				pivot = i;
 			}
 		}
@@ -53,7 +53,7 @@ Mat *LUDcmp_gauss (Mat A) {
 			permutationSign *= -1; //-V127
 		}
 		// Compute multipliers and eliminate k-th column.
-		if (fabs(lu[k][k]) > EPS) {
+		if (isnotzero(lu[k][k])) {
 			for (size_t i = k + 1; i < rows; i++) {
 				lu[i][k] /= lu[k][k];
 				for (size_t j = k + 1; j < cols; j++) {
@@ -115,15 +115,15 @@ Mat Pivotize_LU (Mat A) {
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		for (size_t i = k; i < A->rowsCount; i++) {
-			if (fabs(a[i][k]) > fabs(a[pivot][k])) {
+			if (abs(a[i][k]) > abs(a[pivot][k])) {
 				pivot = i;
 			}
 		}
 		if (pivot != k) {
 			permutationSign *= -1; //-V127
 			for (size_t j = 0; j < A->colsCount; j++) {
-				swap_d(p[k][j], p[pivot][j]);
-				swap_d(A->a[k][j], A->a[pivot][j]);
+				swap(p[k][j], p[pivot][j]);
+				swap(A->a[k][j], A->a[pivot][j]);
 			}
 		}
 	}
@@ -278,7 +278,7 @@ double Det_LUP (Mat *LUP) {
  */
 bool isSingular_LUP (Mat *LUP) {
 	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
-		if (fabs(LUP[1]->a[i][i]) <= EPS) {
+		if (iszero(LUP[1]->a[i][i])) {
 			return true;
 		}
 	}

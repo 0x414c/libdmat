@@ -492,7 +492,7 @@ Mat Minor (Mat A, size_t d) { //TODO:
 
  \date	17-May-14
 
- \param [out]	A   	The Mat to fill to.
+ \param [out]	A   	The Matrix to fill to.
  \param [in]	file	If non-null, the file to read from.
 
  \return	Number of read items.
