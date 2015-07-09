@@ -10,13 +10,13 @@
 
 
 #ifdef CHECKS_ENABLED
-#define Check$(c,m)   ( (c)?(true):( fprintf(stderr, "Warning: check `%s` in `%s` failed ==> `%s`\n", #c, __FUNCTION__, m), false) )
+#define Check$(c,m)   ( (c)?(true):(fprintf(stderr,"Warning: check `%s` in function `%s` failed ==> `%s`\n",#c,__FUNCTION__,m),false))
 #else
 #define Check$(c,m)
 #endif // CHECKS_ENABLED
 
 #ifdef ASSERTS_ENABLED
-#define Assert$(c,m)  ( (c)?(true):( fprintf(stderr, "Warning: assertion `%s` failed ==> `%s`\n\tin `%s` \n\tin file %s\n\tat line %d\n", #c, m, __FUNCTION__, __FILE__, __LINE__), abort(), false) )
+#define Assert$(c,m)  ( (c)?(true):(fprintf(stderr,"Warning: assertion `%s` failed ==> condition `%s` isn't satisfied\n\tin function `%s` \n\tin file %s\n\tat line %d\n",#c,m,__FUNCTION__,__FILE__,__LINE__),abort(),false))
 #else
 #define Assert$(c,m)
 #endif // ASSERTS_ENABLED

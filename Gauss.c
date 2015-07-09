@@ -25,9 +25,11 @@
  \return	Determinant value.
  */
 entry_t Det_Gauss (Mat A) {
+	Assert$(IsSquare$(A), "");
+
 	Mat T = NULL;
-	entry_t det = 1.0;
 	entry_t **a = A->a;
+	entry_t det = 1.0;
 
 	switch (A->rowsCount) {
 		case 1:
@@ -38,9 +40,9 @@ entry_t Det_Gauss (Mat A) {
 			break;
 		case 3:
 			det = (
-				(a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1])) -
-				(a[0][1] * (a[2][2] * a[1][0] - a[1][2] * a[2][0])) +
-				(a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]))
+				a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
+				a[0][1] * (a[2][2] * a[1][0] - a[1][2] * a[2][0]) +
+				a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0])
 			);
 			break;
 		case 4:
@@ -107,7 +109,7 @@ entry_t Det_Gauss (Mat A) {
  \return	Determinant of Matrix A.
  */
 entry_t Det_Bareiss (Mat A) { //TODO: move to another file
-	Mat T = DeepCopy(A);
+	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
 	entry_t **a = T->a;
 
 	// Pivotize

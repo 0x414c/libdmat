@@ -10,9 +10,11 @@
 #define F_EPS (FLT_EPSILON)
 
 #ifndef DOUBLE_PRECISION
-#define EPS (D_EPS)
-#else
 #define EPS (F_EPS)
+//#define EPS (1E-6)
+#else
+#define EPS (D_EPS)
+//#define EPS (1E-6)
 #endif // DOUBLE_PRECISION
 
 #ifndef _USE_MATH_DEFINES

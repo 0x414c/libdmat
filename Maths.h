@@ -7,6 +7,7 @@
 #include "Const.h"
 #include "Config.h"
 
+
 int64_t GCD_Euclid (int64_t a, int64_t b);
 
 #define round(x)	    ( (int64_t)(((x)>=EPS)?(((x)+(0.5))):(((x)-(0.5)))) ) //Half away from zero 'rounding' with casting to int
@@ -19,16 +20,17 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 #define square_fd(x)	( (x)*(x) )
 
 //TODO: (more) proper floats comparison
-#define equals_f(a,b)   ( ((fabsf((b)-(a)))<(F_EPS*fabsf((b)+(a)))) )
-#define equals_d(a,b)   ( ((fabs((b)-(a)))<(D_EPS*fabs((b)+(a)))) )
+//#define equals_f(a,b)   ( ((fabsf((b)-(a)))<(F_EPS*fabsf((b)+(a)))) )
+//#define equals_d(a,b)   ( ((fabs((b)-(a)))<(D_EPS*fabs((b)+(a)))) )
 //#define equals_d(a,b)   ( (a)==(b) )
 //#define equals_d(a,b)   ( fabs((a)-(b))<=D_EPS )
-//#define equals_d(a,b)   ( (fabs(a-b)<=D_EPS*max_3(1.0,fabs(a),fabs(b))) )
+#define equals_f(a,b)   ( (fabs(a-b)<=EPS*max_3(((float_t)1.0),fabs(a),fabs(b))) )
+#define equals_d(a,b)   ( (fabs(a-b)<=EPS*max_3(((double_t)1.0),fabs(a),fabs(b))) )
 
-#define iszero_d(a)     ( fabs(a)<=D_EPS )
-#define iszero_f(a)     ( fabsf(a)<=F_EPS )
-#define isnotzero_d(a)  ( fabs(a)>D_EPS )
-#define isnotzero_f(a)  ( fabsf(a)>F_EPS )
+#define iszero_d(a)     ( fabs(a)<=EPS )
+#define iszero_f(a)     ( fabsf(a)<=EPS )
+#define isnotzero_d(a)  ( fabs(a)>EPS )
+#define isnotzero_f(a)  ( fabsf(a)>EPS )
 
 #ifdef DOUBLE_PRECISION
 #define equals(a,b)     equals_d((a),(b))

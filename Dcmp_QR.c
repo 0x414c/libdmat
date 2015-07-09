@@ -115,7 +115,7 @@ Mat Solve_QR (Mat *QR, Mat B) {
 	Check$(QR[1]->isRankDeficient == false, "Rank deficient system.");
 
 	Mat Qt = Transposed(QR[0]);
-	matMul(&Qt, B);
+	matMul_inplace(&Qt, B);
 	entry_t **qt = Qt->a;
 
 	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {

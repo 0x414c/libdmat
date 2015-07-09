@@ -14,7 +14,8 @@ bool IsIdentity (Mat A);
 bool IsSingular (Mat A);
 bool IsSymmetric (Mat A);
 bool IsSkewSymmetric (Mat A);
-bool IsEqual (Mat A, Mat B);
+bool IsEntriesEqual (Mat A, Mat B);
+bool IsDimsEqual (Mat A, Mat B);
 
 Mat Inverse (Mat A);
 void toInverse (Mat* A);
@@ -22,14 +23,13 @@ void toTransposed_square (Mat A);
 Mat Transposed (Mat A);
 void toTransposed (Mat *A);
 
+void matMul_inplace (Mat *A, Mat B);
 Mat MatMul_naive (Mat A, Mat B);
 Mat MatMul_naive_recursive (Mat A, Mat B);
 Mat MatMul_Strassen (Mat A, Mat B);
 Mat MatMul_Strassen_optimized (Mat A, Mat B);
-
 size_t _fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
-void matMul (Mat *A, Mat B);
 
 #define MatMul$(A,B) MatMul_naive((A),(B))
 

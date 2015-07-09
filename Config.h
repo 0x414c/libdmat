@@ -25,7 +25,7 @@
                 precision of the `long double` type.
                 Both `float_t` and `double_t` are equivalent to `long double`.
  */
-//#define DOUBLE_PRECISION
+#define DOUBLE_PRECISION
 
 
 /**

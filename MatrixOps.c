@@ -30,10 +30,12 @@ TElementWise_MatrixScalar$(div, /)
 
 Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
+	entry_t **a = A->a;
+	entry_t **b = B->a;
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
 		for (size_t j = 0; j < L->colsCount; j++) {
-			L->a[i][j] = lerp(A->a[i][j], B->a[i][j], t);
+			L->a[i][j] = lerp(a[i][j], b[i][j], t);
 		}
 	}
 
@@ -44,7 +46,7 @@ Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
 
 #pragma region "Is?.."
 /**
- \fn	bool IsEqual (Mat A, Mat B)
+ \fn	bool IsEntriesEqual (Mat A, Mat B)
 
  \brief	Checks for element-wise equality of matrices A and B.
 
@@ -55,23 +57,27 @@ Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
 
  \return	true if equal, else false.
  */
-bool IsEqual (Mat A, Mat B) {
+bool IsEntriesEqual (Mat A, Mat B) {
 	entry_t **a = A->a;
 	entry_t **b = B->a;
 
-	if ((A->rowsCount != B->rowsCount) || (A->colsCount != B->colsCount)) {
+	if (!IsDimsEqual(A, B)) {
 		return false;
-	}
-
-	for (size_t i = 0; i < A->rowsCount; i++) {
-		for (size_t j = 0; j < A->colsCount; j++) {
-			if (!(equals(a[i][j], b[i][j]))) {
-				return false;
+	} else {
+		for (size_t i = 0; i < A->rowsCount; i++) {
+			for (size_t j = 0; j < A->colsCount; j++) {
+				if (!(equals(a[i][j], b[i][j]))) {
+					return false;
+				}
 			}
 		}
 	}
 
 	return true;
+}
+
+inline bool IsDimsEqual (Mat A, Mat B) {
+	return (A->rowsCount == B->rowsCount) && (A->colsCount == B->colsCount);
 }
 
 /**
@@ -86,7 +92,7 @@ bool IsEqual (Mat A, Mat B) {
  \return	Checking result (true or false).
  */
 bool IsIdentity (Mat A) {
-    Assert$ (A->rowsCount == A->colsCount, "Matrix A must be square");
+    Assert$ (IsSquare$(A), "Matrix A must be square");
     entry_t **a = A->a;
 
     switch (A->rowsCount) {
@@ -140,9 +146,11 @@ bool IsSymmetric (Mat A) {
 		return false;
 	}
 
+	entry_t **a = A->a;
+
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equals(A->a[i][j], A->a[j][i])) {
+			if (!equals(a[i][j], a[j][i])) {
 				return false;
 			}
 		}
@@ -156,9 +164,11 @@ bool IsSkewSymmetric (Mat A) {
 		return false;
 	}
 
+	entry_t **a = A->a;
+
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
-			if (!equals(A->a[i][j], -A->a[j][i])) {
+			if (!equals(a[i][j], -a[j][i])) {
 				return false;
 			}
 		}
@@ -183,9 +193,11 @@ bool IsSkewSymmetric (Mat A) {
 void toTransposed_square (Mat A) {
 	Assert$(IsSquare$(A), "Cannot transpose non-square matrix with this function. Use toTransposed instead.");
 
+	entry_t **a = A->a;
+
 	for (size_t i = 0; i < A->rowsCount - 1; i++) {
 		for (size_t j = i + 1; j < A->rowsCount; j++) {
-			swap_d(A->a[i][j], A->a[j][i]);
+			swap(a[i][j], a[j][i]);
 		}
 	}
 
@@ -247,12 +259,12 @@ void toTransposed (Mat *A) {
  \return	A^(-1).
  */
 Mat Inverse (Mat A) {
-    if (!Check$(!((A->isSingular) || (iszero(Det_Gauss(A))) || (!IsSquare$(A))), "Cannot invert singular matrix.")) {
+    if (!Check$(!A->isSingular && !iszero(Det_Gauss(A)) && IsSquare$(A), "Cannot invert such matrix.")) {
         return NULL;
     }
 
-	entry_t **a = A->a;
 	Mat R = NULL, I = NULL;
+	entry_t **a = A->a;
 
 	switch (A->rowsCount) {
 		case 1:
@@ -263,13 +275,13 @@ Mat Inverse (Mat A) {
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[1][0] = -a[1][0];
 			R->a[0][1] = -a[0][1];
-			R->a[0][0] = a[1][1];
-			R->a[1][1] = a[0][0];
-			_ms_mul(R, 1.0 / A->det); //TODO: A->det is already computed at the very beginning of func when
+			R->a[0][0] =  a[1][1];
+			R->a[1][1] =  a[0][0];
+			_ms_mul(R, 1.0 / A->det); //HACK: A->det is already computed at the very beginning of func when
 			                          //it checks for matrix singularity. So if checks are disabled,
 			                          //you need to compute Det(A) manually)
 			return R;
-    case 3:
+    	case 3:
 			R = AllocMat(A->rowsCount, A->colsCount);
 			R->a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
 			R->a[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
@@ -355,42 +367,67 @@ void toInverse (Mat *A) {
  \return	Matrix product of A & B.
  */
 Mat MatMul_naive (Mat A, Mat B) {
-    Assert$(A != NULL && B != NULL, "");
-	Assert$(A->colsCount == B->rowsCount, "Cannot multiply. Number of columns in A must be equal to number of rows in B.");
+	Assert$(A->rowsCount == B->colsCount || B->rowsCount == A->colsCount, "Cannot multiply. Number of columns in A must be equal to number of rows in B.");
 
 	Mat C = AllocMat(A->rowsCount, B->colsCount);
+	entry_t **a = A->a;
+	entry_t **b = B->a;
+	entry_t **c = C->a;
 
-	if ((IsSquare$(A)) && (A->rowsCount == 1) && (IsSquare$(B))) {
-		C->a[0][0] = A->a[0][0] * B->a[0][0];
-		return C;
+	if (IsSquare$(A) && IsDimsEqual(A, B)) {
+		switch (A->rowsCount) {
+			case 1:
+				c[0][0] = a[0][0] * b[0][0];
+
+				return C;
+			case 2:
+				c[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0];
+				c[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1];
+
+				c[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0];
+				c[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1];
+
+				return C;
+			case 3:
+				c[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0];
+				c[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1];
+				c[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2];
+
+				c[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0];
+				c[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1];
+				c[1][2] = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2];
+
+				c[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0];
+				c[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1];
+				c[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
+
+				return C;
+			default:
+				goto generalized;
+		}
 	} else {
-		if ((IsSquare$(A)) && (A->rowsCount == 2) && (IsSquare$(B))) {
-			C->a[0][0] = A->a[0][0] * B->a[0][0] + A->a[0][1] * B->a[1][0];
-			C->a[0][1] = A->a[0][0] * B->a[0][1] + A->a[0][1] * B->a[1][1];
-			C->a[1][0] = A->a[1][0] * B->a[0][0] + A->a[1][1] * B->a[1][0];
-			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
-			return C;
-		} else {
-			fill_zeroes(C);
-			for (size_t i = 0; i < A->rowsCount; ++i) {
-				for (size_t k = 0; k < A->colsCount; ++k) {
-					entry_t s = A->a[i][k];
-					for (size_t j = 0; j < B->colsCount; ++j) {
-						C->a[i][j] += s * B->a[k][j];
-					}
-				}
-			}
+		goto generalized;
+	}
 
-			return C;
+generalized:
+	fill_zeroes(C);
+	for (size_t i = 0; i < A->rowsCount; ++i) {
+		for (size_t k = 0; k < A->colsCount; ++k) {
+			entry_t s = a[i][k];
+			for (size_t j = 0; j < B->colsCount; ++j) {
+				c[i][j] += s * b[k][j];
+			}
 		}
 	}
+
+	return C;
 }
 
 /**
  \fn	Mat MatMul_naive_recursive (Mat A, Mat B)
 
  \brief	Recursive implementation of naive matrix multiplication algorithm.
- Only for square Matrices with size=2^n. Not memory	efficient!
+ 		Only for square Matrices with size=2^n. Not memory efficient!
  A, B & product C will be split into 4 submatrices, then the product will be:
 		C11 = A11B11 + A12B21
 		C12 = A11B12 + A12B22
@@ -497,7 +534,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 }
 
 /**
- \fn	void matMul(Mat *A, Mat B)
+ \fn	void matMul_inplace(Mat *A, Mat B)
 
  \brief	In-place matrix multiplication (multiplicand is replaced by result).
 
@@ -506,7 +543,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
  \param	A	The Mat A to process (will be replaced by product of A &amp; B).
  \param	B	The Mat B to process.
  */
-void matMul (Mat *A, Mat B) {
+void matMul_inplace (Mat *A, Mat B) {
 	Assert$((*A)->colsCount == B->rowsCount,
 		"Cannot multiply matrices. Number of columns of A must be equal to number of rows of B.");
 
@@ -548,7 +585,7 @@ Mat MatPow (Mat A, size_t pow) {
 			break;
 		case 2:
 			R = DeepCopy(A);
-			matMul(&R, A);
+			matMul_inplace(&R, A);
 
 			return R;
 			break;
@@ -556,7 +593,7 @@ Mat MatPow (Mat A, size_t pow) {
 			R = DeepCopy(A);
 			do {
 				spinActivityIndicator();
-				matMul(&R, A);
+				matMul_inplace(&R, A);
 				c++;
 			} while (c < pow-1);
 			clearActivityIndicator();
@@ -839,7 +876,7 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 			C->a[1][1] = A->a[1][0] * B->a[0][1] + A->a[1][1] * B->a[1][1];
             return C;
         case 3: case 4: case 5: case 6: case 7: case 8: //TODO: fuckin' MSVC does not support C99 case ranges.
-														// upd.: seems that it is actually an GCC extension or smth.
+														//upd.: seems that it is actually an GCC extension or smth.
 			C = MatMul$(A, B);							//TODO: use MM_SIZE_THRESHOLD
 			return C;
 		default:
