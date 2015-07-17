@@ -13,7 +13,7 @@
 
 Mat AllocMat (size_t rowsCount, size_t columnsCount);
 void freeMat (Mat *A);
-#define freeMat$(p) ( (p!=NULL)?(freeMat(&(p)),(p)=NULL,true):(printf("Cannot free memory."),false) )
+#define freeMat$(p) ( ((p)!=(NULL))?(freeMat(&(p)),(p)=(NULL),true):(fprintf(stderr, "Cannot deallocate memory."),false) )
 size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);
@@ -43,7 +43,7 @@ size_t printMatricesToFile (Mat A, ...);
 void toString (Mat A, FILE *file, char *format);
 
 #ifdef PRETTYOUTPUT
-extern void _trimTrailingZeroes (char *str);
+extern void __trimTrailingZeroes (char *str);
 #else
 #define _cleanTrailingZeroes(str)
 #endif // PRETTYOUTPUT

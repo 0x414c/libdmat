@@ -37,16 +37,16 @@ Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	A = (Mat) malloc(sizeof(*A));
 	Assert$(A != NULL, "Cannot allocate memory for __Mat_struct");
 
-	A->a = NULL;
+	A->mat = NULL;
 //	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
-	A->a = (entry_t**) malloc(rowsCount * sizeof(entry_t*));
-	Assert$(A->a != NULL, "Cannot allocate memory for row pointers");
+	A->mat = (entry_t**) malloc(rowsCount * sizeof(entry_t*));
+	Assert$(A->mat != NULL, "Cannot allocate memory for row pointers");
 
 	for (size_t i = 0; i < rowsCount; i++) {
-		A->a[i] = NULL;
+		A->mat[i] = NULL;
 //		A->a[i] = (entry_t*) calloc(columnsCount, sizeof(entry_t));
-		A->a[i] = (entry_t*) malloc(columnsCount * sizeof(entry_t));
-		Assert$(A->a[i] != NULL, "Cannot allocate memory for row");
+		A->mat[i] = (entry_t*) malloc(columnsCount * sizeof(entry_t));
+		Assert$(A->mat[i] != NULL, "Cannot allocate memory for row");
 	}
 
 	A->rowsCount = rowsCount;
@@ -74,12 +74,12 @@ Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 void freeMat (Mat *A) {
 	Assert$(*A != NULL, "Pointer cannot be NULL.");
 	Assert$(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Size must not be equal to 0.");
-	Assert$((*A)->a != NULL, "Seems that there exists no contents to free...");
+	Assert$((*A)->mat != NULL, "Seems that there exists no contents to free...");
 
 	for (size_t i = 0; i < (*A)->rowsCount; i++) {
-		free((*A)->a[i]);
+		free((*A)->mat[i]);
 	}
-	free$((*A)->a);
+	free$((*A)->mat);
 	free$(*A);
 
 	return;
@@ -142,14 +142,14 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 		return;
 	}
 
-	entry_t **newA = (entry_t**) realloc(A->a, newRows*sizeof(entry_t*));
+	entry_t **newA = (entry_t**) realloc(A->mat, newRows*sizeof(entry_t*));
 	Assert$(newA != NULL, "Reallocating space for row pointers failed");
-	A->a = newA;
+	A->mat = newA;
 
 	for (size_t i = 0; i < ((newRows < A->rowsCount) ? newRows : A->rowsCount); i++) {
-		entry_t *newAi = (entry_t*) realloc(A->a[i], newCols*sizeof(entry_t));
+		entry_t *newAi = (entry_t*) realloc(A->mat[i], newCols*sizeof(entry_t));
 		Assert$(newAi != NULL, "Reallocating space for rows failed");
-		A->a[i] = newAi;
+		A->mat[i] = newAi;
 #ifdef __STDC_IEC_559__
 		if (newCols > A->colsCount)	{
 			//NOTE: memsetting double array w/ 0 will be UB if double isn't IEEE754-compliant.
@@ -161,8 +161,8 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	if (newRows > A->rowsCount)	{
 		for (size_t i = A->rowsCount; i < newRows; i++) {
 //			A->a[i] = (entry_t*) calloc(newCols, sizeof(entry_t));
-			A->a[i] = (entry_t*) malloc(newCols * sizeof(entry_t));
-			Assert$(A->a[i] != NULL, "Allocating space for rows failed.");
+			A->mat[i] = (entry_t*) malloc(newCols * sizeof(entry_t));
+			Assert$(A->mat[i] != NULL, "Allocating space for rows failed.");
 		}
 	}
 
@@ -185,8 +185,8 @@ void concat (Mat A, Mat B) {
 
 	resize(A, max(A->rowsCount, B->rowsCount), A->colsCount + B->colsCount);
 
-	entry_t **a = A->a;
-	entry_t **b = B->a;
+	entry_t **a = A->mat;
+	entry_t **b = B->mat;
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = A->colsCount - B->colsCount; j < A->colsCount; j++) {
 			a[i][j] = b[i][j - (A->colsCount - B->colsCount)];
@@ -214,7 +214,7 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 	Assert$(file != NULL, "File reading error");
 	Assert$(A != NULL, "Cannot print. Pointer is NULL.");
 
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 #ifdef PRETTYOUTPUT
 	static char buf[PRINTBUFSZ];
 #endif // PRETTYOUTPUT
@@ -225,7 +225,7 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 #ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
-			_trimTrailingZeroes(buf);
+			__trimTrailingZeroes(buf);
 			fprintf(file, "%s|", buf);
 #else
 			fprintf(file, format, a[i][j]);
@@ -273,7 +273,7 @@ void toString (Mat A, FILE *file, char *format) {
 	Assert$(file != NULL, "File access error.");
 	Assert$(A != NULL, "Cannot print.");
 
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 //#ifdef PRETTYOUTPUT
 //	char buf[PRINTBUFSZ];
 //#endif // PRETTYOUTPUT
@@ -284,7 +284,7 @@ void toString (Mat A, FILE *file, char *format) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 //#ifdef PRETTYOUTPUT
 //			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
-//			_trimTrailingZeroes(buf); //TODO: buffer overflow
+//			__trimTrailingZeroes(buf); //TODO: buffer overflow
 //			fprintf(file, "%s,", buf);
 //#else
 			fprintf(file, format, a[i][j]);
@@ -300,13 +300,13 @@ void toString (Mat A, FILE *file, char *format) {
 
 #ifdef PRETTYOUTPUT
 /**
- \fn	void _trimTrailingZeroes (char *str)
+ \fn	void __trimTrailingZeroes (char *str)
 
  \brief	Trims trailing zeroes in string containing decimal floating-point number.
 
  \param [in,out] str	If non-null, the string to process.
  */
-void _trimTrailingZeroes (char *str) {
+void __trimTrailingZeroes (char *str) {
 	Assert$(str != NULL, "");
 
 	char *point = strchr(str, '.');
@@ -334,7 +334,7 @@ void _trimTrailingZeroes (char *str) {
 	return;
 }
 //#else
-//#define _trimTrailingZeroes
+//#define __trimTrailingZeroes
 #endif // PRETTYOUTPUT
 #pragma endregion "Printing"
 
@@ -356,8 +356,8 @@ Mat DeepCopy (Mat A) {
 	Assert$(A != NULL, "Cannot copy NULL...");
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
 	Assert$(B != NULL, "Allocating memory for copy failed.");
-	entry_t **a = A->a;
-	entry_t **b = B->a;
+	entry_t **a = A->mat;
+	entry_t **b = B->mat;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -391,8 +391,8 @@ Mat Copy (Mat A) {
 	Assert$(A != NULL, "Cannot copy NULL...");
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
 	Assert$(B != NULL, "Allocating memory for copy failed.");
-	entry_t **a = A->a;
-	entry_t **b = B->a;
+	entry_t **a = A->mat;
+	entry_t **b = B->mat;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -414,8 +414,8 @@ Mat Copy (Mat A) {
  */
 Mat Diag (Mat A) {
 	Mat D = AllocMat(1, A->rowsCount);
-	entry_t **a = A->a;
-	entry_t **d = D->a;
+	entry_t **a = A->mat;
+	entry_t **d = D->mat;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		d[0][i] = a[i][i];
@@ -454,7 +454,7 @@ Mat SubMatrix (Mat A, size_t row, size_t col) {
  */
 Mat Identity (size_t size) {
 	Mat E = AllocMat(size, size);
-	entry_t **e = E->a;
+	entry_t **e = E->mat;
 
 	for (size_t i = 0; i < size; i++) {
 		for (size_t j = 0; j < size; j++) {
@@ -491,11 +491,11 @@ Mat Minor (Mat A, size_t d) { //TODO:
 	Mat M = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < d; i++)	{
-		M->a[i][i] = 1.0; //TODO: Array access results in a null pointer dereference
+		M->mat[i][i] = 1.0; //TODO: Array access results in a null pointer dereference
 	}
 	for (size_t i = d; i < A->rowsCount; i++) {
 		for (size_t j = d; j < A->colsCount; j++) {
-			M->a[i][j] = A->a[i][j];
+			M->mat[i][j] = A->mat[i][j];
 		}
 	}
 
@@ -519,7 +519,7 @@ Mat Minor (Mat A, size_t d) { //TODO:
  */
 size_t fill_fromFile (Mat A, FILE *file) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 	entry_t tmp = 0.0;
 	size_t r = 0;
 
@@ -552,7 +552,7 @@ size_t fill_fromFile (Mat A, FILE *file) {
 void fill_random (Mat A) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -575,7 +575,7 @@ void fill_random (Mat A) {
 void fill_zeroes (Mat A) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
-    entry_t **a = A->a;
+    entry_t **a = A->mat;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -589,7 +589,7 @@ void fill_zeroes (Mat A) {
 void fill_ones (Mat A) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -612,7 +612,7 @@ void fill_ones (Mat A) {
 void fill_sequential (Mat A, int64_t start, int64_t inc) {
 	Assert$(A != NULL, "Cannot fill. It is NULL.");
 
-    entry_t **a = A->a;
+    entry_t **a = A->mat;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -641,22 +641,22 @@ void fill_spiral (Mat A, int64_t start) {
 	for (size_t i = 0; i < numConcentricSquares; i++) {
 		// do top side
 		for (size_t j = 0; j < sideLen; j++) {
-			A->a[i][i + j] = (entry_t) start++;
+			A->mat[i][i + j] = (entry_t) start++;
 		}
 
 		// do right side
 		for (size_t j = 1; j < sideLen; j++) {
-			A->a[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
+			A->mat[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
 		}
 
 		// do bottom side
 		for (ptrdiff_t j = sideLen - 2; j > -1; j--) {
-			A->a[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
+			A->mat[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
 		}
 
 		// do left side
 		for (ptrdiff_t j = sideLen - 2; j > 0; j--) {
-			A->a[i + j][i] = (entry_t) start++;
+			A->mat[i + j][i] = (entry_t) start++;
 		}
 
 		sideLen -= 2;
@@ -697,7 +697,7 @@ void fill_zigZag (Mat A, int64_t start) {
 				col = loopTo - i + loopFrom;
 			}
 
-			A->a[row][col] = (entry_t) start++;
+			A->mat[row][col] = (entry_t) start++;
 		}
 
 		currDiag++;
@@ -711,7 +711,7 @@ void fill_tabulate (Mat A, Function2_u_u_e func) {
 
     for (size_t i = 0; i < A->rowsCount; ++i) {
         for (size_t j = 0; j < A->colsCount; ++j) {
-            A->a[i][j] = (*func) (i, j);
+            A->mat[i][j] = (*func) (i, j);
         }
     }
 

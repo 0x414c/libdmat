@@ -25,9 +25,9 @@
  */
 Mat *Dcmp_LU_Gauss (Mat A) {
 	Mat LU = DeepCopy(A);
-	entry_t **lu = LU->a;
+	entry_t **lu = LU->mat;
 	Mat P = Identity(A->rowsCount);
-	entry_t **p = P->a;
+	entry_t **p = P->mat;
 	size_t cols = A->colsCount;
 	size_t rows = A->rowsCount;
 //	size_t *permutationVector = AllocVec_u(rows);
@@ -46,10 +46,10 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		// Swap rows
 		if (pivot != k) {
 			for (size_t j = 0; j < cols; j++) {
-				swap_d(lu[pivot][j], lu[k][j]);
-				swap_d(p[pivot][j], p[k][j]);
+				swap(lu[pivot][j], lu[k][j]);
+				swap(p[pivot][j], p[k][j]);
 			}
-			//swap_i(permutationVector[pivot], permutationVector[k]);
+			//__swap_i(permutationVector[pivot], permutationVector[k]);
 			permutationSign *= -1; //-V127
 		}
 		// Compute multipliers and eliminate k-th column.
@@ -66,7 +66,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 
 	// fill L
 	Mat L = Identity(rows);
-	entry_t **l = L->a;
+	entry_t **l = L->mat;
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = 0; j < i; j++) {
 			l[i][j] = lu[i][j];
@@ -76,7 +76,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 	// fill U
 	Mat U = AllocMat(rows, cols);
 	fill_zeroes(U);
-	entry_t **u = U->a;
+	entry_t **u = U->mat;
 	for (size_t i = 0; i < rows; i++) {
 		for (size_t j = i; j < cols; j++) {
 			u[i][j] = lu[i][j];
@@ -109,8 +109,8 @@ Mat *Dcmp_LU_Gauss (Mat A) {
  */
 Mat Pivotize_LU (Mat A) {
 	Mat P = Identity(A->rowsCount);
-	entry_t **a = A->a;
-	entry_t **p = P->a;
+	entry_t **a = A->mat;
+	entry_t **p = P->mat;
 	int8_t permutationSign = 1;
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
@@ -161,9 +161,9 @@ Mat *Dcmp_LU_Crout (Mat A) {
 	A_copy = DeepCopy(A);
 	P = Pivotize_LU(A_copy);
 
-	entry_t **l = L->a;
-	entry_t **u = U->a;
-	entry_t **a = A_copy->a;
+	entry_t **l = L->mat;
+	entry_t **u = U->mat;
+	entry_t **a = A_copy->mat;
 
 	for (size_t j = 0; j < n; j++) {
 		for (size_t i = 0; i <= j; i++) {
@@ -212,15 +212,15 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
 	Assert$(LUP[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
 	Check$(isSingular_LUP(LUP) == false, "Cannot solve for singular matrix.");
 
-	entry_t **l = LUP[0]->a;
-	entry_t **u = LUP[1]->a;
+	entry_t **l = LUP[0]->mat;
+	entry_t **u = LUP[1]->mat;
 	Mat PB = MatMul$(LUP[2], B);
-	entry_t **b = PB->a;
+	entry_t **b = PB->mat;
 
 	Mat Y = AllocMat(B->rowsCount, B->colsCount);
-	entry_t **y = Y->a;
+	entry_t **y = Y->mat;
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
-	entry_t **x = X->a;
+	entry_t **x = X->mat;
 
 	for (size_t c = 0; c < B->colsCount; c++) {
 		// forward solve Ly = b
@@ -258,7 +258,7 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
  \return			Determinant value.
  */
 double Det_LUP (Mat *LUP) {
-	entry_t **u = LUP[1]->a;
+	entry_t **u = LUP[1]->mat;
 	entry_t det = LUP[2]->permutationSign;
 
 	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
@@ -279,7 +279,7 @@ double Det_LUP (Mat *LUP) {
  */
 bool isSingular_LUP (Mat *LUP) {
 	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
-		if (iszero(LUP[1]->a[i][i])) {
+		if (iszero(LUP[1]->mat[i][i])) {
 			return true;
 		}
 	}

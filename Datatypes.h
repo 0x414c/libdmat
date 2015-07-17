@@ -28,7 +28,7 @@ struct __Mat_struct {
 	/**
 	 \brief	The entry_t**.
 	 */
-	entry_t **a;
+	entry_t **mat;
 
 	/**
 	 \brief	Number of rows.

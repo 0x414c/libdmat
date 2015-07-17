@@ -28,7 +28,7 @@ Mat MatMul_naive (Mat A, Mat B);
 Mat MatMul_naive_recursive (Mat A, Mat B);
 Mat MatMul_Strassen (Mat A, Mat B);
 Mat MatMul_Strassen_optimized (Mat A, Mat B);
-size_t _fixSize (size_t Size);
+size_t __fixSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
 
 #define MatMul$(A,B) MatMul_naive((A),(B))
@@ -53,7 +53,7 @@ Mat MatLerp_entrywise (Mat A, Mat B, entry_t t);
 	void _mm1_##funcName (Mat A, Mat B) {							\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount) 									\
-		A->a[i][j] = A->a[i][j] operator B->a[i][j]; }				\
+		A->mat[i][j] = A->mat[i][j] operator B->mat[i][j]; }		\
 
 extern void _mm1_add();
 extern void _mm1_sub();
@@ -64,7 +64,7 @@ extern void _mm1_div();
 	void _mm2_##funcName (Mat A, Mat B, Mat C) {					\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount)									\
-		(C->a[i][j]) = (A->a[i][j]) operator (B->a[i][j]); }		\
+		(C->mat[i][j]) = (A->mat[i][j]) operator (B->mat[i][j]); }	\
 
 extern void _mm2_add();
 extern void _mm2_sub();
@@ -75,7 +75,7 @@ extern void _mm2_div();
 	void _ms_##funcName (Mat A, double x) {					    	\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount)									\
-		(A->a[i][j]) = (A->a[i][j]) operator (x); }					\
+		(A->mat[i][j]) = (A->mat[i][j]) operator (x); }				\
 
 extern void _ms_add();
 extern void _ms_sub();

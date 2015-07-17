@@ -31,9 +31,9 @@
 /**
  \def	MM_SIZE_THRESHOLD
 
- \brief
+ \brief Size limit for recursive procedures.
  */
-#define MM_SIZE_THRESHOLD (16)
+#define MM_SIZE_THRESHOLD (8)
 
 
 /**

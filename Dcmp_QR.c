@@ -28,7 +28,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 	Mat R = AllocMat(rows, columns);
 	fill_zeroes(R);
 
-	entry_t **qr = QR->a;
+	entry_t **qr = QR->mat;
 
 	for (size_t k = 0; k < columns; k++) {
 		// Compute 2-norm of k-th column without under/overflow.
@@ -58,31 +58,31 @@ Mat *Dcmp_QR_Householder (Mat A) {
 					qr[i][j] += s*(qr[i][k]);
 
 					if (i < j) {
-						R->a[i][j] = qr[i][j];
+						R->mat[i][j] = qr[i][j];
 					}
 				}
 			}
 		}
-		R->a[k][k] = -norm;
-		if (iszero(R->a[k][k])) {
+		R->mat[k][k] = -norm;
+		if (iszero(R->mat[k][k])) {
 			R->isRankDeficient = true;
 		}
 	}
 
 	for (ssize_t k = columns - 1; k >= 0; k--) {
 		for (size_t i = 0; i < rows; i++) {
-			Q->a[i][k] = 0.0;
+			Q->mat[i][k] = 0.0;
 		}
-		Q->a[k][k] = 1.0;
+		Q->mat[k][k] = 1.0;
 		for (size_t j = k; j < columns; j++) {
 			if (isnotzero(qr[k][k])) {
 				entry_t s = 0.0;
 				for (size_t i = k; i < rows; i++) {
-					s += qr[i][k] * Q->a[i][j];
+					s += qr[i][k] * Q->mat[i][j];
 				}
 				s = -s / qr[k][k];
 				for (size_t i = k; i < rows; i++) {
-					Q->a[i][j] += s * qr[i][k];
+					Q->mat[i][j] += s * qr[i][k];
 				}
 			}
 		}
@@ -102,7 +102,7 @@ entry_t Det_QR (Mat *QR) {
 	entry_t det = 1.0;
 
 	for (size_t i = 0; i < QR[1]->rowsCount; i++) {
-		det *= QR[1]->a[i][i];
+		det *= QR[1]->mat[i][i];
 	}
 
 	return det;
@@ -116,15 +116,15 @@ Mat Solve_QR (Mat *QR, Mat B) {
 
 	Mat Qt = Transposed(QR[0]);
 	matMul_inplace(&Qt, B);
-	entry_t **qt = Qt->a;
+	entry_t **qt = Qt->mat;
 
 	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
-			qt[k][j] /= QR[1]->a[k][k];
+			qt[k][j] /= QR[1]->mat[k][k];
 		}
 		for (ssize_t i = 0; i < k; i++) {
 			for (size_t j = 0; j < B->colsCount; j++) {
-				qt[i][j] -= qt[k][j] * QR[1]->a[i][k];
+				qt[i][j] -= qt[k][j] * QR[1]->mat[i][k];
 			}
 		}
 	}

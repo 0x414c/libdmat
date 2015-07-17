@@ -28,7 +28,7 @@ entry_t Det_Gauss (Mat A) {
 	Assert$(IsSquare$(A), "");
 
 	Mat T = NULL;
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 	entry_t det = 1.0;
 
 	switch (A->rowsCount) {
@@ -76,7 +76,7 @@ entry_t Det_Gauss (Mat A) {
 
 			if (!(T->isSingular)) {
 				for (size_t i = 0; i < A->rowsCount; i++) {
-					det *= T->a[i][i];
+					det *= T->mat[i][i];
 				}
 				det *= T->permutationSign;
 			} else {
@@ -110,7 +110,7 @@ entry_t Det_Gauss (Mat A) {
  */
 entry_t Det_Bareiss (Mat A) { //TODO: move to another file
 	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
-	entry_t **a = T->a;
+	entry_t **a = T->mat;
 
 	// Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
@@ -121,13 +121,9 @@ entry_t Det_Bareiss (Mat A) { //TODO: move to another file
 			}
 		}
 		if (pivot != k) {
-//			for (size_t j = 0; j < A->colsCount; j++) {
-//				swap_d(T->a[k][j], T->a[pivot][j]);
-//			}
-//			entry_t *a_pivot = a[pivot];
-//			a[pivot] = a[k];
-//			a[k] = a_pivot;
-			swap$(a[pivot], a[k]);
+			entry_t *a_pivot = a[pivot];
+			a[pivot] = a[k];
+			a[k] = a_pivot;
 			T->permutationSign *= -1; //-V127
 		}
 	}
@@ -163,7 +159,7 @@ entry_t Det_Bareiss (Mat A) { //TODO: move to another file
  \param	A	The Matrix to process.
  */
 void toRowEchelonForm (Mat A) {
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 
 	// W/ immediate rows swapping
 	for (size_t k = 0; k < A->rowsCount; k++) {
@@ -171,13 +167,9 @@ void toRowEchelonForm (Mat A) {
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			if (abs(a[i][k]) > abs(a[k][k]))
 			if (isnotzero(a[i][k])) {
-//				for (size_t j = 0; j < A->colsCount; j++) {
-//					swap_d(a[k][j], a[i][j]);
-//				}
-//				entry_t *a_i = a[i];
-//				a[i] = a[k];
-//				a[k] = a_i;
-				swap$(a[i], a[k]);
+				entry_t *a_i = a[i];
+				a[i] = a[k];
+				a[k] = a_i;
 				A->permutationSign *= -1; //-V127
 			}
 		}
@@ -208,7 +200,7 @@ void toRowEchelonForm (Mat A) {
  \param	A	The Matrix to process.
  */
 void toRowEchelonForm_reference (Mat A) {
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 
 	// Reference implementation of pivoting algorithm
 	for (size_t k = 0; k < A->rowsCount; k++) {
@@ -226,13 +218,9 @@ void toRowEchelonForm_reference (Mat A) {
 		}
 		// Swap rows
 		if (pivot != k) {
-//			for (size_t j = 0; j < A->colsCount; j++) {
-//				swap_d(a[k][j], a[pivot][j]);
-//			}
-//			entry_t *a_pivot = a[pivot];
-//			a[pivot] = a[k];
-//			a[k] = a_pivot;
-			swap$(a[pivot], a[k]);
+			entry_t *a_pivot = a[pivot];
+			a[pivot] = a[k];
+			a[k] = a_pivot;
 			A->permutationSign *= -1; //-V127
 		}
 		// Calculate factor, eliminate k-th column
@@ -265,7 +253,7 @@ void toRowEchelonForm_reference (Mat A) {
  \param	A	The Matrix to process.
  */
 void toReducedRowEchelonForm (Mat A) {
-	entry_t **a = A->a;
+	entry_t **a = A->mat;
 	size_t pivotCol = 0;
 	size_t rowsCount = A->rowsCount, colsCount = A->colsCount;
 	size_t i, j, k, r;
@@ -287,7 +275,7 @@ void toReducedRowEchelonForm (Mat A) {
 			}
 		}
 		for (j = 0; j < colsCount; j++) {
-			swap_d(a[i][j], a[r][j]);
+			swap(a[i][j], a[r][j]);
 		}
 		if (isnotzero(a[r][pivotCol])) {
 			entry_t divisor = a[r][pivotCol];
@@ -331,8 +319,8 @@ Mat Solve_GaussJordan (Mat A, Mat B) {
 	Mat AU = DeepCopy(A);
 
 	concat(AU, B);
-    entry_t **au = AU->a;
-    entry_t **x = X->a;
+    entry_t **au = AU->mat;
+    entry_t **x = X->mat;
 
 	toReducedRowEchelonForm(AU);
 
@@ -369,11 +357,11 @@ Mat Solve_Gauss (Mat A, Mat B) {
 
 	//Back-substitution
 	for (ssize_t i = AU->rowsCount - 1; i >= 0; i--) {
-		X->a[i][0] = AU->a[i][AU->colsCount-1];
+		X->mat[i][0] = AU->mat[i][AU->colsCount-1];
 		for (size_t j = i + 1; j < AU->rowsCount; j++) {
-			X->a[i][0] -= AU->a[i][j] * X->a[j][0];
+			X->mat[i][0] -= AU->mat[i][j] * X->mat[j][0];
 		}
-		X->a[i][0] /= AU->a[i][i];
+		X->mat[i][0] /= AU->mat[i][i];
 	}
 
 	freeMat$(AU);

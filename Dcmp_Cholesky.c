@@ -34,17 +34,17 @@ Mat Dcmp_Cholesky (Mat A) {
 		for (size_t k = 0; k < j; k++) {
 			entry_t s = 0.0;
 			for (size_t i = 0; i < k; i++) {
-				s += L->a[k][i] * L->a[j][i];
+				s += L->mat[k][i] * L->mat[j][i];
 			}
-			L->a[j][k] = s = (A->a[j][k] - s) / L->a[k][k];
+			L->mat[j][k] = s = (A->mat[j][k] - s) / L->mat[k][k];
 			d += s * s;
-			isSPD = isSPD && (equals(A->a[k][j], A->a[j][k]));
+			isSPD = isSPD && (equals(A->mat[k][j], A->mat[j][k]));
 		}
-		d = A->a[j][j] - d;
+		d = A->mat[j][j] - d;
 		isSPD = isSPD && isnotzero(d);
-		L->a[j][j] = sqrt(max(d, 0.0));
+		L->mat[j][j] = sqrt(max(d, 0.0));
 		for (size_t k = j + 1; k < A->rowsCount; k++) {
-			L->a[j][k] = 0.0;
+			L->mat[j][k] = 0.0;
 		}
 	}
 	L->isSPD = isSPD;
@@ -76,9 +76,9 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 	for (size_t k = 0; k < L->rowsCount; k++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
 			for (size_t i = 0; i < k; i++) {
-				X->a[k][j] -= X->a[i][j] * L->a[k][i];
+				X->mat[k][j] -= X->mat[i][j] * L->mat[k][i];
 			}
-			X->a[k][j] /= L->a[k][k];
+			X->mat[k][j] /= L->mat[k][k];
 		}
 	}
 
@@ -86,9 +86,9 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 	for (ssize_t k = L->rowsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
 			for (size_t i = k + 1; i < L->rowsCount; i++) {
-				X->a[k][j] -= X->a[i][j] * L->a[i][k];
+				X->mat[k][j] -= X->mat[i][j] * L->mat[i][k];
 			}
-			X->a[k][j] /= L->a[k][k];
+			X->mat[k][j] /= L->mat[k][k];
 		}
 	}
 
@@ -107,7 +107,7 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 entry_t Det_cholesky (Mat L) {
 	entry_t det = 1.0;
 	for (size_t i = 0; i < L->rowsCount; i++) {
-		det *= L->a[i][i];
+		det *= L->mat[i][i];
 	}
 
 	return det;

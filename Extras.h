@@ -22,7 +22,7 @@
 #endif // ASSERTS_ENABLED
 
 
-#define free$(p)      do { free(p); p = NULL; } while (false)
+#define free$(p)      do { free(p); (p) = (NULL); } while (false)
 
 void __swap (void *x, void *y, void* tmp, size_t size);
 
