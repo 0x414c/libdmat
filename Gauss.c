@@ -25,7 +25,7 @@
  \return	Determinant value.
  */
 entry_t Det_Gauss (Mat A) {
-	Assert$(IsSquare$(A), "");
+	Assert$(IsSquare$(A), "Matrix A should be square.");
 
 	Mat T = NULL;
 	entry_t **a = A->mat;
@@ -108,40 +108,44 @@ entry_t Det_Gauss (Mat A) {
 
  \return	Determinant of Matrix A.
  */
-entry_t Det_Bareiss (Mat A) { //TODO: move to another file
+//TODO: move to another file
+entry_t Det_Bareiss (Mat A) {
+  Assert$(IsSquare$(A), "Matrix A should be square.");
+
 	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
-	entry_t **a = T->mat;
+	entry_t **t = T->mat;
 
 	// Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t pivot = k;
 		for (size_t i = k; i < A->rowsCount; i++) {
-			if (abs(a[i][k]) > abs(a[pivot][k])) {
+			if (abs(t[i][k]) > abs(t[pivot][k])) {
 				pivot = i;
 			}
 		}
 		if (pivot != k) {
-			entry_t *a_pivot = a[pivot];
-			a[pivot] = a[k];
-			a[k] = a_pivot;
+			entry_t *a_pivot = t[pivot];
+			t[pivot] = t[k];
+			t[k] = a_pivot;
 			T->permutationSign *= -1; //-V127
 		}
 	}
 
 	// Bareiss algorithm main step
 	for (size_t i = 0; i < T->rowsCount - 1; i++) {
-		Check$(isnotzero(a[i][i]), "Singularity...");
+		Check$(isnotzero(t[i][i]), "Singular matrix.");
 		for (size_t j = i + 1; j < T->rowsCount; j++) {
 			for (size_t k = i + 1; k < T->rowsCount; k++) {
-				a[j][k] = a[j][k] * a[i][i] - a[j][i] * a[i][k];
+				t[j][k] = t[j][k] * t[i][i] - t[j][i] * t[i][k];
 				if (i != 0) {
-					a[j][k] /= a[i-1][i-1];
+					t[j][k] /= t[i-1][i-1];
 				}
 			}
 		}
 	}
 
-	entry_t det = a[T->rowsCount - 1][T->rowsCount - 1] * T->permutationSign;
+	entry_t det = t[T->rowsCount - 1][T->rowsCount - 1] * T->permutationSign;
+
 	freeMat$(T);
 
 	return det;

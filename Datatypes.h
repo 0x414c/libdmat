@@ -20,11 +20,11 @@ typedef float_t entry_t;
 #endif
 
 /**
- \struct	__Mat_struct
+ \struct	_Mat_struct
 
  \brief	A matrix structure.
  */
-struct __Mat_struct {
+struct _Mat_struct {
 	/**
 	 \brief	The entry_t**.
 	 */
@@ -77,9 +77,9 @@ struct __Mat_struct {
 };
 
 /**
- \typedef	struct __Mat_struct *Mat
+ \typedef	struct _Mat_struct *Mat
 
  \brief	Defines an alias representing the matrix.
-		The `Mat` 'itself' is a ptr to __Mat_struct.
+		The `Mat` 'itself' is a ptr to _Mat_struct.
  */
-typedef struct __Mat_struct *Mat;
+typedef struct _Mat_struct *Mat;

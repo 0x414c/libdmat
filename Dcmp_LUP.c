@@ -49,7 +49,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 				swap(lu[pivot][j], lu[k][j]);
 				swap(p[pivot][j], p[k][j]);
 			}
-			//__swap_i(permutationVector[pivot], permutationVector[k]);
+			//_swap_i(permutationVector[pivot], permutationVector[k]);
 			permutationSign *= -1; //-V127
 		}
 		// Compute multipliers and eliminate k-th column.

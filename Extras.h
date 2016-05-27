@@ -10,13 +10,13 @@
 
 
 #ifdef CHECKS_ENABLED
-#define Check$(c,m)   ( (c)?(true):(fprintf(stderr,"Warning: check `%s` in function `%s` failed ==> `%s`\n",#c,__FUNCTION__,m),false))
+#define Check$(c,m)   ( (c) ? (true) : (fprintf(stderr, "Check `%s' have failed:\n  condition `%s' wasn't satisfied\n  in function `%s'\n", #c, (m), __FUNCTION__), false) )
 #else
 #define Check$(c,m)
 #endif // CHECKS_ENABLED
 
 #ifdef ASSERTS_ENABLED
-#define Assert$(c,m)  ( (c)?(true):(fprintf(stderr,"Warning: assertion `%s` failed ==> condition `%s` isn't satisfied\n\tin function `%s` \n\tin file %s\n\tat line %d\n",#c,m,__FUNCTION__,__FILE__,__LINE__),abort(),false))
+#define Assert$(c,m)  ( (c) ? (true) : (fprintf(stderr, "Assertion `%s' have failed:\n  condition `%s' wasn't satisfied\n  in function `%s'\n  from file `%s'\n  at line %d\n", #c, (m), __FUNCTION__, __FILE__, __LINE__), abort(), false) )
 #else
 #define Assert$(c,m)
 #endif // ASSERTS_ENABLED
@@ -24,9 +24,9 @@
 
 #define free$(p)      do { free(p); (p) = (NULL); } while (false)
 
-void __swap (void *x, void *y, void* tmp, size_t size);
+void _swap_v (void *x, void *y, void *tmp, size_t size);
 
-#define swap$(a, b)   do { __swap(&(a), &(b), (char[(sizeof(a)==sizeof(b))?(ptrdiff_t)sizeof(a):-1]) {0}, sizeof(a)); } while (false)
+#define swap$(a, b)   do { _swap_v(&(a), &(b), (char[(sizeof(a) == sizeof(b)) ? (ptrdiff_t) sizeof(a) : -1]) {0}, sizeof(a)); } while (false)
 
 
 #define CRLF$ puts("")

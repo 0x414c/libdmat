@@ -27,7 +27,7 @@
  \param	rowsCount   	The rows count.
  \param	columnsCount	The columns count.
 
- \return	Pointer to __Mat_struct if allocation was successful, NULL otherwise.
+ \return	Pointer to _Mat_struct if allocation was successful, NULL otherwise.
  */
 Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	Mat A = NULL;
@@ -35,7 +35,7 @@ Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Rows and/or columns count can't be set to zero");
 
 	A = (Mat) malloc(sizeof(*A));
-	Assert$(A != NULL, "Cannot allocate memory for __Mat_struct");
+	Assert$(A != NULL, "Cannot allocate memory for _Mat_struct");
 
 	A->mat = NULL;
 //	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
@@ -225,7 +225,7 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 #ifdef PRETTYOUTPUT
 			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
-			__trimTrailingZeroes(buf);
+			_trimTrailingZeroes(buf);
 			fprintf(file, "%s|", buf);
 #else
 			fprintf(file, format, a[i][j]);
@@ -284,7 +284,7 @@ void toString (Mat A, FILE *file, char *format) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 //#ifdef PRETTYOUTPUT
 //			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
-//			__trimTrailingZeroes(buf); //TODO: buffer overflow
+//			_trimTrailingZeroes(buf); //TODO: buffer overflow
 //			fprintf(file, "%s,", buf);
 //#else
 			fprintf(file, format, a[i][j]);
@@ -300,13 +300,13 @@ void toString (Mat A, FILE *file, char *format) {
 
 #ifdef PRETTYOUTPUT
 /**
- \fn	void __trimTrailingZeroes (char *str)
+ \fn	void _trimTrailingZeroes (char *str)
 
  \brief	Trims trailing zeroes in string containing decimal floating-point number.
 
  \param [in,out] str	If non-null, the string to process.
  */
-void __trimTrailingZeroes (char *str) {
+void _trimTrailingZeroes (char *str) {
 	Assert$(str != NULL, "");
 
 	char *point = strchr(str, '.');
@@ -334,7 +334,7 @@ void __trimTrailingZeroes (char *str) {
 	return;
 }
 //#else
-//#define __trimTrailingZeroes
+//#define _trimTrailingZeroes
 #endif // PRETTYOUTPUT
 #pragma endregion "Printing"
 

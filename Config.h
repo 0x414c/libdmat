@@ -25,7 +25,7 @@
                 precision of the `long double` type.
                 Both `float_t` and `double_t` are equivalent to `long double`.
  */
-#define DOUBLE_PRECISION
+//#define DOUBLE_PRECISION
 
 
 /**
@@ -65,7 +65,7 @@
 
  \brief	Output file used in printing functions.
  */
-#define OUTFILE stdout
+#define OUTFILE (stdout)
 
 
 /**
@@ -108,7 +108,7 @@
 
  \brief	Format string for floats (used in printAsStr$()).
  */
-#define FMT_FLT_STR		"% .10f"
+#define FMT_FLT_STR "% .10f"
 
 
 /**
@@ -117,7 +117,7 @@
  \brief	Format string for filling from file containing floats (used in fill_fromFile()).
  */
 #ifdef DOUBLE_PRECISION
-#define FMT_FLT_INPUT   "%lf"
+#define FMT_FLT_INPUT "%lf"
 #else
-#define FMT_FLT_INPUT   "%f"
+#define FMT_FLT_INPUT "%f"
 #endif // DOUBLE_PRECISION

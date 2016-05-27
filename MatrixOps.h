@@ -28,10 +28,10 @@ Mat MatMul_naive (Mat A, Mat B);
 Mat MatMul_naive_recursive (Mat A, Mat B);
 Mat MatMul_Strassen (Mat A, Mat B);
 Mat MatMul_Strassen_optimized (Mat A, Mat B);
-size_t __fixSize (size_t Size);
+size_t _adjustSize (size_t Size);
 Mat MatPow (Mat A, size_t deg);
 
-#define MatMul$(A,B) MatMul_naive((A),(B))
+#define MatMul$(A,B) MatMul_naive((A), (B))
 
 Mat KroneckerProd (Mat A, Mat B);
 Mat KroneckerSum (Mat A, Mat B);
@@ -49,35 +49,35 @@ Mat MatLerp_entrywise (Mat A, Mat B, entry_t t);
 // 'templates' for element-wise functions
 #define _foreach$(idx,mat,cmp)	for (size_t (idx) = 0; (idx) < (mat)->cmp; (idx)++)
 
-#define TElementWise_MatrixMatrix1$(funcName, operator)				\
-	void _mm1_##funcName (Mat A, Mat B) {							\
+#define ElementWise_MatrixMatrixFunc_Inplace$(funcName, operator)				\
+	void _m_m_inplace_##funcName (Mat A, Mat B) {							\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount) 									\
-		A->mat[i][j] = A->mat[i][j] operator B->mat[i][j]; }		\
+		(A->mat[i][j]) = (A->mat[i][j]) operator (B->mat[i][j]); }		\
 
-extern void _mm1_add();
-extern void _mm1_sub();
-extern void _mm1_mul();
-extern void _mm1_div();
+extern void _m_m_inplace_add();
+extern void _m_m_inplace_sub();
+extern void _m_m_inplace_mul();
+extern void _m_m_inplace_div();
 
-#define TElementWise_MatrixMatrix2$(funcName, operator)				\
-	void _mm2_##funcName (Mat A, Mat B, Mat C) {					\
+#define ElementWise_MatrixMatrixFunc$(funcName, operator)				\
+	void _m_m_##funcName (Mat A, Mat B, Mat C) {					\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount)									\
 		(C->mat[i][j]) = (A->mat[i][j]) operator (B->mat[i][j]); }	\
 
-extern void _mm2_add();
-extern void _mm2_sub();
-extern void _mm2_mul();
-extern void _mm2_div();
+extern void _m_m_add();
+extern void _m_m_sub();
+extern void _m_m_mul();
+extern void _m_m_div();
 
-#define TElementWise_MatrixScalar$(funcName, operator)              \
-	void _ms_##funcName (Mat A, double x) {					    	\
+#define ElementWise_MatrixScalarFunc_Inplace$(funcName, operator)              \
+	void _m_s_inplace_##funcName (Mat A, double x) {					    	\
 		_foreach$(i,A,rowsCount)									\
 		_foreach$(j,A,colsCount)									\
 		(A->mat[i][j]) = (A->mat[i][j]) operator (x); }				\
 
-extern void _ms_add();
-extern void _ms_sub();
-extern void _ms_mul();
-extern void _ms_div();
+extern void _m_s_inplace_add();
+extern void _m_s_inplace_sub();
+extern void _m_s_inplace_mul();
+extern void _m_s_inplace_div();

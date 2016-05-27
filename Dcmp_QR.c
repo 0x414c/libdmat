@@ -32,14 +32,14 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 	for (size_t k = 0; k < columns; k++) {
 		// Compute 2-norm of k-th column without under/overflow.
-		entry_t norm = 0;
+		entry_t norm = 0.0;
 		for (size_t i = k; i < rows; i++) {
 			norm = hypot(norm, qr[i][k]);
 		}
 
 		if (isnotzero(norm)) {
 			// Form k-th Householder vector.
-			if (qr[k][k] < 0) {
+			if (qr[k][k] < (entry_t) 0.0) {
 				norm = -norm;
 			}
 			for (size_t i = k; i < rows; i++) {
@@ -64,6 +64,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 			}
 		}
 		R->mat[k][k] = -norm;
+    R->permutationSign *= -1;
 		if (iszero(R->mat[k][k])) {
 			R->isRankDeficient = true;
 		}
@@ -104,6 +105,8 @@ entry_t Det_QR (Mat *QR) {
 	for (size_t i = 0; i < QR[1]->rowsCount; i++) {
 		det *= QR[1]->mat[i][i];
 	}
+
+	det *= (entry_t) QR[1]->permutationSign;
 
 	return det;
 }
