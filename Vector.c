@@ -20,7 +20,6 @@ bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 
 
 #pragma region "Search in array"
-
 bool exists_d (double *c, size_t start, double value) {
     for (size_t i = 0; i < start; i++) {
         if (equals_d(c[i], value)) {

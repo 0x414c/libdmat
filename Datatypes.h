@@ -9,7 +9,7 @@
 
 
 /**
- \typedef	double entry_t
+ \typedef	double_t entry_t
 
  \brief		Defines an alias representing the Matrix entry type.
  */
@@ -28,7 +28,7 @@ struct _Mat_struct {
 	/**
 	 \brief	The entry_t**.
 	 */
-	entry_t **mat;
+	entry_t **data;
 
 	/**
 	 \brief	Number of rows.
@@ -58,7 +58,14 @@ struct _Mat_struct {
 	/**
 	 \brief	true if this Matrix is singular.
 	 */
+    //TODO: to bitfield
 	bool isSingular;
+
+	/**
+     \brief	true if this Matrix is identity matrix.
+    */
+	//TODO: to bitfield
+	bool isIdentity;
 
 	/**
 	 \brief	true if this Matrix is Symmetric positive-definite.

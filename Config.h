@@ -29,15 +29,15 @@
 
 
 /**
- \def	MM_SIZE_THRESHOLD
+ \def	RECURSION_LIMIT();
 
- \brief Size limit for recursive procedures.
+ \brief Matrix size limit for recursive procedures.
  */
-#define MM_SIZE_THRESHOLD (8)
+#define RECURSION_LIMIT ( 8 )
 
 
 /**
- \def	CHECKS_ENABLED
+ \def	CHECKS_ENABLED();
 
  \brief	Enable checks?
  */
@@ -45,7 +45,7 @@
 
 
 /**
- \def	ASSERTS_ENABLED
+ \def	ASSERTS_ENABLED();
 
  \brief	Enable asserts?
  */
@@ -65,7 +65,7 @@
 
  \brief	Output file used in printing functions.
  */
-#define OUTFILE (stdout)
+#define OUTFILE ( stdout )
 
 
 /**
@@ -81,16 +81,16 @@
  \def	PRINTBUFSZ();
 
  \brief	Size of printing buffer.
-        Note that buffer must be capable to hold string formatted w/ FMT_FLT
+        Note that buffer must be capable to hold string formatted using `FMT_FLT'
  */
-#define PRINTBUFSZ (320)
+#define PRINTBUFSZ ( 320 )
 #endif // PRETTYOUTPUT
 
 
 /**
  \def	FMT_INT();
 
- \brief	Formatting string for ints.
+ \brief	Formatting string for integers.
  */
 #define FMT_INT	"%5d"
 
@@ -106,7 +106,7 @@
 /**
  \def	FMT_FLT_STR();
 
- \brief	Format string for floats (used in printAsStr$()).
+ \brief	Format string for floats (used in `printAsStr$()').
  */
 #define FMT_FLT_STR "% .10f"
 
@@ -114,7 +114,7 @@
 /**
  \def	FMT_FLT_INPUT();
 
- \brief	Format string for filling from file containing floats (used in fill_fromFile()).
+ \brief	Format string for filling from file containing floats (used in `fill_fromFile()').
  */
 #ifdef DOUBLE_PRECISION
 #define FMT_FLT_INPUT "%lf"

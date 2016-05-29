@@ -28,11 +28,12 @@ Mat *Dcmp_QR_Householder (Mat A) {
 	Mat R = AllocMat(rows, columns);
 	fill_zeroes(R);
 
-	entry_t **qr = QR->mat;
+	entry_t **qr = QR->data;
 
 	for (size_t k = 0; k < columns; k++) {
 		// Compute 2-norm of k-th column without under/overflow.
 		entry_t norm = 0.0;
+
 		for (size_t i = k; i < rows; i++) {
 			norm = hypot(norm, qr[i][k]);
 		}
@@ -42,48 +43,61 @@ Mat *Dcmp_QR_Householder (Mat A) {
 			if (qr[k][k] < (entry_t) 0.0) {
 				norm = -norm;
 			}
+
 			for (size_t i = k; i < rows; i++) {
 				qr[i][k] /= norm;
 			}
+
 			qr[k][k] += 1.0;
 
 			// Apply transformation to remaining columns.
 			for (size_t j = k + 1; j < columns; j++) {
 				entry_t s = 0.0;
+
 				for (size_t i = k; i < rows; i++) {
 					s += qr[i][k] * qr[i][j];
 				}
+
 				s = -s / qr[k][k];
+
 				for (size_t i = k; i < rows; i++) {
 					qr[i][j] += s*(qr[i][k]);
 
 					if (i < j) {
-						R->mat[i][j] = qr[i][j];
+						R->data[i][j] = qr[i][j];
 					}
 				}
 			}
 		}
-		R->mat[k][k] = -norm;
-    R->permutationSign *= -1;
-		if (iszero(R->mat[k][k])) {
+
+		R->data[k][k] = -norm;
+
+		R->permutationSign *= -1;
+
+		if (iszero(R->data[k][k])) {
 			R->isRankDeficient = true;
 		}
 	}
 
 	for (ssize_t k = columns - 1; k >= 0; k--) {
 		for (size_t i = 0; i < rows; i++) {
-			Q->mat[i][k] = 0.0;
+			Q->data[i][k] = 0.0;
 		}
-		Q->mat[k][k] = 1.0;
-		for (size_t j = k; j < columns; j++) {
+
+		Q->data[k][k] = 1.0;
+
+		for (size_t j = (size_t) k; j < columns; j++) {
 			if (isnotzero(qr[k][k])) {
 				entry_t s = 0.0;
-				for (size_t i = k; i < rows; i++) {
-					s += qr[i][k] * Q->mat[i][j];
+
+				for (size_t i = (size_t) k; i < rows; i++) {
+					s += qr[i][k] * Q->data[i][j];
 				}
+
 				s = -s / qr[k][k];
-				for (size_t i = k; i < rows; i++) {
-					Q->mat[i][j] += s * qr[i][k];
+
+				for (size_t i = (size_t) k; i < rows; i++) {
+					Q->data[i][j] += s * qr[i][k];
 				}
 			}
 		}
@@ -100,13 +114,12 @@ Mat *Dcmp_QR_Householder (Mat A) {
 }
 
 entry_t Det_QR (Mat *QR) {
-	entry_t det = 1.0;
+	entry_t det = (entry_t) QR[1]->permutationSign;
+	entry_t **r = QR[1]->data;
 
 	for (size_t i = 0; i < QR[1]->rowsCount; i++) {
-		det *= QR[1]->mat[i][i];
+		det *= r[i][i];
 	}
-
-	det *= (entry_t) QR[1]->permutationSign;
 
 	return det;
 }
@@ -119,15 +132,16 @@ Mat Solve_QR (Mat *QR, Mat B) {
 
 	Mat Qt = Transposed(QR[0]);
 	matMul_inplace(&Qt, B);
-	entry_t **qt = Qt->mat;
+	entry_t **qt = Qt->data;
 
 	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
-			qt[k][j] /= QR[1]->mat[k][k];
+			qt[k][j] /= QR[1]->data[k][k];
 		}
+
 		for (ssize_t i = 0; i < k; i++) {
 			for (size_t j = 0; j < B->colsCount; j++) {
-				qt[i][j] -= qt[k][j] * QR[1]->mat[i][k];
+				qt[i][j] -= qt[k][j] * QR[1]->data[i][k];
 			}
 		}
 	}

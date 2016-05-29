@@ -11,4 +11,4 @@ Mat Pivotize_LU (Mat A);
 double Det_LUP (Mat *LUP);
 Mat Solve_LUP (Mat *LUP, Mat B);
 
-bool isSingular_LUP (Mat *LUP);
+bool IsSingular_LUP (Mat *LUP);

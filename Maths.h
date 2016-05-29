@@ -14,8 +14,8 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 //Half away from zero rounding with casting to int*_t
 #define round(x)	      ( (int64_t) (((x) >= (EPS)) ? (((x) + (entry_t) (0.5))) : (((x) - (entry_t) (0.5)))) )
 #define lerp(a,b,t)	    ( (((entry_t) (1.0)) - (t)) * (a) + (t) * (b) )
-#define _swap_t(a,b,T)  do { T (t) = (a); (a) = (b); (b) = (t); } while (false)
-#define _swap_i(a,b)    do { _swap_t((a), (b), int); } while (false)
+#define _swap_t(a,b,T)    do { T (t) = (a); (a) = (b); (b) = (t); } while (false)
+#define _swap_i(a,b)      do { _swap_t((a), (b), int); } while (false)
 #define _swap_f(a,b)	  do { _swap_t((a), (b), float_t); } while (false)
 #define _swap_d(a,b)	  do { _swap_t((a), (b), double_t); } while (false)
 #define ispowerof2_i(x) ( ((x) && (((x) & (~(x) + 1)) == (x))) )

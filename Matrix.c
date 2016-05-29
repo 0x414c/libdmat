@@ -27,26 +27,26 @@
  \param	rowsCount   	The rows count.
  \param	columnsCount	The columns count.
 
- \return	Pointer to _Mat_struct if allocation was successful, NULL otherwise.
+ \return	Pointer to `_Mat_struct' if allocation was successful, NULL otherwise.
  */
 Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 	Mat A = NULL;
 
-	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Rows and/or columns count can't be set to zero");
+	Assert$(((rowsCount != 0) && (columnsCount != 0)), "Size should be greater than 0");
 
 	A = (Mat) malloc(sizeof(*A));
-	Assert$(A != NULL, "Cannot allocate memory for _Mat_struct");
+	Assert$(A != NULL, "Cannot allocate memory for `_Mat_struct'.");
 
-	A->mat = NULL;
+	A->data = NULL;
 //	A->a = (entry_t**) calloc(rowsCount, sizeof(entry_t*));
-	A->mat = (entry_t**) malloc(rowsCount * sizeof(entry_t*));
-	Assert$(A->mat != NULL, "Cannot allocate memory for row pointers");
+	A->data = (entry_t**) malloc(rowsCount * sizeof(entry_t*));
+	Assert$(A->data != NULL, "Cannot allocate memory for row pointers.");
 
 	for (size_t i = 0; i < rowsCount; i++) {
-		A->mat[i] = NULL;
+		A->data[i] = NULL;
 //		A->a[i] = (entry_t*) calloc(columnsCount, sizeof(entry_t));
-		A->mat[i] = (entry_t*) malloc(columnsCount * sizeof(entry_t));
-		Assert$(A->mat[i] != NULL, "Cannot allocate memory for row");
+		A->data[i] = (entry_t*) malloc(columnsCount * sizeof(entry_t));
+		Assert$(A->data[i] != NULL, "Cannot allocate memory for row.");
 	}
 
 	A->rowsCount = rowsCount;
@@ -65,21 +65,21 @@ Mat AllocMat (size_t rowsCount, size_t columnsCount) {
 /**
  \fn	Mat freeMat (Mat A)
 
- \brief	Free memory consumed by Matrix.
+ \brief	Free memory allocated for Matrix.
 
  \date	15-May-14
 
  \param	A	The Matrix to process.
  */
 void freeMat (Mat *A) {
-	Assert$(*A != NULL, "Pointer cannot be NULL.");
-	Assert$(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Size must not be equal to 0.");
-	Assert$((*A)->mat != NULL, "Seems that there exists no contents to free...");
+	Assert$(*A != NULL, "A is NULL.");
+	Assert$(((*A)->rowsCount != 0) && ((*A)->colsCount != 0), "Size should be greater than 0.");
+	Assert$((*A)->data != NULL, "A contains no data.");
 
 	for (size_t i = 0; i < (*A)->rowsCount; i++) {
-		free((*A)->mat[i]);
+		free((*A)->data[i]);
 	}
-	free$((*A)->mat);
+	free$((*A)->data);
 	free$(*A);
 
 	return;
@@ -110,7 +110,6 @@ size_t freeMats (Mat A, ...) {
 
 
 #pragma region "Resizing"
-
 /**
  \fn	void resize (Mat A, size_t newRows, size_t newCols)
 
@@ -136,20 +135,20 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 
 
 	Assert$(A != NULL, "Cannot resize");
-	Assert$((newRows != 0 && newCols != 0), "Rows and/or columns count can't be set to 0");
+	Assert$((newRows != 0 && newCols != 0), "Rows and/or columns count can't be set to 0.");
 	if ((A->rowsCount == newRows) && (A->colsCount == newCols)) {
-		Check$(0, "Resizing has no effect because size difference is 0");
+		Check$(0, "Resizing has no effect because size difference is 0.");
 		return;
 	}
 
-	entry_t **newA = (entry_t**) realloc(A->mat, newRows*sizeof(entry_t*));
-	Assert$(newA != NULL, "Reallocating space for row pointers failed");
-	A->mat = newA;
+	entry_t **newA = (entry_t**) realloc(A->data, newRows*sizeof(entry_t*));
+	Assert$(newA != NULL, "Reallocating space for row pointers failed.");
+	A->data = newA;
 
 	for (size_t i = 0; i < ((newRows < A->rowsCount) ? newRows : A->rowsCount); i++) {
-		entry_t *newAi = (entry_t*) realloc(A->mat[i], newCols*sizeof(entry_t));
-		Assert$(newAi != NULL, "Reallocating space for rows failed");
-		A->mat[i] = newAi;
+		entry_t *newAi = (entry_t*) realloc(A->data[i], newCols * sizeof(entry_t));
+		Assert$(newAi != NULL, "Reallocating space for rows failed.");
+		A->data[i] = newAi;
 #ifdef __STDC_IEC_559__
 		if (newCols > A->colsCount)	{
 			//NOTE: memsetting double array w/ 0 will be UB if double isn't IEEE754-compliant.
@@ -161,8 +160,8 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 	if (newRows > A->rowsCount)	{
 		for (size_t i = A->rowsCount; i < newRows; i++) {
 //			A->a[i] = (entry_t*) calloc(newCols, sizeof(entry_t));
-			A->mat[i] = (entry_t*) malloc(newCols * sizeof(entry_t));
-			Assert$(A->mat[i] != NULL, "Allocating space for rows failed.");
+			A->data[i] = (entry_t*) malloc(newCols * sizeof(entry_t));
+			Assert$(A->data[i] != NULL, "Allocating space for rows failed.");
 		}
 	}
 
@@ -173,20 +172,21 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 }
 
 /**
- \fn	void concat (Mat A, Mat B)
+ \fn	void join (Mat A, Mat B)
 
  \brief	Merges matrices A & B into one, result will be in A.
 
  \param	A	The source Mat A to process.
  \param	B	The source Mat B to process.
  */
-void concat (Mat A, Mat B) {
-	Assert$((A != NULL) && (B != NULL), "Cannot concatenate matrices.");
+void join (Mat A, Mat B) {
+	Assert$((A != NULL) && (B != NULL), "Cannot join.");
 
 	resize(A, max(A->rowsCount, B->rowsCount), A->colsCount + B->colsCount);
 
-	entry_t **a = A->mat;
-	entry_t **b = B->mat;
+	entry_t **a = A->data;
+	entry_t **b = B->data;
+
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = A->colsCount - B->colsCount; j < A->colsCount; j++) {
 			a[i][j] = b[i][j - (A->colsCount - B->colsCount)];
@@ -196,6 +196,43 @@ void concat (Mat A, Mat B) {
 	return;
 }
 #pragma endregion "Resizing"
+
+
+#pragma region "Swap*"
+void swapRows (Mat A, size_t i, size_t j) {
+	Assert$(A != NULL, "Cannot swap.");
+
+	if (Check$(i != j, "Swap has no effect.")) {
+		entry_t **a = A->data;
+
+		entry_t *a_i = a[i];
+		a[i] = a[j];
+		a[j] = a_i;
+
+//		for (size_t k = 0; k < A->colsCount; k++) {
+//			swap(a[i][k], a[j][k]); //TODO: Swap row pointers
+//		}
+
+//		A->permutationSign *= -1; //-V127 //TODO:
+	}
+
+	return;
+}
+
+void swapCols (Mat A, size_t i, size_t j) {
+	Assert$(A != NULL, "Cannot swap.");
+
+	if (Check$(i != j, "Swap has no effect.")) {
+		entry_t **a = A->data;
+
+		for (size_t k = 0; k < A->rowsCount; k++) {
+			swap(a[k][i], a[k][j]);
+		}
+	}
+
+	return;
+}
+#pragma endregion "Swap*"
 
 
 #pragma region "Printing"
@@ -210,35 +247,40 @@ void concat (Mat A, Mat B) {
  \param [out]	file  	If non-null, the file to write to.
  \param [in]	format	If non-null, the format string.
  */
-void printMatrixToFile (Mat A, FILE *file, char *format) {
-	Assert$(file != NULL, "File reading error");
-	Assert$(A != NULL, "Cannot print. Pointer is NULL.");
+void printMatToFile (Mat A, FILE *file, char *format) {
+	Assert$(A != NULL, "Cannot print.");
+	Assert$(file != NULL, "File reading error.");
+	Assert$(format != NULL, "Format string is NULL.");
 
-	entry_t **a = A->mat;
+	entry_t **a = A->data;
 #ifdef PRETTYOUTPUT
 	static char buf[PRINTBUFSZ];
 #endif // PRETTYOUTPUT
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf(file, "[");
+		fflush(file);
 		for (size_t j = 0; j < A->colsCount; j++) {
 #ifdef PRETTYOUTPUT
-			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
+			snprintf(buf, PRINTBUFSZ - 1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
 			_trimTrailingZeroes(buf);
 			fprintf(file, "%s|", buf);
+			fflush(file);
 #else
 			fprintf(file, format, a[i][j]);
+			fflush(file);
 #endif
 		}
 		fprintf(file, "\b]\n");
+		fflush(file);
 	}
 
 	return;
 }
 
 /**
- \fn	size_t printMatricesToFile (Mat A, ...)
+ \fn	size_t printMatsToFile (Mat A, ...)
 
  \brief	Print many matrices to file.
 
@@ -246,13 +288,13 @@ void printMatrixToFile (Mat A, FILE *file, char *format) {
 
  \return	Printed matrices count.
  */
-size_t printMatricesToFile (Mat A, ...) {
-	Assert$(A != NULL, "Cannot print because of A is NULL.");
+size_t printMatsToFile (Mat A, ...) {
+	Assert$(A != NULL, "Cannot print.");
 	size_t n = 0;
 	va_list vl;
 	va_start(vl, A);
 	for (Mat T = A; T; T = va_arg(vl, Mat), n++) {
-        printf(" >>Mat["FMT_SIZET"]\n", n);
+        printf(" >>Mat[" FMT_SIZET "]\n", n);
 		printMat$(T);
 	}
 	va_end(vl);
@@ -273,7 +315,7 @@ void toString (Mat A, FILE *file, char *format) {
 	Assert$(file != NULL, "File access error.");
 	Assert$(A != NULL, "Cannot print.");
 
-	entry_t **a = A->mat;
+	entry_t **a = A->data;
 //#ifdef PRETTYOUTPUT
 //	char buf[PRINTBUFSZ];
 //#endif // PRETTYOUTPUT
@@ -340,7 +382,6 @@ void _trimTrailingZeroes (char *str) {
 
 
 #pragma region "Constructors"
-
 /**
 \fn	Mat DeepCopy (Mat A)
 
@@ -353,11 +394,12 @@ void _trimTrailingZeroes (char *str) {
 \return	Deep copy of source Matrix.
 */
 Mat DeepCopy (Mat A) {
-	Assert$(A != NULL, "Cannot copy NULL...");
+	Assert$(A != NULL, "Cannot copy.");
+	entry_t **a = A->data;
+
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
 	Assert$(B != NULL, "Allocating memory for copy failed.");
-	entry_t **a = A->mat;
-	entry_t **b = B->mat;
+	entry_t **b = B->data;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -368,7 +410,9 @@ Mat DeepCopy (Mat A) {
 	B->rank = A->rank;
 	B->trace = A->trace;
 	B->det = A->det;
+
 	B->isSingular = A->isSingular;
+	B->isIdentity = A->isIdentity;
 	B->isSPD = A->isSPD;
 	B->isRankDeficient = A->isRankDeficient;
 	B->permutationSign = A->permutationSign;
@@ -388,11 +432,12 @@ Mat DeepCopy (Mat A) {
 \return	Shallow copy of source Matrix.
 */
 Mat Copy (Mat A) {
-	Assert$(A != NULL, "Cannot copy NULL...");
+	Assert$(A != NULL, "Cannot copy.");
+	entry_t **a = A->data;
+
 	Mat B = AllocMat(A->rowsCount, A->colsCount);
 	Assert$(B != NULL, "Allocating memory for copy failed.");
-	entry_t **a = A->mat;
-	entry_t **b = B->mat;
+	entry_t **b = B->data;
 
 	for (size_t i = 0; i < B->rowsCount; i++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -413,9 +458,9 @@ Mat Copy (Mat A) {
  \return	Main diagonal of Matrix A.
  */
 Mat Diag (Mat A) {
+	entry_t **a = A->data;
 	Mat D = AllocMat(1, A->rowsCount);
-	entry_t **a = A->mat;
-	entry_t **d = D->mat;
+	entry_t **d = D->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		d[0][i] = a[i][i];
@@ -425,7 +470,7 @@ Mat Diag (Mat A) {
 }
 
 /**
- \fn	Mat Sub (Mat A, size_t row, size_t col)
+ \fn	Mat SubMat (Mat A, size_t row, size_t col)
 
  \brief	Returns submatrix of A.
 
@@ -435,14 +480,14 @@ Mat Diag (Mat A) {
 
  \return	A Mat.
  */
-Mat SubMatrix (Mat A, size_t row, size_t col) {
-	Assert$(false, "Not implemented"); //TODO:
+Mat SubMat (Mat A, size_t row, size_t col) {
+	Assert$(false, "Not Yet Implemented."); //TODO:
 
 	return NULL;
 }
 
 /**
- \fn	Mat Identity (size_t Size)
+ \fn	Mat Identity (size_t size)
 
  \brief	Constructs an identity matrix with the given size.
 
@@ -454,7 +499,7 @@ Mat SubMatrix (Mat A, size_t row, size_t col) {
  */
 Mat Identity (size_t size) {
 	Mat E = AllocMat(size, size);
-	entry_t **e = E->mat;
+	entry_t **e = E->data;
 
 	for (size_t i = 0; i < size; i++) {
 		for (size_t j = 0; j < size; j++) {
@@ -465,6 +510,8 @@ Mat Identity (size_t size) {
 			}
 		}
 	}
+
+	E->isIdentity = true;
 
 	return E;
 }
@@ -487,15 +534,15 @@ Mat Zeroes (size_t size) {
  \return	Minor.
  */
 Mat Minor (Mat A, size_t d) { //TODO:
-	Assert$(A->rowsCount <= d, "Rows count of A must be <= minor degree.");
+	Assert$(A->rowsCount <= d, "Rows count of A must be less than minor degree.");
 	Mat M = AllocMat(A->rowsCount, A->colsCount);
 
 	for (size_t i = 0; i < d; i++)	{
-		M->mat[i][i] = 1.0; //TODO: Array access results in a null pointer dereference
+		M->data[i][i] = 1.0; //TODO: Array access results in a null pointer dereference
 	}
 	for (size_t i = d; i < A->rowsCount; i++) {
 		for (size_t j = d; j < A->colsCount; j++) {
-			M->mat[i][j] = A->mat[i][j];
+			M->data[i][j] = A->data[i][j];
 		}
 	}
 
@@ -518,16 +565,17 @@ Mat Minor (Mat A, size_t d) { //TODO:
  \return	Number of read items.
  */
 size_t fill_fromFile (Mat A, FILE *file) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
-	entry_t **a = A->mat;
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
+	Assert$(A->rowsCount != 0 && A->colsCount != 0, "Matrix size should be greater than 0.");
+	Assert$(file != NULL, "File reading error.");
+
+	entry_t **a = A->data;
 	entry_t tmp = 0.0;
 	size_t r = 0;
 
-	Assert$(A->rowsCount != 0 && A->colsCount != 0, "Invalid size.");
-	Assert$(file != NULL, "File reading error");
-
 	while (!(feof(file)) && !(ferror(file))) {
 		spinActivityIndicator();
+
 		for (size_t i = 0; i < A->rowsCount; i++) {
 			for (size_t j = 0; j < A->colsCount; j++) {
 				r += fscanf(file, FMT_FLT_INPUT, &tmp);
@@ -535,6 +583,7 @@ size_t fill_fromFile (Mat A, FILE *file) {
 			}
 		}
 	}
+
 	clearActivityIndicator();
 
 	return r;
@@ -550,13 +599,13 @@ size_t fill_fromFile (Mat A, FILE *file) {
  \param	A	The Mat to process.
  */
 void fill_random (Mat A) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-	entry_t **a = A->mat;
+	entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
-			a[i][j] = round(((double) rand()) / 1000); //-V636
+			a[i][j] = round(((entry_t) rand()) / 1000); //-V636
 		}
 	}
 
@@ -573,9 +622,9 @@ void fill_random (Mat A) {
  \param	A	The Mat to process.
  */
 void fill_zeroes (Mat A) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-    entry_t **a = A->mat;
+    entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -587,9 +636,9 @@ void fill_zeroes (Mat A) {
 }
 
 void fill_ones (Mat A) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-	entry_t **a = A->mat;
+	entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -610,9 +659,9 @@ void fill_ones (Mat A) {
  \param inc     The increment.
  */
 void fill_sequential (Mat A, int64_t start, int64_t inc) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-    entry_t **a = A->mat;
+    entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -633,7 +682,7 @@ void fill_sequential (Mat A, int64_t start, int64_t inc) {
  \param	start	The start value.
  */
 void fill_spiral (Mat A, int64_t start) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
 	size_t sideLen = A->rowsCount;
 	size_t numConcentricSquares = (size_t) (ceil(((double) (sideLen)) / 2.0));
@@ -641,22 +690,22 @@ void fill_spiral (Mat A, int64_t start) {
 	for (size_t i = 0; i < numConcentricSquares; i++) {
 		// do top side
 		for (size_t j = 0; j < sideLen; j++) {
-			A->mat[i][i + j] = (entry_t) start++;
+			A->data[i][i + j] = (entry_t) start++;
 		}
 
 		// do right side
 		for (size_t j = 1; j < sideLen; j++) {
-			A->mat[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
+			A->data[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
 		}
 
 		// do bottom side
 		for (ptrdiff_t j = sideLen - 2; j > -1; j--) {
-			A->mat[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
+			A->data[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
 		}
 
 		// do left side
 		for (ptrdiff_t j = sideLen - 2; j > 0; j--) {
-			A->mat[i + j][i] = (entry_t) start++;
+			A->data[i + j][i] = (entry_t) start++;
 		}
 
 		sideLen -= 2;
@@ -673,31 +722,32 @@ void fill_spiral (Mat A, int64_t start) {
  \param	start	The start value.
  */
 void fill_zigZag (Mat A, int64_t start) {
-	Assert$(A != NULL, "Cannot fill. It is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
 	size_t lastValue = A->rowsCount * A->rowsCount - 1;
 	size_t currDiag = 0;
 	size_t loopFrom, loopTo;
 	size_t row, col;
+
 	do {
-		if (currDiag < A->rowsCount) {// if doing the upper-left triangular half
+		if (currDiag < A->rowsCount) { // if doing the upper-left triangular half
 			loopFrom = 0;
 			loopTo = currDiag;
-		} else {// doing the bottom-right triangular half
+		} else { // doing the bottom-right triangular half
 			loopFrom = currDiag - A->rowsCount + 1;
 			loopTo = A->rowsCount - 1;
 		}
 
 		for (size_t i = loopFrom; i <= loopTo; i++)			{
-			if (currDiag % 2 == 0) {// want to fill upwards
+			if (currDiag % 2 == 0) { // want to fill upwards
 				row = loopTo - i + loopFrom;
 				col = i;
-			} else {// want to fill downwards
+			} else { // want to fill downwards
 				row = i;
 				col = loopTo - i + loopFrom;
 			}
 
-			A->mat[row][col] = (entry_t) start++;
+			A->data[row][col] = (entry_t) start++;
 		}
 
 		currDiag++;
@@ -706,12 +756,12 @@ void fill_zigZag (Mat A, int64_t start) {
 	return;
 }
 
-void fill_tabulate (Mat A, Function2_u_u_e func) {
-    Assert$(A != NULL, "Cannot fill. It is NULL.");
+void fill_tabulate (Mat A, function_s_s_e_t func) {
+    Assert$(A != NULL, "Cannot fill. A is NULL.");
 
     for (size_t i = 0; i < A->rowsCount; ++i) {
         for (size_t j = 0; j < A->colsCount; ++j) {
-            A->mat[i][j] = (*func) (i, j);
+            A->data[i][j] = (*func) (i, j);
         }
     }
 
