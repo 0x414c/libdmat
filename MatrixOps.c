@@ -29,13 +29,16 @@ EntryWiseFunc_MatrixScalar_Inplace$(div, /)
 
 
 Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
+	Assert$(IsDimsEqual(A, B), "Matrices A and B should be equal by sizes.");
+
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
+	entry_t **l = L->data;
 	entry_t **a = A->data;
 	entry_t **b = B->data;
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
 		for (size_t j = 0; j < L->colsCount; j++) {
-			L->data[i][j] = lerp(a[i][j], b[i][j], t);
+			l[i][j] = lerp(a[i][j], b[i][j], t);
 		}
 	}
 
@@ -103,16 +106,16 @@ bool IsIdentity (Mat A) {
 			case 0:
 				return false;
 			case 1:
-				return equals(a[0][0], 1.0);
+				return equals(a[0][0], (entry_t) 1.0);
 			case 2:
-				return equals(a[0][0], 1.0) && iszero(a[0][1]) && iszero(a[1][0]) && equals(a[1][1], 1.0);
+				return equals(a[0][0], (entry_t) 1.0) && iszero(a[0][1]) && iszero(a[1][0]) && equals(a[1][1], (entry_t) 1.0);
 			default:
 				for (size_t i = 0; i < A->rowsCount; i++) {
 					for (size_t j = 0; j < A->colsCount; j++) {
 						if ((i != j) && (isnotzero(a[i][j]))) {
 							return false;
 						} else {
-							if ((i == j) && (!(equals(a[i][j], 1.0)))) {
+							if ((i == j) && (!(equals(a[i][j], (entry_t) 1.0)))) {
 								return false;
 							}
 						}
@@ -125,11 +128,13 @@ bool IsIdentity (Mat A) {
 }
 
 bool IsSingular (Mat A) {
+	Assert$(IsSquare$(A), "Matrix A should be square.");
+
 	if (A->isSingular) {
 		return true;
 	} else {
 		Mat T = DeepCopy(A);
-		entry_t det = Det_Gauss(T);
+		toRowEchelonForm_reference(T);
 		bool isSingular = T->isSingular;
 		freeMat$(T);
 		A->isSingular = isSingular;
@@ -266,7 +271,8 @@ void toTransposed (Mat *A) {
 Mat Inverse (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
-	entry_t det = Det_Gauss(A);
+	entry_t _det = Det_Gauss(A);
+
 	if (!Check$(!(A->isSingular), "Cannot invert singular matrix.")) {
 		return NULL;
 	}
@@ -278,7 +284,7 @@ Mat Inverse (Mat A) {
 		case 1:
 			RI = AllocMat(A->rowsCount, A->colsCount);
 
-			RI->data[0][0] = ((entry_t) 1.0) / A->det;
+			RI->data[0][0] = (entry_t) 1.0 / A->det;
 
 			return RI;
 		case 2:
@@ -289,7 +295,7 @@ Mat Inverse (Mat A) {
 			RI->data[0][0] =  a[1][1];
 			RI->data[1][1] =  a[0][0];
 
-			_mul_m_s_inplace(RI, ((entry_t) 1.0) / A->det);
+			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
 
 			return RI;
     	case 3:
@@ -305,7 +311,7 @@ Mat Inverse (Mat A) {
 			RI->data[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
 			RI->data[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
 
-			_mul_m_s_inplace(RI, ((entry_t) 1.0) / A->det);
+			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
 
 			return RI;
 		case 4:
@@ -331,7 +337,7 @@ Mat Inverse (Mat A) {
 			RI->data[3][2] = a[0][2] * a[1][1] * a[3][0] - a[0][1] * a[1][2] * a[3][0] - a[0][2] * a[1][0] * a[3][1] + a[0][0] * a[1][2] * a[3][1] + a[0][1] * a[1][0] * a[3][2] - a[0][0] * a[1][1] * a[3][2];
 			RI->data[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
 
-			_mul_m_s_inplace(RI, ((entry_t) 1.0) / A->det);
+			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
 
 			return RI;
 		default:
@@ -424,6 +430,29 @@ Mat MatMul_naive (Mat A, Mat B) {
 				c[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
 
 				return C;
+
+			case 4:
+				c[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0] + a[0][3] * b[3][0];
+				c[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1] + a[0][3] * b[3][1];
+				c[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2] + a[0][3] * b[3][2];
+				c[0][3] = a[0][0] * b[0][3] + a[0][1] * b[1][3] + a[0][2] * b[2][3] + a[0][3] * b[3][3];
+
+				c[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0] + a[1][3] * b[3][0];
+				c[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1] + a[1][3] * b[3][1];
+				c[1][2] = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2] + a[1][3] * b[3][2];
+				c[1][3] = a[1][0] * b[0][3] + a[1][1] * b[1][3] + a[1][2] * b[2][3] + a[1][3] * b[3][3];
+
+				c[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0] + a[2][3] * b[3][0];
+				c[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1] + a[2][3] * b[3][1];
+				c[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2] + a[2][3] * b[3][2];
+				c[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3] * b[3][3];
+
+				c[3][0] = a[3][0] * b[0][0] + a[3][1] * b[1][0] + a[3][2] * b[2][0] + a[3][3] * b[3][0];
+				c[3][1] = a[3][0] * b[0][1] + a[3][1] * b[1][1] + a[3][2] * b[2][1] + a[3][3] * b[3][1];
+				c[3][2] = a[3][0] * b[0][2] + a[3][1] * b[1][2] + a[3][2] * b[2][2] + a[3][3] * b[3][2];
+				c[3][3] = a[3][0] * b[0][3] + a[3][1] * b[1][3] + a[3][2] * b[2][3] + a[3][3] * b[3][3];
+
+				return C;
 			default:
 				goto generalized;
 		}
@@ -477,11 +506,13 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 	switch (size) {
 		case 1:
 			C = AllocMat(1, 1);
+
 			C->data[0][0] = a[0][0] * b[0][0];
 
 			return C;
 		case 2:
 			C = AllocMat(2, 2);
+
 			C->data[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0];
 			C->data[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1];
 			C->data[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0];
@@ -502,6 +533,30 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 			C->data[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0];
 			C->data[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1];
 			C->data[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
+
+			return C;
+		case 4:
+			C = AllocMat(4, 4);
+
+			C->data[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0] + a[0][3] * b[3][0];
+			C->data[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1] + a[0][3] * b[3][1];
+			C->data[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2] + a[0][3] * b[3][2];
+			C->data[0][3] = a[0][0] * b[0][3] + a[0][1] * b[1][3] + a[0][2] * b[2][3] + a[0][3] * b[3][3];
+
+			C->data[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0] + a[1][3] * b[3][0];
+			C->data[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1] + a[1][3] * b[3][1];
+			C->data[1][2] = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2] + a[1][3] * b[3][2];
+			C->data[1][3] = a[1][0] * b[0][3] + a[1][1] * b[1][3] + a[1][2] * b[2][3] + a[1][3] * b[3][3];
+
+			C->data[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0] + a[2][3] * b[3][0];
+			C->data[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1] + a[2][3] * b[3][1];
+			C->data[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2] + a[2][3] * b[3][2];
+			C->data[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3] * b[3][3];
+
+			C->data[3][0] = a[3][0] * b[0][0] + a[3][1] * b[1][0] + a[3][2] * b[2][0] + a[3][3] * b[3][0];
+			C->data[3][1] = a[3][0] * b[0][1] + a[3][1] * b[1][1] + a[3][2] * b[2][1] + a[3][3] * b[3][1];
+			C->data[3][2] = a[3][0] * b[0][2] + a[3][1] * b[1][2] + a[3][2] * b[2][2] + a[3][3] * b[3][2];
+			C->data[3][3] = a[3][0] * b[0][3] + a[3][1] * b[1][3] + a[3][2] * b[2][3] + a[3][3] * b[3][3];
 
 			return C;
 		default:
@@ -920,13 +975,13 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 
 	switch (size) {
 		case 1:
-			C = AllocMat(size, size);
+			C = AllocMat(1, 1);
 
 			C->data[0][0] = a[0][0] * B->data[0][0];
 
 			return C;
 		case 2:
-			C = AllocMat(size, size);
+			C = AllocMat(2, 2);
 
 			C->data[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0];
 			C->data[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1];
@@ -935,7 +990,7 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 
             return C;
 		case 3:
-			C = AllocMat(size, size);
+			C = AllocMat(3, 3);
 
 			C->data[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0];
 			C->data[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1];
@@ -948,6 +1003,30 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 			C->data[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0];
 			C->data[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1];
 			C->data[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
+
+			return C;
+		case 4:
+			C = AllocMat(4, 4);
+
+			C->data[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0] + a[0][3] * b[3][0];
+			C->data[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1] + a[0][3] * b[3][1];
+			C->data[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2] + a[0][3] * b[3][2];
+			C->data[0][3] = a[0][0] * b[0][3] + a[0][1] * b[1][3] + a[0][2] * b[2][3] + a[0][3] * b[3][3];
+
+			C->data[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0] + a[1][3] * b[3][0];
+			C->data[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1] + a[1][3] * b[3][1];
+			C->data[1][2] = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2] + a[1][3] * b[3][2];
+			C->data[1][3] = a[1][0] * b[0][3] + a[1][1] * b[1][3] + a[1][2] * b[2][3] + a[1][3] * b[3][3];
+
+			C->data[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0] + a[2][3] * b[3][0];
+			C->data[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1] + a[2][3] * b[3][1];
+			C->data[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2] + a[2][3] * b[3][2];
+			C->data[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3] * b[3][3];
+
+			C->data[3][0] = a[3][0] * b[0][0] + a[3][1] * b[1][0] + a[3][2] * b[2][0] + a[3][3] * b[3][0];
+			C->data[3][1] = a[3][0] * b[0][1] + a[3][1] * b[1][1] + a[3][2] * b[2][1] + a[3][3] * b[3][1];
+			C->data[3][2] = a[3][0] * b[0][2] + a[3][1] * b[1][2] + a[3][2] * b[2][2] + a[3][3] * b[3][2];
+			C->data[3][3] = a[3][0] * b[0][3] + a[3][1] * b[1][3] + a[3][2] * b[2][3] + a[3][3] * b[3][3];
 
 			return C;
 		default:

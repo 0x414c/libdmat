@@ -224,7 +224,7 @@ void toRowEchelonForm (Mat A) {
  \fn		void toRowEchelonForm_reference (Mat A)
 
  \brief		Transforms Matrix A into a row echelon form.
- 			Reference implementation.
+ 			Reference implementation w/ partial pivoting.
 
  \param	A	The Matrix to process.
  */
@@ -242,14 +242,14 @@ void toRowEchelonForm_reference (Mat A) {
 			}
 		}
 
-		// Swap rows
-		if (piv > k) {
-			swapRows(A, piv, k);
+		if (isnotzero(a[piv][k])) {
+			// Swap rows
+			if (piv > k) {
+				swapRows(A, piv, k);
 
-			A->permutationSign *= -1; //-V127
-		}
+				A->permutationSign *= -1; //-V127
+			}
 
-		if (isnotzero(a[k][k])) {
 			// Compute multipliers and eliminate k-th column.
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = a[i][k] / a[k][k];
@@ -282,56 +282,68 @@ void toRowEchelonForm_reference (Mat A) {
  \param	A	The Matrix to process.
  */
 void toReducedRowEchelonForm (Mat A) {
-	size_t rowsCount = A->rowsCount, colsCount = A->colsCount;
 	entry_t **a = A->data;
-	size_t pr, pc = 0;
+	size_t piv_col = 0;
 
-	for (size_t r = 0; r < rowsCount; r++) {
-		if (pc >= colsCount) {
-			return;
+	for (size_t k = 0; k < A->rowsCount; k++) {
+		if (piv_col == A->colsCount) {
+			break;
 		} else {
-			pr = r;
+			size_t piv_row = k;
 
-			while (iszero(a[pr][pc])) {
-				pr++;
-
-				if (pr == rowsCount) {
-					pr = r;
-					pc++;
-
-					if (pc == colsCount) {
-						return;
+			while (true) {
+				for (size_t i = k + 1; i < A->rowsCount; i++) {
+					if (abs(a[i][piv_col]) > a[piv_row][piv_col]) {
+						piv_row = i;
 					}
 				}
-			}
-		}
 
-		if (pr > r) {
-			swapRows(A, pr, r);
-		}
+				if (iszero(a[piv_row][piv_col])) {
+					A->isSingular = true;
+					Check$(!(A->isSingular), "Singular matrix.");
 
-		if (isnotzero(a[r][pc])) {
-			entry_t d = a[r][pc];
+					piv_col++;
 
-			for (size_t j = 0; j < colsCount; j++) {
-				a[r][j] /= d;
-			}
-		} else {
-			A->isSingular = true;
-			Check$(!(A->isSingular), "Singular matrix.");
-		}
-
-		for (size_t i = 0; i < rowsCount; i++) {
-			if (i != r)	{
-				entry_t f = a[i][pc];
-
-				for (size_t j = 0; j < colsCount; j++) {
-					a[i][j] -= f * a[r][j];
+					if (piv_col == A->colsCount) {
+						return;
+					}
+				} else {
+					break;
 				}
 			}
-		}
 
-		pc++;
+			if (piv_row > k) {
+				swapRows(A, piv_row, k);
+
+				A->permutationSign *= -1; //-V127
+			}
+
+			if (!equals(a[k][piv_col], (entry_t) 1.0)) {
+				entry_t d = a[k][piv_col];
+
+				for (size_t j = 0; j < A->colsCount; j++) {
+					a[k][j] /= d;
+				}
+			}
+
+			for (size_t i = 0; i < k; i++) {
+				entry_t f = a[i][piv_col];
+
+				for (size_t j = 0; j < A->colsCount; j++) {
+					a[i][j] -= f * a[k][j];
+				}
+			}
+
+			for (size_t i = k + 1; i < A->rowsCount; i++) {
+				entry_t f = a[i][piv_col];
+
+				for (size_t j = 0; j < A->colsCount; j++) {
+					a[i][j] -= f * a[k][j];
+				}
+			}
+
+			piv_col++;
+		}
 	}
 
 	return;

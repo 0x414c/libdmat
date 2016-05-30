@@ -29,7 +29,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 	Mat P = Identity(A->rowsCount);
 //	size_t *permutationVector = AllocVec_u(rows);
 
-	// Pivoting
+	// Pivotize and eliminate
 	// TODO: one procedure to pivotize them all
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		// Find pivot.
@@ -42,17 +42,17 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 			}
 		}
 
-		// Swap rows
-		if (piv > k) {
-			swapRows(LU, piv, k);
-			swapRows(P, piv, k);
+		if (isnotzero(lu[piv][k])) {
+			// Swap rows
+			if (piv > k) {
+				swapRows(LU, piv, k);
+				swapRows(P, piv, k);
 
-			//_swap_i(permutationVector[piv], permutationVector[k]);
-			P->permutationSign *= -1; //-V127
-		}
+				//_swap_i(permutationVector[piv], permutationVector[k]);
+				P->permutationSign *= -1; //-V127
+			}
 
-		// Compute multipliers and eliminate k-th column.
-		if (isnotzero(lu[k][k])) {
+			// Compute multipliers and eliminate k-th column.
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = lu[i][k] / lu[k][k];
 
@@ -68,7 +68,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		}
 	}
 
-	// fill L
+	// Fill L
 	Mat L = Identity(A->rowsCount);
 	entry_t **l = L->data;
 
@@ -78,7 +78,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		}
 	}
 
-	// fill U
+	// Fill U
 	Mat U = Zeroes(A->rowsCount);
 	entry_t **u = U->data;
 
@@ -110,7 +110,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 
  \param	[in,out] A	The Matrix to process.	Note that A will be modified too.
 
- \return	Pivoting matrix.
+ \return	Permutation matrix.
  */
 Mat Pivotize_LU (Mat A) {
 	Mat P = Identity(A->rowsCount);
