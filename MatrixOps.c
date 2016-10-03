@@ -462,11 +462,11 @@ Mat MatMul_naive (Mat A, Mat B) {
 
 generalized:
 	fill_zeroes(C);
-	for (size_t i = 0; i < A->rowsCount; ++i) {
-		for (size_t k = 0; k < A->colsCount; ++k) {
-			entry_t s = a[i][k];
-			for (size_t j = 0; j < B->colsCount; ++j) {
-				c[i][j] += s * b[k][j];
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		for (size_t k = 0; k < A->colsCount; k++) {
+			entry_t f = a[i][k];
+			for (size_t j = 0; j < B->colsCount; j++) {
+				c[i][j] += f * b[k][j];
 			}
 		}
 	}
@@ -857,7 +857,7 @@ entry_t ConditionNumber (Mat A) {
 entry_t DiagProd (Mat A) {
 	entry_t prod = 1.0;
 
-	for (size_t i = 0; i < A->rowsCount; ++i) {
+	for (size_t i = 0; i < A->rowsCount; i++) {
 		prod *= A->data[i][i];
 	}
 
