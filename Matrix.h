@@ -49,7 +49,7 @@ void toString (Mat A, FILE *file, char *format);
 extern void _trimTrailingZeroes (char *str);
 #else
 #define _trimTrailingZeroes(str)
-#endif // PRETTYOUTPUT
+#endif //PRETTYOUTPUT
 
 #ifdef PRINTING_ENABLED
 #define printMat$(a)       do { printMatToFile((a), OUTFILE, FMT_FLT); } while (false)

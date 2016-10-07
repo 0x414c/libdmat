@@ -13,7 +13,7 @@ uint64_t GetTickCounts() {
 	gettimeofday(&tv, NULL);
 	return (uint64_t) (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
-#endif // __GNUC__
+#endif //__GNUC__
 
 #ifdef _MSC_VER
 #pragma message("Got MSVC...")
@@ -22,8 +22,8 @@ uint64_t GetTickCounts() {
 #define GetTickCounts() GetTickCount64()
 #else
 #define GetTickCounts() GetTickCount()
-#endif // WINVER
-#endif // _MSC_VER
+#endif //WINVER
+#endif //_MSC_VER
 
 
 static uint8_t currentPos = 0;
@@ -55,4 +55,4 @@ void clearActivityIndicator (void) {
 
 	return;
 }
-#endif // SPINNER
+#endif //SPINNER

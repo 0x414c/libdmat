@@ -125,18 +125,18 @@ entry_t Det_Bareiss (Mat A) {
 	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
 	entry_t **t = T->data;
 
-	// Pivotize
+	//Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		size_t piv = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			// Reference implementation of pivoting algorithm
+			//Reference implementation of pivoting algorithm
 			if (abs(t[i][k]) > abs(t[piv][k])) {
 				piv = i;
 			}
 		}
 
-		// Swap rows
+		//Swap rows
 		if (piv > k) {
 			swapRows(T, piv, k);
 
@@ -144,7 +144,7 @@ entry_t Det_Bareiss (Mat A) {
 		}
 	}
 
-	// Bareiss algorithm main step
+	//Bareiss algorithm main step
 	for (size_t i = 0; i < T->rowsCount - 1; i++) {
 		if (isnotzero(t[i][i])) {
 			for (size_t j = i + 1; j < T->rowsCount; j++) {
@@ -192,9 +192,9 @@ void toRowEchelonForm (Mat A) {
 	entry_t **a = A->data;
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		// Find pivot.
+		//Find pivot.
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			// Immediate rows swapping
+			//Immediate rows swapping
 			if (abs(a[i][k]) > abs(a[k][k])) {
 				swapRows(A, i, k);
 
@@ -202,7 +202,7 @@ void toRowEchelonForm (Mat A) {
 			}
 		}
 
-		// Compute multipliers and eliminate k-th column.
+		//Compute multipliers and eliminate k-th column.
 		if (isnotzero(a[k][k])) {
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = a[i][k] / a[k][k];
@@ -232,25 +232,25 @@ void toRowEchelonForm_reference (Mat A) {
 	entry_t **a = A->data;
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		// Find pivot
+		//Find pivot
 		size_t piv = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			// Reference implementation of pivoting algorithm
+			//Reference implementation of pivoting algorithm
 			if (abs(a[i][k]) > abs(a[piv][k])) {
 				piv = i;
 			}
 		}
 
 		if (isnotzero(a[piv][k])) {
-			// Swap rows
+			//Swap rows
 			if (piv > k) {
 				swapRows(A, piv, k);
 
 				A->permutationSign *= -1; //-V127
 			}
 
-			// Compute multipliers and eliminate k-th column.
+			//Compute multipliers and eliminate k-th column.
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = a[i][k] / a[k][k];
 

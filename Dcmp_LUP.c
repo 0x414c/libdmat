@@ -29,21 +29,21 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 	Mat P = Identity(A->rowsCount);
 //	size_t *permutationVector = AllocVec_u(rows);
 
-	// Pivotize and eliminate
-	// TODO: one procedure to pivotize them all
+	//Pivotize and eliminate
+	//TODO: one procedure to pivotize them all
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		// Find pivot.
+		//Find pivot.
 		size_t piv = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			// Reference implementation of pivoting algorithm
+			//Reference implementation of pivoting algorithm
 			if (abs(lu[i][k]) > abs(lu[piv][k])) {
 				piv = i;
 			}
 		}
 
 		if (isnotzero(lu[piv][k])) {
-			// Swap rows
+			//Swap rows
 			if (piv > k) {
 				swapRows(LU, piv, k);
 				swapRows(P, piv, k);
@@ -52,7 +52,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 				P->permutationSign *= -1; //-V127
 			}
 
-			// Compute multipliers and eliminate k-th column.
+			//Compute multipliers and eliminate k-th column.
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
 				entry_t f = lu[i][k] / lu[k][k];
 
@@ -68,7 +68,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		}
 	}
 
-	// Fill L
+	//Fill L
 	Mat L = Identity(A->rowsCount);
 	entry_t **l = L->data;
 
@@ -78,7 +78,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		}
 	}
 
-	// Fill U
+	//Fill U
 	Mat U = Zeroes(A->rowsCount);
 	entry_t **u = U->data;
 
@@ -227,7 +227,7 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
 	entry_t **x = X->data;
 
 	for (size_t c = 0; c < B->colsCount; c++) {
-		// forward solve L.y = b
+		//forward solve L.y = b
 		for (size_t i = 0; i < LUP[0]->rowsCount; i++) {
 			y[i][c] = pb[i][c];
 
@@ -238,7 +238,7 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
 			//y[i][c] /= l[i][i];
 		}
 
-		// backward solve U.x = y
+		//backward solve U.x = y
 		for (ptrdiff_t i = LUP[1]->rowsCount - 1; i >= 0; i--) {
 			x[i][c] = y[i][c];
 

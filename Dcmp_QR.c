@@ -31,7 +31,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 	entry_t **qr = QR->data;
 
 	for (size_t k = 0; k < columns; k++) {
-		// Compute 2-norm of k-th column without under/overflow.
+		//Compute 2-norm of k-th column without under/overflow.
 		entry_t norm = 0.0;
 
 		for (size_t i = k; i < rows; i++) {
@@ -39,7 +39,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 		}
 
 		if (isnotzero(norm)) {
-			// Form k-th Householder vector.
+			//Form k-th Householder vector.
 			if (qr[k][k] < (entry_t) 0.0) {
 				norm = -norm;
 			}
@@ -50,7 +50,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 			qr[k][k] += 1.0;
 
-			// Apply transformation to remaining columns.
+			//Apply transformation to remaining columns.
 			for (size_t j = k + 1; j < columns; j++) {
 				entry_t s = 0.0;
 

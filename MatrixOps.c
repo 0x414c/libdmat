@@ -95,7 +95,7 @@ inline bool IsDimsEqual (Mat A, Mat B) {
  \return	Checking result (true or false).
  */
 bool IsIdentity (Mat A) {
-    Assert$(IsSquare$(A), "Matrix A should be square.");
+	Assert$(IsSquare$(A), "Matrix A should be square.");
 
 	if (A->isIdentity) {
 		return true;
@@ -298,7 +298,7 @@ Mat Inverse (Mat A) {
 			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
 
 			return RI;
-    	case 3:
+		case 3:
 			RI = AllocMat(A->rowsCount, A->colsCount);
 
 			RI->data[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
@@ -581,7 +581,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				Mat B21 = AllocMat(size, size);
 				Mat B22 = AllocMat(size, size);
 
-				// Split
+				//Split
 				for (size_t i = 0; i < size; i++) {
 					for (size_t j = 0; j < size; j++) {
 						A11->data[i][j] = a[i][j];
@@ -617,7 +617,7 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 				_add_m_m_inplace(C22, tmp_1);
 				freeMat$(tmp_1);
 
-				// Join
+				//Join
 				for (size_t i = 0; i < size; i++) {
 					for (size_t j = 0; j < size; j++) {
 						C->data[i][j] = C11->data[i][j];
@@ -779,7 +779,7 @@ entry_t OneNorm (Mat A) {
 entry_t TwoNorm (Mat A) {
 	Assert$(false, "Not Yet Implemented."); //TODO:
 
-    return 0.0;
+	return 0.0;
 }
 
 /**
@@ -792,10 +792,10 @@ entry_t TwoNorm (Mat A) {
  \return	Inf-norm.
  */
 entry_t InfinityNorm (Mat A) {
-    entry_t norm = 0.0;
+	entry_t norm = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
-        entry_t sum = 0.0;
+		entry_t sum = 0.0;
 
 		for (size_t j = 0; j < A->colsCount; j++) {
 			sum += abs(A->data[i][j]);
@@ -818,7 +818,7 @@ entry_t InfinityNorm (Mat A) {
  \return	Euclidean norm.
  */
 entry_t EuclideanNorm (Mat A) {
-    entry_t sum = 0.0;
+	entry_t sum = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -1049,7 +1049,7 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 				Mat B21 = AllocMat(size, size);
 				Mat B22 = AllocMat(size, size);
 
-				// Split
+				//Split
 				for (size_t i = 0; i < size; i++) {
 					for (size_t j = 0; j < size; j++) {
 						A11->data[i][j] = a[i][j];
@@ -1067,47 +1067,47 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 				Mat A_tmp = AllocMat(size, size);
 				Mat B_tmp = AllocMat(size, size);
 
-				_add_m_m_m(A11, A22, A_tmp); // A11 + A22
-				_add_m_m_m(B11, B22, B_tmp); // B11 + B22
-				Mat P1 = MatMul_Strassen(A_tmp, B_tmp); // P1 = (A11+A22) * (B11+B22)
+				_add_m_m_m(A11, A22, A_tmp); //A11 + A22
+				_add_m_m_m(B11, B22, B_tmp); //B11 + B22
+				Mat P1 = MatMul_Strassen(A_tmp, B_tmp); //P1 = (A11+A22) * (B11+B22)
 
-				_add_m_m_m(A21, A22, A_tmp); // A21 + A22
-				Mat P2 = MatMul_Strassen(A_tmp, B11); // P2 = (A21+A22) * (B11)
+				_add_m_m_m(A21, A22, A_tmp); //A21 + A22
+				Mat P2 = MatMul_Strassen(A_tmp, B11); //P2 = (A21+A22) * (B11)
 
-				_sub_m_m_m(B12, B22, B_tmp); // B12 - B22
-				Mat P3 = MatMul_Strassen(A11, B_tmp); // P3 = (A11) * (B12 - B22)
+				_sub_m_m_m(B12, B22, B_tmp); //B12 - B22
+				Mat P3 = MatMul_Strassen(A11, B_tmp); //P3 = (A11) * (B12 - B22)
 
-				_sub_m_m_m(B21, B11, B_tmp); // B21 - B11
-				Mat P4 = MatMul_Strassen(A22, B_tmp); // P4 = (A22) * (B21 - B11)
+				_sub_m_m_m(B21, B11, B_tmp); //B21 - B11
+				Mat P4 = MatMul_Strassen(A22, B_tmp); //P4 = (A22) * (B21 - B11)
 
-				_add_m_m_m(A11, A12, A_tmp); // A11 + A12
-				Mat P5 = MatMul_Strassen(A_tmp, B22); // P5 = (A11 + A12) * (B22)
+				_add_m_m_m(A11, A12, A_tmp); //A11 + A12
+				Mat P5 = MatMul_Strassen(A_tmp, B22); //P5 = (A11 + A12) * (B22)
 
-				_sub_m_m_m(A21, A11, A_tmp); // A21 - A11
-				_add_m_m_m(B11, B12, B_tmp); // B11 + B12
-				Mat P6 = MatMul_Strassen(A_tmp, B_tmp); // P6 = (A21 - A11) * (B11 + B12)
+				_sub_m_m_m(A21, A11, A_tmp); //A21 - A11
+				_add_m_m_m(B11, B12, B_tmp); //B11 + B12
+				Mat P6 = MatMul_Strassen(A_tmp, B_tmp); //P6 = (A21 - A11) * (B11 + B12)
 
-				_sub_m_m_m(A12, A22, A_tmp); // A12 - A22
-				_add_m_m_m(B21, B22, B_tmp); // B21 + B22
-				Mat P7 = MatMul_Strassen(A_tmp, B_tmp); // P7 = (A12 - A22) * (B21 + B22)
+				_sub_m_m_m(A12, A22, A_tmp); //A12 - A22
+				_add_m_m_m(B21, B22, B_tmp); //B21 + B22
+				Mat P7 = MatMul_Strassen(A_tmp, B_tmp); //P7 = (A12 - A22) * (B21 + B22)
 
 				Mat C11 = AllocMat(size, size);
 				Mat C12 = AllocMat(size, size);
 				Mat C21 = AllocMat(size, size);
 				Mat C22 = AllocMat(size, size);
 
-				_add_m_m_m(P3, P5, C12); // C12 = P3 + P5
-				_add_m_m_m(P2, P4, C21); // C21 = P2 + P4
+				_add_m_m_m(P3, P5, C12); //C12 = P3 + P5
+				_add_m_m_m(P2, P4, C21); //C21 = P2 + P4
 
-				_add_m_m_m(P1, P4, A_tmp); // P1 + P4
-				_add_m_m_m(A_tmp, P7, B_tmp); // P1 + P4 + P7
-				_sub_m_m_m(B_tmp, P5, C11); // C11 = P1 + P4 - P5 + P7
+				_add_m_m_m(P1, P4, A_tmp); //P1 + P4
+				_add_m_m_m(A_tmp, P7, B_tmp); //P1 + P4 + P7
+				_sub_m_m_m(B_tmp, P5, C11); //C11 = P1 + P4 - P5 + P7
 
-				_add_m_m_m(P1, P3, A_tmp); // P1 + P3
-				_add_m_m_m(A_tmp, P6, B_tmp); // P1 + P3 + P6
-				_sub_m_m_m(B_tmp, P2, C22); // C22 = P1 + P3 - P2 + P6
+				_add_m_m_m(P1, P3, A_tmp); //P1 + P3
+				_add_m_m_m(A_tmp, P6, B_tmp); //P1 + P3 + P6
+				_sub_m_m_m(B_tmp, P2, C22); //C22 = P1 + P3 - P2 + P6
 
-				// Join
+				//Join
 				for (size_t i = 0; i < size; i++) {
 					for (size_t j = 0; j < size; j++) {
 						C->data[i][j] = C11->data[i][j];

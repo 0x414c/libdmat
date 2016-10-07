@@ -78,7 +78,7 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 
 	Mat X = DeepCopy(B);
 
-	// Solve L*Y = B;
+	//Solve L*Y = B;
 	for (size_t k = 0; k < L->rowsCount; k++) {
 		for (size_t j = 0; j < B->colsCount; j++) {
 			for (size_t i = 0; i < k; i++) {
@@ -89,7 +89,7 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 		}
 	}
 
-	// Solve L'*X = Y;
+	//Solve L'*X = Y;
 	for (ssize_t k = L->rowsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
 			for (size_t i = (size_t) (k + 1); i < L->rowsCount; i++) {

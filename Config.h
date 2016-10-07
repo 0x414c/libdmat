@@ -84,7 +84,7 @@
         Note that buffer must be capable to hold string formatted using `FMT_FLT'
  */
 #define PRINTBUFSZ ( 320 )
-#endif // PRETTYOUTPUT
+#endif //PRETTYOUTPUT
 
 
 /**
@@ -92,7 +92,7 @@
 
  \brief	Formatting string for integers.
  */
-#define FMT_INT	"%5d"
+#define FMT_INT "%5d"
 
 
 /**
@@ -100,7 +100,7 @@
 
  \brief	Format string for floats.
  */
-#define FMT_FLT	"%14.3f"
+#define FMT_FLT "%14.3f"
 
 
 /**
@@ -120,4 +120,4 @@
 #define FMT_FLT_INPUT "%lf"
 #else
 #define FMT_FLT_INPUT "%f"
-#endif // DOUBLE_PRECISION
+#endif //DOUBLE_PRECISION

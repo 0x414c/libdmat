@@ -58,12 +58,12 @@ struct _Mat_struct {
 	/**
 	 \brief	true if this Matrix is singular.
 	 */
-    //TODO: to bitfield
+	//TODO: to bitfield
 	bool isSingular;
 
 	/**
-     \brief	true if this Matrix is identity matrix.
-    */
+	 \brief	true if this Matrix is identity matrix.
+	*/
 	//TODO: to bitfield
 	bool isIdentity;
 

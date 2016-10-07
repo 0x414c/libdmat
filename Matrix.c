@@ -154,7 +154,7 @@ void resize (Mat A, size_t newRows, size_t newCols) {
 			//NOTE: memsetting double array w/ 0 will be UB if double isn't IEEE754-compliant.
 			memset(A->a[i] + A->colsCount, 0, sizeof(entry_t) * (newCols - A->colsCount));
 		}
-#endif // __STDC_IEC_559__
+#endif //__STDC_IEC_559__
 	}
 
 	if (newRows > A->rowsCount)	{
@@ -255,7 +255,7 @@ void printMatToFile (Mat A, FILE *file, char *format) {
 	entry_t **a = A->data;
 #ifdef PRETTYOUTPUT
 	static char buf[PRINTBUFSZ];
-#endif // PRETTYOUTPUT
+#endif //PRETTYOUTPUT
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf(file, "[");
@@ -318,7 +318,7 @@ void toString (Mat A, FILE *file, char *format) {
 	entry_t **a = A->data;
 //#ifdef PRETTYOUTPUT
 //	char buf[PRINTBUFSZ];
-//#endif // PRETTYOUTPUT
+//#endif //PRETTYOUTPUT
 
 	fprintf(file, "{");
 	for (size_t i = 0; i < A->rowsCount; i++) {
@@ -331,7 +331,7 @@ void toString (Mat A, FILE *file, char *format) {
 //#else
 			fprintf(file, format, a[i][j]);
 			fprintf(file, ",");
-//#endif // PRETTYOUTPUT
+//#endif //PRETTYOUTPUT
 		}
 		fprintf(file, "\b},");
 	}
@@ -377,7 +377,7 @@ void _trimTrailingZeroes (char *str) {
 }
 //#else
 //#define _trimTrailingZeroes
-#endif // PRETTYOUTPUT
+#endif //PRETTYOUTPUT
 #pragma endregion "Printing"
 
 
@@ -624,7 +624,7 @@ void fill_random (Mat A) {
 void fill_zeroes (Mat A) {
 	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-    entry_t **a = A->data;
+	entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -661,12 +661,12 @@ void fill_ones (Mat A) {
 void fill_sequential (Mat A, int64_t start, int64_t inc) {
 	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-    entry_t **a = A->data;
+	entry_t **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
 			a[i][j] = (entry_t) start; //-V113
-            start += inc;
+			start += inc;
 		}
 	}
 
@@ -688,22 +688,22 @@ void fill_spiral (Mat A, int64_t start) {
 	size_t numConcentricSquares = (size_t) (ceil(((double) (sideLen)) / 2.0));
 
 	for (size_t i = 0; i < numConcentricSquares; i++) {
-		// do top side
+		//do top side
 		for (size_t j = 0; j < sideLen; j++) {
 			A->data[i][i + j] = (entry_t) start++;
 		}
 
-		// do right side
+		//do right side
 		for (size_t j = 1; j < sideLen; j++) {
 			A->data[i + j][A->rowsCount - 1 - i] = (entry_t) start++;
 		}
 
-		// do bottom side
+		//do bottom side
 		for (ptrdiff_t j = sideLen - 2; j > -1; j--) {
 			A->data[A->rowsCount - 1 - i][i + j] = (entry_t) start++;
 		}
 
-		// do left side
+		//do left side
 		for (ptrdiff_t j = sideLen - 2; j > 0; j--) {
 			A->data[i + j][i] = (entry_t) start++;
 		}
@@ -730,19 +730,19 @@ void fill_zigZag (Mat A, int64_t start) {
 	size_t row, col;
 
 	do {
-		if (currDiag < A->rowsCount) { // if doing the upper-left triangular half
+		if (currDiag < A->rowsCount) { //if doing the upper-left triangular half
 			loopFrom = 0;
 			loopTo = currDiag;
-		} else { // doing the bottom-right triangular half
+		} else { //doing the bottom-right triangular half
 			loopFrom = currDiag - A->rowsCount + 1;
 			loopTo = A->rowsCount - 1;
 		}
 
-		for (size_t i = loopFrom; i <= loopTo; i++)			{
-			if (currDiag % 2 == 0) { // want to fill upwards
+		for (size_t i = loopFrom; i <= loopTo; i++) {
+			if (currDiag % 2 == 0) { //want to fill upwards
 				row = loopTo - i + loopFrom;
 				col = i;
-			} else { // want to fill downwards
+			} else { //want to fill downwards
 				row = i;
 				col = loopTo - i + loopFrom;
 			}
@@ -757,14 +757,14 @@ void fill_zigZag (Mat A, int64_t start) {
 }
 
 void fill_tabulate (Mat A, function_s_s_e_t func) {
-    Assert$(A != NULL, "Cannot fill. A is NULL.");
+	Assert$(A != NULL, "Cannot fill. A is NULL.");
 
-    for (size_t i = 0; i < A->rowsCount; ++i) {
-        for (size_t j = 0; j < A->colsCount; ++j) {
-            A->data[i][j] = (*func) (i, j);
-        }
-    }
+	for (size_t i = 0; i < A->rowsCount; ++i) {
+		for (size_t j = 0; j < A->colsCount; ++j) {
+			A->data[i][j] = (*func) (i, j);
+		}
+	}
 
-    return;
+	return;
 }
 #pragma endregion "Filling routines"
