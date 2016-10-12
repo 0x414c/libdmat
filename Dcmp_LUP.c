@@ -20,10 +20,12 @@
 
  \param	A	The Mat to process.
 
- \return	The * to Matrices array containing L, U &amp; P.
+ \return	The * to Matrices array containing L, U & P.
  			\[0] is L, [1] is U, [2] is P. \.
  */
 Mat *Dcmp_LU_Gauss (Mat A) {
+	Assert$(IsSquare$(A), "Matrix A should be square.");
+
 	Mat LU = DeepCopy(A);
 	entry_t **lu = LU->data;
 	Mat P = Identity(A->rowsCount);
@@ -154,6 +156,8 @@ Mat Pivotize_LU (Mat A) {
  \return	The * to Matrices array containing L, U &amp; P. \[0] is L, [1] is U, [2] is P. \.
  */
 Mat *Dcmp_LU_Crout (Mat A) {
+	Assert$(IsSquare$(A), "Matrix A should be square.");
+
 	Mat L = Identity(A->rowsCount);
 	Mat U = AllocMat(A->rowsCount, A->colsCount);
 	fill_zeroes(U);

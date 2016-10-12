@@ -20,6 +20,8 @@ More specifically, the first k columns of Q form an orthonormal basis for the sp
 The fact that any column k of A only depends on the first k columns of Q is responsible for the triangular form of R.
 */
 Mat *Dcmp_QR_Householder (Mat A) {
+	Assert$(IsSquare$(A), "Matrix A should be square."); //TODO:
+
 	size_t rows = A->rowsCount;
 	size_t columns = A->colsCount;
 

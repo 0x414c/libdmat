@@ -1,6 +1,7 @@
 #include "SpinningIndicator.h"
 
-#ifdef SPINNER
+
+#ifdef WITH_SPINNER
 #include <stdio.h>
 #include <stdint.h>
 
@@ -20,7 +21,7 @@ uint64_t GetTickCounts() {
 #include <Windows.h>
 #if WINVER >= 0x0600
 #define GetTickCounts() GetTickCount64()
-#else
+#else //WINVER
 #define GetTickCounts() GetTickCount()
 #endif //WINVER
 #endif //_MSC_VER
@@ -55,4 +56,4 @@ void clearActivityIndicator (void) {
 
 	return;
 }
-#endif //SPINNER
+#endif //WITH_SPINNER

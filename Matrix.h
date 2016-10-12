@@ -45,18 +45,18 @@ void printMatToFile (Mat A, FILE *file, char *format);
 size_t printMatsToFile (Mat A, ...);
 void toString (Mat A, FILE *file, char *format);
 
-#ifdef PRETTYOUTPUT
+#ifdef WITH_PRETTYPRINT
 extern void _trimTrailingZeroes (char *str);
-#else
+#else //WITH_PRETTYPRINT
 #define _trimTrailingZeroes(str)
-#endif //PRETTYOUTPUT
+#endif //WITH_PRETTYPRINT
 
-#ifdef PRINTING_ENABLED
-#define printMat$(a)       do { printMatToFile((a), OUTFILE, FMT_FLT); } while (false)
+#ifdef WITH_PRINTING
+#define printMat$(a)       do { printMatToFile((a), OUT, FMT_FLT); } while (false)
 #define printMats$(a, ...) do { printMatsToFile((a), __VA_ARGS__); } while (false)
-#define printAsStr$(a)     do { toString((a), OUTFILE, FMT_FLT_STR); } while (false)
+#define printAsStr$(a)     do { toString((a), OUT, FMT_FLT_STR); } while (false)
 #else
 #define printMat$(a)
 #define printMats$(a, ...)
 #define printAsStr$(a)
-#endif
+#endif //WITH_PRINTING

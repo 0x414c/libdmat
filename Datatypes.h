@@ -13,11 +13,11 @@
 
  \brief		Defines an alias representing the Matrix entry type.
  */
-#ifdef DOUBLE_PRECISION
+#ifdef WITH_DOUBLE
 typedef double_t entry_t;
-#else
+#else //WITH_DOUBLE
 typedef float_t entry_t;
-#endif
+#endif //WITH_DOUBLE
 
 /**
  \struct	_Mat_struct

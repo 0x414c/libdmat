@@ -253,24 +253,24 @@ void printMatToFile (Mat A, FILE *file, char *format) {
 	Assert$(format != NULL, "Format string is NULL.");
 
 	entry_t **a = A->data;
-#ifdef PRETTYOUTPUT
+#ifdef WITH_PRETTYPRINT
 	static char buf[PRINTBUFSZ];
-#endif //PRETTYOUTPUT
+#endif //WITH_PRETTYPRINT
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf(file, "[");
 		fflush(file);
 		for (size_t j = 0; j < A->colsCount; j++) {
-#ifdef PRETTYOUTPUT
+#ifdef WITH_PRETTYPRINT
 			snprintf(buf, PRINTBUFSZ - 1, format, a[i][j]);
             buf[PRINTBUFSZ-1] = '\0';
 			_trimTrailingZeroes(buf);
 			fprintf(file, "%s|", buf);
 			fflush(file);
-#else
+#else //WITH_PRETTYPRINT
 			fprintf(file, format, a[i][j]);
 			fflush(file);
-#endif
+#endif //WITH_PRETTYPRINT
 		}
 		fprintf(file, "\b]\n");
 		fflush(file);
@@ -316,22 +316,22 @@ void toString (Mat A, FILE *file, char *format) {
 	Assert$(A != NULL, "Cannot print.");
 
 	entry_t **a = A->data;
-//#ifdef PRETTYOUTPUT
+//#ifdef WITH_PRETTYPRINT
 //	char buf[PRINTBUFSZ];
-//#endif //PRETTYOUTPUT
+//#endif //WITH_PRETTYPRINT
 
 	fprintf(file, "{");
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		fprintf (file, "\n{");
 		for (size_t j = 0; j < A->colsCount; j++) {
-//#ifdef PRETTYOUTPUT
+//#ifdef WITH_PRETTYPRINT
 //			snprintf(buf, PRINTBUFSZ-1, format, a[i][j]);
 //			_trimTrailingZeroes(buf); //TODO: buffer overflow
 //			fprintf(file, "%s,", buf);
-//#else
+//#else //WITH_PRETTYPRINT
 			fprintf(file, format, a[i][j]);
 			fprintf(file, ",");
-//#endif //PRETTYOUTPUT
+//#endif //WITH_PRETTYPRINT
 		}
 		fprintf(file, "\b},");
 	}
@@ -340,7 +340,7 @@ void toString (Mat A, FILE *file, char *format) {
 	return;
 }
 
-#ifdef PRETTYOUTPUT
+#ifdef WITH_PRETTYPRINT
 /**
  \fn	void _trimTrailingZeroes (char *str)
 
@@ -375,9 +375,7 @@ void _trimTrailingZeroes (char *str) {
 
 	return;
 }
-//#else
-//#define _trimTrailingZeroes
-#endif //PRETTYOUTPUT
+#endif //WITH_PRETTYPRINT
 #pragma endregion "Printing"
 
 
@@ -683,6 +681,7 @@ void fill_sequential (Mat A, int64_t start, int64_t inc) {
  */
 void fill_spiral (Mat A, int64_t start) {
 	Assert$(A != NULL, "Cannot fill. A is NULL.");
+	Assert$(IsSquare$(A), "Matrix A should be square."); //TODO:
 
 	size_t sideLen = A->rowsCount;
 	size_t numConcentricSquares = (size_t) (ceil(((double) (sideLen)) / 2.0));
@@ -723,6 +722,7 @@ void fill_spiral (Mat A, int64_t start) {
  */
 void fill_zigZag (Mat A, int64_t start) {
 	Assert$(A != NULL, "Cannot fill. A is NULL.");
+	Assert$(IsSquare$(A), "Matrix A should be square."); //TODO:
 
 	size_t lastValue = A->rowsCount * A->rowsCount - 1;
 	size_t currDiag = 0;

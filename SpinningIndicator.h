@@ -1,12 +1,12 @@
 #pragma once
 
-//#define SPINNER
+//#define WITH_SPINNER
 
-#ifdef SPINNER
-#define MIN_TICKS 64
+#ifdef WITH_SPINNER
+#define MIN_TICKS ( 64 )
 void spinActivityIndicator (void);
 void clearActivityIndicator (void);
-#else
+#else //WITH_SPINNER
 #define spinActivityIndicator() 
 #define clearActivityIndicator() 
-#endif
+#endif //WITH_SPINNER

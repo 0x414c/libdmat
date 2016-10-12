@@ -36,7 +36,7 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 #define isnotzero_d(a)	( fabs((a)) > EPS )
 #define isnotzero_f(a)	( fabsf((a)) > EPS )
 
-#ifdef DOUBLE_PRECISION
+#ifdef WITH_DOUBLE
 #define equals(a,b)		( equals_d((a), (b)) )
 #define iszero(a)		( iszero_d((a)) )
 #define isnotzero(a)	( isnotzero_d((a)) )
@@ -44,7 +44,8 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 #define abs(a)			( fabs((a)) )
 #define hypot(a,b)		( hypot((a), (b)) )
 #define sqrt(a)			( sqrt((a)) )
-#else
+#define pow(a,b)		( pow((a), (b)) )
+#else //WITH_DOUBLE
 #define equals(a,b)		( equals_f((a), (b)) )
 #define iszero(a)		( iszero_f((a)) )
 #define isnotzero(a)	( isnotzero_f((a)) )
@@ -52,16 +53,17 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 #define abs(a)			( fabsf((a)) )
 #define hypot(a,b)		( hypotf((a), (b)) )
 #define sqrt(a)			( sqrtf((a)) )
-#endif //DOUBLE_PRECISION
+#define pow(a,b)		( powf((a), (b)) )
+#endif //WITH_DOUBLE
 
-//#ifdef __GNUC__
+#ifdef __GNUC__
 #ifndef max
 #define max(a,b)		( ((a) < (b)) ? (b) : (a) )
 #endif //max
 #ifndef min
 #define min(a,b)		( ((a) < (b)) ? (a) : (b) )
 #endif //min
-//#endif //__GNUC__
+#endif //__GNUC__
 
 #define max_3(a,b,c)	( max(max((a), (b)), (c)) )
 #define min_3(a,b,c)	( min(min((a), (b)), (c)) )

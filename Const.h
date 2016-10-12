@@ -5,17 +5,11 @@
 #include "Config.h"
 
 
-#define LD_EPS ( LDBL_EPSILON )
-#define D_EPS  ( DBL_EPSILON )
-#define F_EPS  ( FLT_EPSILON )
-
-#ifndef DOUBLE_PRECISION
-//#define EPS (F_EPS)
-#define EPS (1E-5)
+#ifndef WITH_DOUBLE
+#define EPS ( 1E-5 )
 #else
-//#define EPS (D_EPS)
-#define EPS (1E-14)
-#endif //DOUBLE_PRECISION
+#define EPS ( 1E-14 )
+#endif //WITH_DOUBLE
 
 #ifndef _USE_MATH_DEFINES
 #define M_E			( 2.718281828459045235360287471352662498 )

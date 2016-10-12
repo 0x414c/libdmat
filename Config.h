@@ -1,11 +1,10 @@
 #pragma once
 
 #include "PlatformDependent.h"
-#include "Const.h"
 
 
 /**
- \def	DOUBLE_PRECISION
+ \def	WITH_DOUBLE
 
  \brief	Enable double precision storage?
         If defined, Matrix entry type `entry_t` will be defined as `double_t`,
@@ -25,7 +24,7 @@
                 precision of the `long double` type.
                 Both `float_t` and `double_t` are equivalent to `long double`.
  */
-//#define DOUBLE_PRECISION
+#define WITH_DOUBLE
 
 
 /**
@@ -37,46 +36,54 @@
 
 
 /**
- \def	CHECKS_ENABLED();
+ \def	WITH_CHECKS();
 
  \brief	Enable checks?
  */
-#define CHECKS_ENABLED
+#define WITH_CHECKS
 
 
 /**
- \def	ASSERTS_ENABLED();
+ \def	WITH_ASSERTS();
 
  \brief	Enable asserts?
  */
-#define ASSERTS_ENABLED
+#define WITH_ASSERTS
 
 
 /**
- \def	PRINTING_ENABLED();
+ \def	WITH_PRINTING();
 
  \brief	Will output be produced?
  */
-#define PRINTING_ENABLED
+#define WITH_PRINTING
 
 
 /**
- \def	OUTFILE();
+ \def	OUT();
 
  \brief	Output file used in printing functions.
  */
-#define OUTFILE ( stdout )
+#define OUT ( stdout )
 
 
 /**
- \def	PRETTYOUTPUT();
+ \def	ERROUT();
+
+ \brief	Output file used in printing functions.
+ */
+#define ERROUT ( stdout )
+
+
+/**
+ \def	WITH_PRETTYPRINT();
 
  \brief	Will output be formatted to easy-readable form?
  */
-#define PRETTYOUTPUT
+#define WITH_PRETTYPRINT
 
 
-#ifdef PRETTYOUTPUT
+#ifdef WITH_PRETTYPRINT
 /**
  \def	PRINTBUFSZ();
 
@@ -84,7 +91,7 @@
         Note that buffer must be capable to hold string formatted using `FMT_FLT'
  */
 #define PRINTBUFSZ ( 320 )
-#endif //PRETTYOUTPUT
+#endif //WITH_PRETTYPRINT
 
 
 /**
@@ -116,8 +123,8 @@
 
  \brief	Format string for filling from file containing floats (used in `fill_fromFile()').
  */
-#ifdef DOUBLE_PRECISION
+#ifdef WITH_DOUBLE
 #define FMT_FLT_INPUT "%lf"
 #else
 #define FMT_FLT_INPUT "%f"
-#endif //DOUBLE_PRECISION
+#endif //WITH_DOUBLE

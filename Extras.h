@@ -9,17 +9,17 @@
 #include "Config.h"
 
 
-#ifdef CHECKS_ENABLED
-#define Check$(c,m)		( (c) ? (true) : (fprintf(stderr, "Check `%s' have failed:\n  with message `%s'\n  in function `%s'\n", #c, (m), __FUNCTION__), false) )
-#else
+#ifdef WITH_CHECKS
+#define Check$(c,m)		( (c) ? (true) : (fprintf(ERROUT, "Check `%s' have failed\n  with message `%s'\n  in function `%s'\n", #c, (m), __func__), false) )
+#else //WITH_CHECKS
 #define Check$(c, m)
-#endif //CHECKS_ENABLED
+#endif //WITH_CHECKS
 
-#ifdef ASSERTS_ENABLED
-#define Assert$(c,m)	( (c) ? (true) : (fprintf(stderr, "Assertion `%s' have failed:\n  with message `%s'\n  in function `%s'\n  from file `%s'\n  at line %d\n", #c, (m), __FUNCTION__, __FILE__, __LINE__), abort(), false) )
-#else
+#ifdef WITH_ASSERTS
+#define Assert$(c,m)	( (c) ? (true) : (fprintf(ERROUT, "Assertion `%s' have failed\n  with message `%s'\n  in function `%s'\n  from file `%s'\n  at line %d\n", #c, (m), __func__, __FILE__, __LINE__), abort(), false) )
+#else //WITH_ASSERTS
 #define Assert$(c, m)
-#endif //ASSERTS_ENABLED
+#endif //WITH_ASSERTS
 
 
 #define free$(p)		do { free(p); (p) = (NULL); } while (false)

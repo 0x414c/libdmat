@@ -15,7 +15,7 @@
 /**
  \fn		double Det_Gauss (Mat A)
 
- \brief		Calculates matrix determinant by Gauss' method for n&gt;3 and with rule of Sarrus for n&lt;=3.
+ \brief		Calculates matrix determinant by Gauss' method for n > 4 and with rule of Sarrus for n <= 4.
 
  \date		13-May-14
 
@@ -120,7 +120,7 @@ entry_t Det_Gauss (Mat A) {
  */
 //TODO: move to another file
 entry_t Det_Bareiss (Mat A) {
-  Assert$(IsSquare$(A), "Matrix A should be square.");
+	Assert$(IsSquare$(A), "Matrix A should be square.");
 
 	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
 	entry_t **t = T->data;
@@ -213,9 +213,10 @@ void toRowEchelonForm (Mat A) {
 			}
 		} else {
 			A->isSingular = true;
-			Check$(!(A->isSingular), "Singular matrix.");
 		}
 	}
+
+	Check$(!(A->isSingular), "Singular matrix.");
 
 	return;
 }
@@ -233,19 +234,19 @@ void toRowEchelonForm_reference (Mat A) {
 
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		//Find pivot
-		size_t piv = k;
+		size_t piv_row = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			//Reference implementation of pivoting algorithm
-			if (abs(a[i][k]) > abs(a[piv][k])) {
-				piv = i;
+			if (abs(a[i][k]) > abs(a[piv_row][k])) {
+				piv_row = i;
 			}
 		}
 
-		if (isnotzero(a[piv][k])) {
+		if (isnotzero(a[piv_row][k])) {
 			//Swap rows
-			if (piv > k) {
-				swapRows(A, piv, k);
+			if (piv_row > k) {
+				swapRows(A, piv_row, k);
 
 				A->permutationSign *= -1; //-V127
 			}
@@ -262,9 +263,10 @@ void toRowEchelonForm_reference (Mat A) {
 			}
 		} else {
 			A->isSingular = true;
-			Check$(!(A->isSingular), "Singular matrix.");
 		}
 	}
+
+	Check$(!(A->isSingular), "Singular matrix.");
 
 	return;
 }
@@ -300,12 +302,11 @@ void toReducedRowEchelonForm (Mat A) {
 
 				if (iszero(a[piv_row][piv_col])) {
 					A->isSingular = true;
-					Check$(!(A->isSingular), "Singular matrix.");
 
 					piv_col++;
 
 					if (piv_col == A->colsCount) {
-						return;
+						goto end;
 					}
 				} else {
 					break;
@@ -345,6 +346,9 @@ void toReducedRowEchelonForm (Mat A) {
 			piv_col++;
 		}
 	}
+
+end:
+	Check$(!(A->isSingular), "Singular matrix.");
 
 	return;
 }

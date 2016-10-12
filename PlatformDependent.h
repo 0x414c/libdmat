@@ -13,7 +13,7 @@
 
  \brief	Format string for ptrdiff_t on Windows. */
 #define FMT_PTRDIFFT "%Id"
-#else
+#else //_MSC_VER
 #ifdef __GNUC__
 /**
 \def	FMT_SIZET();
