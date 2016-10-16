@@ -9,26 +9,26 @@
 
 
 /**
- \typedef	double_t entry_t
+ \typedef	double_t entry_type
 
  \brief		Defines an alias representing the Matrix entry type.
  */
 #ifdef WITH_DOUBLE
-typedef double_t entry_t;
+typedef double_t entry_type;
 #else //WITH_DOUBLE
-typedef float_t entry_t;
+typedef float_t entry_type;
 #endif //WITH_DOUBLE
 
 /**
- \struct	_Mat_struct
+ \struct	_mat_s
 
  \brief	A matrix structure.
  */
-struct _Mat_struct {
+struct _mat_s {
 	/**
-	 \brief	The entry_t**.
+	 \brief	The entry_type**.
 	 */
-	entry_t **data;
+	entry_type **data;
 
 	/**
 	 \brief	Number of rows.
@@ -48,12 +48,12 @@ struct _Mat_struct {
 	/**
 	 \brief	The trace of Matrix (sum of all the entries on main diagonal).
 	 */
-	entry_t trace;
+	entry_type trace;
 
 	/**
 	 \brief	The determinant of a Matrix.
 	 */
-	entry_t det;
+	entry_type det;
 
 	/**
 	 \brief	true if this Matrix is singular.
@@ -87,6 +87,6 @@ struct _Mat_struct {
  \typedef	struct _Mat_struct *Mat
 
  \brief	Defines an alias representing the matrix.
-		The `Mat` 'itself' is a ptr to _Mat_struct.
+		The `Mat` 'itself' is a * to `_mat_s`.
  */
-typedef struct _Mat_struct *Mat;
+typedef struct _mat_s *Mat;

@@ -30,9 +30,9 @@ Mat Dcmp_Cholesky (Mat A) {
 	bool isSPD = true;
 
 	for (size_t j = 0; j < A->rowsCount; j++) {
-		entry_t d = 0.0;
+		entry_type d = 0.0;
 		for (size_t k = 0; k < j; k++) {
-			entry_t s = 0.0;
+			entry_type s = 0.0;
 
 			for (size_t i = 0; i < k; i++) {
 				s += L->data[k][i] * L->data[j][i];
@@ -46,7 +46,7 @@ Mat Dcmp_Cholesky (Mat A) {
 
 		d = A->data[j][j] - d;
 		isSPD = isSPD && isnotzero(d);
-		L->data[j][j] = sqrt(max(d, (entry_t) 0.0));
+		L->data[j][j] = sqrt(max(d, (entry_type) 0.0));
 
 		for (size_t k = j + 1; k < A->rowsCount; k++) {
 			L->data[j][k] = 0.0;
@@ -112,8 +112,8 @@ Mat Solve_Cholesky (Mat L, Mat B) {
 
  \return	Determinant value.
  */
-entry_t Det_cholesky (Mat L) {
-	entry_t det = 1.0;
+entry_type Det_cholesky (Mat L) {
+	entry_type det = 1.0;
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
 		det *= L->data[i][i];

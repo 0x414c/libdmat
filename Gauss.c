@@ -23,12 +23,12 @@
 
  \return	Determinant value.
  */
-entry_t Det_Gauss (Mat A) {
+entry_type Det_Gauss (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
-	Mat T = NULL;
-	entry_t **a = A->data;
-	entry_t det;
+	Mat A1 = NULL;
+	entry_type **a = A->data;
+	entry_type det;
 
 	switch (A->rowsCount) {
 		case 1:
@@ -73,31 +73,35 @@ entry_t Det_Gauss (Mat A) {
 
 			break;
 		default:
-			T = DeepCopy(A);
+			A1 = DeepCopy(A);
 
-			toRowEchelonForm_reference(T);
+			toUpperTriangularForm_ref(A1);
 
-			if (!(T->isSingular)) {
-				det = (entry_t) T->permutationSign;
+			if (!(A1->isSingular)) {
+				det = (entry_type) A1->permutationSign;
 
 				for (size_t i = 0; i < A->rowsCount; i++) {
-					det *= T->data[i][i];
+					det *= A1->data[i][i];
 				}
+
+				A->isSingular = false;
 			} else {
 				det = 0.0;
 
 				A->isSingular = true;
 			}
 
-			freeMat$(T);
+			freeMat$(A1);
 
-            A->det = det;
+			A->det = det;
 
-            return det;
+			return det;
 	}
 
 	if (iszero(det)) {
 		A->isSingular = true;
+	} else {
+		A->isSingular = false;
 	}
 
 	A->det = det;
@@ -119,58 +123,58 @@ entry_t Det_Gauss (Mat A) {
  \return	Determinant of Matrix A.
  */
 //TODO: move to another file
-entry_t Det_Bareiss (Mat A) {
+entry_type Det_Bareiss (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
-	Mat T = DeepCopy(A); //TODO: replace w/ Copy()
-	entry_t **t = T->data;
+	Mat A1 = DeepCopy(A); //TODO: replace w/ Copy()
+	entry_type **a1 = A1->data;
 
 	//Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		size_t piv = k;
+		//Find pivot
+		size_t piv_row = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			//Reference implementation of pivoting algorithm
-			if (abs(t[i][k]) > abs(t[piv][k])) {
-				piv = i;
+			if (abs(a1[i][k]) > abs(a1[piv_row][k])) {
+				piv_row = i;
 			}
 		}
 
 		//Swap rows
-		if (piv > k) {
-			swapRows(T, piv, k);
+		if (piv_row > k) {
+			swapRows(A1, piv_row, k);
 
-			T->permutationSign *= -1; //-V127
+			A1->permutationSign *= -1; //-V127
 		}
 	}
 
 	//Bareiss algorithm main step
-	for (size_t i = 0; i < T->rowsCount - 1; i++) {
-		if (isnotzero(t[i][i])) {
-			for (size_t j = i + 1; j < T->rowsCount; j++) {
-				for (size_t k = i + 1; k < T->rowsCount; k++) {
-					t[j][k] = t[j][k] * t[i][i] - t[j][i] * t[i][k];
+	for (size_t i = 0; i < A1->rowsCount - 1; i++) {
+		if (isnotzero(a1[i][i])) {
+			for (size_t k = i + 1; k < A1->rowsCount; k++) {
+				for (size_t j = i + 1; j < A1->colsCount; j++) {
+					a1[k][j] = a1[k][j] * a1[i][i] - a1[i][j] * a1[k][i];
 
-					if (i != 0) {
-						t[j][k] /= t[i - 1][i - 1];
+					if (i > 0) {
+						a1[k][j] /= a1[i - 1][i - 1];
 					}
 				}
 			}
 		} else {
-			A->isSingular = true;
-			Check$(!(A->isSingular), "Singular matrix.");
-
-			freeMat$(T);
-
+			A1->isSingular = true;
+			Check$(!(A1->isSingular), "Singular matrix.");
+			A->isSingular = A1->isSingular;
+			freeMat$(A1);
 			A->det = 0.0;
 
 			return 0.0;
 		}
 	}
 
-	entry_t det = t[T->rowsCount - 1][T->rowsCount - 1] * T->permutationSign;
+	entry_type det = a1[A1->rowsCount - 1][A1->rowsCount - 1] * A1->permutationSign;
 
-	freeMat$(T);
+	freeMat$(A1);
 
 	A->det = det;
 
@@ -181,16 +185,18 @@ entry_t Det_Bareiss (Mat A) {
 
 #pragma region "Transforming routines"
 /**
- \fn		void toRowEchelonForm (Mat A)
+ \fn		void toUpperTriangularForm (Mat A)
 
- \brief		Transforms matrix A into a row echelon form.
-            Optimized implementation.
+ \brief		Transforms matrix A into an upper triangular form.
 
  \param	A	The Matrix to process.
  */
-void toRowEchelonForm (Mat A) {
-	entry_t **a = A->data;
+void toUpperTriangularForm (Mat A) {
+	Check$(IsSquare$(A), "Matrix A should be square.");
 
+	entry_type **a = A->data;
+
+	//Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		//Find pivot.
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
@@ -205,7 +211,7 @@ void toRowEchelonForm (Mat A) {
 		//Compute multipliers and eliminate k-th column.
 		if (isnotzero(a[k][k])) {
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
-				entry_t f = a[i][k] / a[k][k];
+				entry_type f = a[i][k] / a[k][k];
 
 				for (size_t j = k; j < A->colsCount; j++) {
 					a[i][j] -= f * a[k][j];
@@ -222,16 +228,19 @@ void toRowEchelonForm (Mat A) {
 }
 
 /**
- \fn		void toRowEchelonForm_reference (Mat A)
+ \fn		void toUpperTriangularForm_ref (Mat A)
 
- \brief		Transforms Matrix A into a row echelon form.
+ \brief		Transforms Matrix A into an upper triangular form.
  			Reference implementation w/ partial pivoting.
 
  \param	A	The Matrix to process.
  */
-void toRowEchelonForm_reference (Mat A) {
-	entry_t **a = A->data;
+void toUpperTriangularForm_ref (Mat A) {
+	Check$(IsSquare$(A), "Matrix A should be square.");
 
+	entry_type **a = A->data;
+
+	//Pivotize and eliminate
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		//Find pivot
 		size_t piv_row = k;
@@ -251,9 +260,9 @@ void toRowEchelonForm_reference (Mat A) {
 				A->permutationSign *= -1; //-V127
 			}
 
-			//Compute multipliers and eliminate k-th column.
+			//Compute multipliers and eliminate k-th column
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
-				entry_t f = a[i][k] / a[k][k];
+				entry_type f = a[i][k] / a[k][k];
 
 				for (size_t j = k + 1; j < A->colsCount; j++) {
 					a[i][j] -= f * a[k][j];
@@ -272,6 +281,171 @@ void toRowEchelonForm_reference (Mat A) {
 }
 
 /**
+ \fn		void toRowEchelonForm (Mat A)
+
+ \brief		Transforms Matrix A into a row echelon form.
+ 			Reference implementation w/ partial pivoting.
+
+ \param	A	The Matrix to process.
+ */
+void toRowEchelonForm (Mat A) {
+	entry_type **a = A->data;
+	size_t piv_col = 0;
+
+	//Pivotize and eliminate
+	for (size_t k = 0; k < A->rowsCount; k++) {
+		if (piv_col == A->colsCount) {
+			break;
+		} else {
+			//Find pivot
+			size_t piv_row = k;
+
+			while (true) {
+				for (size_t i = k + 1; i < A->rowsCount; i++) {
+					//Reference implementation of pivoting algorithm
+					if (abs(a[i][piv_col]) > a[piv_row][piv_col]) {
+						piv_row = i;
+					}
+				}
+
+				if (iszero(a[piv_row][piv_col])) {
+					A->isSingular = true;
+
+					piv_col++;
+
+					if (piv_col == A->colsCount) {
+						goto ref_end;
+					}
+				} else {
+					break;
+				}
+			}
+
+			//Swap rows
+			if (piv_row > k) {
+				swapRows(A, piv_row, k);
+
+				A->permutationSign *= -1; //-V127
+			}
+
+			//Compute multipliers and eliminate piv_col-th column
+			for (size_t i = k + 1; i < A->rowsCount; i++) {
+				entry_type f = a[i][piv_col] / a[k][piv_col];
+
+				for (size_t j = piv_col + 1; j < A->colsCount; j++) {
+					a[i][j] -= f * a[k][j];
+				}
+
+				a[i][piv_col] = 0.0;
+			}
+
+			piv_col++;
+		}
+	}
+
+ref_end:
+	Check$(!(A->isSingular), "Singular matrix.");
+
+	return;
+}
+
+void toRowEchelonForm_Bareiss (Mat A) {
+	entry_type **a = A->data;
+
+	//Pivotize
+	for (size_t k = 0; k < A->rowsCount; k++) {
+		//Find pivot
+		size_t piv_row = k;
+
+		for (size_t i = k + 1; i < A->rowsCount; i++) {
+			//Reference implementation of pivoting algorithm
+			if (abs(a[i][k]) > abs(a[piv_row][k])) {
+				piv_row = i;
+			}
+		}
+
+		//Swap rows
+		if (piv_row > k) {
+			swapRows(A, piv_row, k);
+
+			A->permutationSign *= -1; //-V127
+		}
+	}
+
+	entry_type prev_piv = 1.0;
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		if (isnotzero(a[i][i])) {
+			entry_type piv = a[i][i];
+
+			for (size_t k = i + 1; k < A->rowsCount; k++) {
+				for (size_t j = i + 1; j < A->colsCount; j++) {
+					a[k][j] = (a[k][j] * piv - a[i][j] * a[k][i]) / prev_piv;
+				}
+
+				a[k][i] = 0.0;
+			}
+
+			prev_piv = piv;
+		} else {
+			A->isSingular = true;
+		}
+	}
+
+	Check$(!(A->isSingular), "Singular matrix.");
+}
+
+void toReducedRowEchelonForm_Bareiss (Mat A) {
+	entry_type **a = A->data;
+
+	//Pivotize
+	for (size_t k = 0; k < A->rowsCount; k++) {
+		//Find pivot
+		size_t piv_row = k;
+
+		for (size_t i = k + 1; i < A->rowsCount; i++) {
+			//Reference implementation of pivoting algorithm
+			if (abs(a[i][k]) > abs(a[piv_row][k])) {
+				piv_row = i;
+			}
+		}
+
+		//Swap rows
+		if (piv_row > k) {
+			swapRows(A, piv_row, k);
+
+			A->permutationSign *= -1; //-V127
+		}
+	}
+
+	entry_type prev_piv = 1.0;
+
+	for (size_t i = 0; i < A->rowsCount; i++) {
+		if (isnotzero(a[i][i])) {
+			entry_type piv = a[i][i];
+
+			for (size_t k = 0; k < A->rowsCount; k++) {
+				if (k != i) {
+					for (size_t j = 0; j < A->colsCount; j++) {
+						if (j != i) {
+							a[k][j] = (a[k][j] * piv - a[i][j] * a[k][i]) / prev_piv;
+						}
+					}
+
+					a[k][i] = 0.0;
+				}
+			}
+
+			prev_piv = piv;
+		} else {
+			A->isSingular = true;
+		}
+	}
+
+	Check$(!(A->isSingular), "Singular matrix.");
+}
+
+/**
  \fn		void toReducedRowEchelonForm (Mat A)
 
  \brief		Transforms matrix into reduced row echelon form (aka row canonical form).
@@ -284,17 +458,20 @@ void toRowEchelonForm_reference (Mat A) {
  \param	A	The Matrix to process.
  */
 void toReducedRowEchelonForm (Mat A) {
-	entry_t **a = A->data;
+	entry_type **a = A->data;
 	size_t piv_col = 0;
 
+	//Pivotize and eliminate
 	for (size_t k = 0; k < A->rowsCount; k++) {
 		if (piv_col == A->colsCount) {
 			break;
 		} else {
+			//Find pivot
 			size_t piv_row = k;
 
 			while (true) {
 				for (size_t i = k + 1; i < A->rowsCount; i++) {
+					//Reference implementation of pivoting algorithm
 					if (abs(a[i][piv_col]) > a[piv_row][piv_col]) {
 						piv_row = i;
 					}
@@ -306,40 +483,35 @@ void toReducedRowEchelonForm (Mat A) {
 					piv_col++;
 
 					if (piv_col == A->colsCount) {
-						goto end;
+						goto rref_end;
 					}
 				} else {
 					break;
 				}
 			}
 
+			//Swap rows
 			if (piv_row > k) {
 				swapRows(A, piv_row, k);
 
 				A->permutationSign *= -1; //-V127
 			}
 
-			if (!equals(a[k][piv_col], (entry_t) 1.0)) {
-				entry_t d = a[k][piv_col];
+			if (!equals(a[k][piv_col], (entry_type) 1.0)) {
+				entry_type d = a[k][piv_col];
 
 				for (size_t j = 0; j < A->colsCount; j++) {
 					a[k][j] /= d;
 				}
 			}
 
-			for (size_t i = 0; i < k; i++) {
-				entry_t f = a[i][piv_col];
+			for (size_t i = 0; i < A->rowsCount; i++) {
+				if (i != k) {
+					entry_type f = a[i][piv_col];
 
-				for (size_t j = 0; j < A->colsCount; j++) {
-					a[i][j] -= f * a[k][j];
-				}
-			}
-
-			for (size_t i = k + 1; i < A->rowsCount; i++) {
-				entry_t f = a[i][piv_col];
-
-				for (size_t j = 0; j < A->colsCount; j++) {
-					a[i][j] -= f * a[k][j];
+					for (size_t j = 0; j < A->colsCount; j++) {
+						a[i][j] -= f * a[k][j];
+					}
 				}
 			}
 
@@ -347,7 +519,7 @@ void toReducedRowEchelonForm (Mat A) {
 		}
 	}
 
-end:
+rref_end:
 	Check$(!(A->isSingular), "Singular matrix.");
 
 	return;
@@ -356,40 +528,6 @@ end:
 
 
 #pragma region "Solving routines"
-/**
- \fn		Mat Solve_GaussJordan (Mat A, Mat B)
-
- \brief		Solves system of linear equations using Gauss-Jordan method.
-
- \param	A	Coefficients matrix.
- \param	B	Right hand side as column-vector.
-
- \return	Solution as column-vector.
- */
-Mat Solve_GaussJordan (Mat A, Mat B) {
-	Assert$(B->colsCount == 1, "Matrix B should be column-vector.");
-	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to the number of unknown variables.");
-
-	Mat X = AllocMat(A->rowsCount, 1);
-	Mat AB = DeepCopy(A);
-
-	join(AB, B);
-	entry_t **au = AB->data;
-	entry_t **x = X->data;
-
-	toReducedRowEchelonForm(AB);
-
-	Check$(!(AB->isSingular), "Cannot solve for singular matrix.");
-
-	for (size_t i = 0; i < X->rowsCount; i++) {
-		x[i][0] = au[i][AB->colsCount - 1];
-	}
-
-	freeMat$(AB);
-
-	return X;
-}
-
 /**
  \fn		Mat Solve_Gauss (Mat A, Mat B)
 
@@ -401,28 +539,150 @@ Mat Solve_GaussJordan (Mat A, Mat B) {
  \return	Solution as column-vector.
  */
 Mat Solve_Gauss (Mat A, Mat B) {
-	Assert$(B->colsCount == 1, "Matrix B should be column-vector.");
 	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to number of unknown variables.");
+	Assert$(B->colsCount == 1, "Matrix B should be column-vector.");
 
-	Mat X = AllocMat(B->rowsCount, B->colsCount);
 	Mat AB = DeepCopy(A);
 
-	join(AB, B);
+	joinColumns(AB, B);
 
 	//Forward step (elimination with row pivoting)
-	toRowEchelonForm_reference(AB);
+	toRowEchelonForm(AB);
 
 	Check$(!(AB->isSingular), "Cannot solve for singular matrix.");
 
+	Mat X = AllocMat(B->rowsCount, 1);
+
+	entry_type **ab = AB->data;
+	entry_type **x = X->data;
+
 	//Back-substitution step
 	for (ssize_t i = AB->rowsCount - 1; i >= 0; i--) {
-		X->data[i][0] = AB->data[i][AB->colsCount-1];
+		x[i][0] = ab[i][AB->colsCount - 1];
 
 		for (size_t j = (size_t) (i + 1); j < AB->rowsCount; j++) {
-			X->data[i][0] -= AB->data[i][j] * X->data[j][0];
+			x[i][0] -= ab[i][j] * x[j][0];
 		}
 
-		X->data[i][0] /= AB->data[i][i];
+		x[i][0] /= ab[i][i];
+	}
+
+	freeMat$(AB);
+
+	return X;
+}
+
+/**
+ \fn		Mat Solve_GaussJordan (Mat A, Mat B)
+
+ \brief		Solves system of linear equations using Gauss-Jordan method.
+
+ \param	A	Coefficients matrix.
+ \param	B	Right hand side as column-vector.
+
+ \return	Solution as column-vector.
+ */
+Mat Solve_GaussJordan (Mat A, Mat B) {
+	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to the number of unknown variables.");
+
+	Mat AB = DeepCopy(A);
+
+	joinColumns(AB, B);
+
+	toReducedRowEchelonForm(AB);
+
+	Check$(!(AB->isSingular), "Cannot solve for singular matrix.");
+
+	Mat X = AllocMat(B->rowsCount, B->colsCount);
+
+	entry_type **ab = AB->data;
+	entry_type **x = X->data;
+
+	for (size_t i = 0; i < X->rowsCount; i++) {
+		for (size_t j = A->colsCount; j < AB->colsCount; j++) {
+			x[i][j - A->colsCount] = ab[i][j];
+		}
+	}
+
+	freeMat$(AB);
+
+	return X;
+}
+
+/**
+ \fn		Mat Solve_Bareiss (Mat A, Mat B)
+
+ \brief		Solves system of linear equations using Bareiss algorithm.
+
+ \param	A	Coeffs matrix.
+ \param	B	Right hand side as column-vector.
+
+ \return	Solution as column-vector.
+ */
+Mat Solve_Bareiss (Mat A, Mat B) {
+	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to number of unknown variables.");
+	Assert$(B->colsCount == 1, "Matrix B should be column-vector.");
+
+	Mat AB = DeepCopy(A);
+
+	joinColumns(AB, B);
+
+	//Forward step (elimination with row pivoting)
+	toRowEchelonForm_Bareiss(AB);
+
+	Check$(!(AB->isSingular), "Cannot solve for singular matrix.");
+
+	Mat X = AllocMat(B->rowsCount, 1);
+
+	entry_type **ab = AB->data;
+	entry_type **x = X->data;
+
+	//Back-substitution step
+	for (ssize_t i = AB->rowsCount - 1; i >= 0; i--) {
+		x[i][0] = ab[i][AB->colsCount - 1];
+
+		for (size_t j = (size_t) (i + 1); j < AB->rowsCount; j++) {
+			x[i][0] -= ab[i][j] * x[j][0];
+		}
+
+		x[i][0] /= ab[i][i];
+	}
+
+	freeMat$(AB);
+
+	return X;
+}
+
+/**
+ \fn		Mat Solve_Montante (Mat A, Mat B)
+
+ \brief		Solves system of linear equations using Montante method (based on Bareiss algorithm).
+
+ \param	A	Coefficients matrix.
+ \param	B	Right hand side as column-vector.
+
+ \return	Solution as column-vector.
+ */
+Mat Solve_Montante (Mat A, Mat B) {
+	Assert$(A->rowsCount == B->rowsCount, "Number of equations must be equal to the number of unknown variables.");
+
+	Mat AB = DeepCopy(A);
+
+	joinColumns(AB, B);
+
+	toReducedRowEchelonForm_Bareiss(AB);
+
+	Check$(!(AB->isSingular), "Cannot solve for singular matrix.");
+
+	Mat X = AllocMat(B->rowsCount, B->colsCount);
+
+	entry_type **ab = AB->data;
+	entry_type **x = X->data;
+
+	for (size_t i = 0; i < X->rowsCount; i++) {
+		for (size_t j = A->colsCount; j < AB->colsCount; j++) {
+			x[i][j - A->colsCount] = ab[i][j] / ab[i][i];
+		}
 	}
 
 	freeMat$(AB);

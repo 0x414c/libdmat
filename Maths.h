@@ -12,9 +12,9 @@
 int64_t GCD_Euclid (int64_t a, int64_t b);
 
 //Half away from zero rounding with casting to int64_t
-#define round(x)		( (int64_t) (((x) >= (EPS)) ? (((x) + (entry_t) 0.5)) : (((x) - (entry_t) 0.5))) )
+#define round(x)		( (int64_t) (((x) >= (entry_type) 0.0) ? (((x) + (entry_type) 0.5)) : (((x) - (entry_type) 0.5))) )
 
-#define lerp(a,b,t)		( ((entry_t) 1.0 - (t)) * (a) + (t) * (b) )
+#define lerp(a,b,t)		( ((entry_type) 1.0 - (t)) * (a) + (t) * (b) )
 
 #define _swap_t(a,b,T)	do { T (t) = (a); (a) = (b); (b) = (t); } while (false)
 #define _swap_i(a,b)	do { _swap_t((a), (b), int); } while (false)
@@ -27,14 +27,14 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 #define square(x)		( (x) * (x) )
 
 //TODO: (more) proper floats comparison
-#define equals_d(a,b)	( fabs((a) - (b)) <= EPS * max_3((double_t) 1.0, fabs((a)), fabs((b))) )
-#define equals_f(a,b)	( fabsf((a) - (b)) <= EPS * max_3((float_t) 1.0, fabsf((a)), fabsf((b))) )
+#define equals_d(a,b)	( fabs((a) - (b)) <= (EPS) * max_3((double_t) 1.0, fabs((a)), fabs((b))) )
+#define equals_f(a,b)	( fabsf((a) - (b)) <= (EPS) * max_3((float_t) 1.0, fabsf((a)), fabsf((b))) )
 
-#define iszero_d(a)		( fabs((a)) <= EPS )
-#define iszero_f(a)		( fabsf((a)) <= EPS )
+#define iszero_d(a)		( fabs((a)) <= (EPS) )
+#define iszero_f(a)		( fabsf((a)) <= (EPS) )
 
-#define isnotzero_d(a)	( fabs((a)) > EPS )
-#define isnotzero_f(a)	( fabsf((a)) > EPS )
+#define isnotzero_d(a)	( fabs((a)) > (EPS) )
+#define isnotzero_f(a)	( fabsf((a)) > (EPS) )
 
 #ifdef WITH_DOUBLE
 #define equals(a,b)		( equals_d((a), (b)) )
@@ -58,10 +58,10 @@ int64_t GCD_Euclid (int64_t a, int64_t b);
 
 #ifdef __GNUC__
 #ifndef max
-#define max(a,b)		( ((a) < (b)) ? (b) : (a) )
+#define max(a,b)		( ((b) < (a)) ? (a) : (b) )
 #endif //max
 #ifndef min
-#define min(a,b)		( ((a) < (b)) ? (a) : (b) )
+#define min(a,b)		( ((b) < (a)) ? (b) : (a) )
 #endif //min
 #endif //__GNUC__
 

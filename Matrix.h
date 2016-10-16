@@ -17,15 +17,18 @@ void freeMat (Mat *A);
 size_t freeMats (Mat A, ...);
 
 void resize (Mat A, size_t newRows, size_t newCols);
-void join (Mat A, Mat B);
+void joinColumns (Mat A, Mat B);
 
 void swapRows (Mat A, size_t i, size_t j);
 void swapCols (Mat A, size_t i, size_t j);
 
 Mat Copy (Mat A);
 Mat DeepCopy (Mat A);
+
 Mat Identity (size_t size);
 Mat Zeroes (size_t size);
+Mat Ones (size_t size);
+
 Mat Diag (Mat A);
 Mat SubMat (Mat A, size_t row, size_t col);
 Mat Minor (Mat A, size_t d);

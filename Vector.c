@@ -5,6 +5,8 @@
 
 
 bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
+	Assert$(index != NULL, "index should not be NULL.");
+
 	for (ptrdiff_t i = k - 1; i >= 0; --i) {
 		if (index[i] < n - k + i + 1) {	//warning C4018: '<' : signed/unsigned mismatch
 			++index[i];
@@ -21,6 +23,8 @@ bool nextPermutation (size_t *index, ptrdiff_t k, ptrdiff_t n) { //TODO:
 
 #pragma region "Search in array"
 bool exists_d (double *c, size_t start, double value) {
+	Assert$(c != NULL, "c should not be NULL.");
+
 	for (size_t i = 0; i < start; i++) {
 		if (equals_d(c[i], value)) {
 			return true;
@@ -31,6 +35,8 @@ bool exists_d (double *c, size_t start, double value) {
 }
 
 bool exists_u (size_t *c, size_t start, size_t end, size_t value) {
+	Assert$(c != NULL, "c should not be NULL.");
+
 	for (size_t i = end; i < start; i++) {
 		if (c[i] == value) {
 			return true;
@@ -50,10 +56,12 @@ bool exists_u (size_t *c, size_t start, size_t end, size_t value) {
  \return		null if it fails, else an int64_t pointer.
  */
 int64_t *AllocVec_i (size_t size) {
+	Assert$(size > 0, "size should be greater than 0");
+
 	int64_t *v = NULL;
 	v = ((int64_t *) malloc(sizeof(int64_t) * (size)));
 	//v = ((int64_t *) calloc(Size, sizeof(int64_t)));
-	Assert$(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate memory.");
 
 	return v;
 }
@@ -68,10 +76,12 @@ int64_t *AllocVec_i (size_t size) {
  \return	null if it fails, else a size_t pointer.
  */
 size_t *AllocVec_u (size_t size) {
+	Assert$(size > 0, "size should be greater than 0");
+
 	size_t *v = NULL;
 	v = ((size_t *) malloc(sizeof(size_t) * (size)));
 	//v = ((size_t *) calloc(Size, sizeof(size_t)));
-	Assert$(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate memory.");
 
 	return v;
 }
@@ -86,10 +96,12 @@ size_t *AllocVec_u (size_t size) {
  \return	null if it fails, else a double pointer.
  */
 double *AllocVec_d (size_t size) {
+	Assert$(size > 0, "size should be gtreater than 0");
+
 	double *v = NULL;
 	v = ((double *) malloc(sizeof(double) * size));
 	//v = ((double *) calloc(Size, sizeof(double)));
-	Assert$(v != NULL, "Cannot allocate.");
+	Assert$(v != NULL, "Cannot allocate memory.");
 
 	return v;
 }
@@ -104,6 +116,8 @@ double *AllocVec_d (size_t size) {
  \param	start			 	The starting value.
  */
 void fillSequential_u (size_t *index, size_t size, size_t start) {
+	Assert$(index != NULL, "index should not be NULL.");
+
 	for (size_t i = 0; i < size; i++) {
 		index[i] = start++;
 	}

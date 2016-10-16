@@ -5,4 +5,4 @@
 
 Mat Dcmp_Cholesky (Mat A);
 Mat Solve_Cholesky (Mat L, Mat B);
-entry_t Det_cholesky (Mat L);
+entry_type Det_cholesky (Mat L);

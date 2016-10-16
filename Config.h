@@ -7,7 +7,7 @@
  \def	WITH_DOUBLE
 
  \brief	Enable double precision storage?
-        If defined, Matrix entry type `entry_t` will be defined as `double_t`,
+        If defined, Matrix entry type `entry_type` will be defined as `double_t`,
         `float_t` otherwise.
         Computations will follow rules defined by `FLT_EVAL_METHOD`:
             -x  (not including `-1`) Implementation-defined.
@@ -24,7 +24,7 @@
                 precision of the `long double` type.
                 Both `float_t` and `double_t` are equivalent to `long double`.
  */
-#define WITH_DOUBLE
+//#define WITH_DOUBLE
 
 
 /**

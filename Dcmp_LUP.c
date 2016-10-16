@@ -27,36 +27,37 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
 	Mat LU = DeepCopy(A);
-	entry_t **lu = LU->data;
+	entry_type **lu = LU->data;
+
 	Mat P = Identity(A->rowsCount);
 //	size_t *permutationVector = AllocVec_u(rows);
 
 	//Pivotize and eliminate
 	//TODO: one procedure to pivotize them all
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		//Find pivot.
-		size_t piv = k;
+		//Find pivot
+		size_t piv_row = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
 			//Reference implementation of pivoting algorithm
-			if (abs(lu[i][k]) > abs(lu[piv][k])) {
-				piv = i;
+			if (abs(lu[i][k]) > abs(lu[piv_row][k])) {
+				piv_row = i;
 			}
 		}
 
-		if (isnotzero(lu[piv][k])) {
+		if (isnotzero(lu[piv_row][k])) {
 			//Swap rows
-			if (piv > k) {
-				swapRows(LU, piv, k);
-				swapRows(P, piv, k);
+			if (piv_row > k) {
+				swapRows(LU, piv_row, k);
+				swapRows(P, piv_row, k);
 
-				//_swap_i(permutationVector[piv], permutationVector[k]);
+				//_swap_i(permutationVector[piv_row], permutationVector[k]);
 				P->permutationSign *= -1; //-V127
 			}
 
-			//Compute multipliers and eliminate k-th column.
+			//Compute multipliers and eliminate k-th column
 			for (size_t i = k + 1; i < A->rowsCount; i++) {
-				entry_t f = lu[i][k] / lu[k][k];
+				entry_type f = lu[i][k] / lu[k][k];
 
 				for (size_t j = k + 1; j < A->colsCount; j++) {
 					lu[i][j] -= f * lu[k][j];
@@ -66,13 +67,14 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 			}
 		} else {
 			A->isSingular = true;
-			Check$(!(A->isSingular), "Singular matrix.");
 		}
 	}
 
+	Check$(!(A->isSingular), "Singular matrix.");
+
 	//Fill L
 	Mat L = Identity(A->rowsCount);
-	entry_t **l = L->data;
+	entry_type **l = L->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < i; j++) {
@@ -82,7 +84,7 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 
 	//Fill U
 	Mat U = Zeroes(A->rowsCount);
-	entry_t **u = U->data;
+	entry_type **u = U->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = i; j < A->colsCount; j++) {
@@ -90,16 +92,16 @@ Mat *Dcmp_LU_Gauss (Mat A) {
 		}
 	}
 
-	Mat *result = (Mat*) malloc(3 * sizeof(*result));
-	Assert$(result != NULL, "Cannot allocate.");
-	result[0] = L;
-	result[1] = U;
-	result[2] = P;
+	Mat *res = (Mat*) malloc(3 * sizeof(struct _mat_s));
+	Assert$(res != NULL, "Cannot allocate memory.");
+	res[0] = L;
+	res[1] = U;
+	res[2] = P;
 
 	freeMat$(LU);
 	//free$(permutationVector);
 
-	return result;
+	return res;
 }
 #pragma endregion "Gauss"
 
@@ -115,25 +117,37 @@ Mat *Dcmp_LU_Gauss (Mat A) {
  \return	Permutation matrix.
  */
 Mat Pivotize_LU (Mat A) {
-	Mat P = Identity(A->rowsCount);
-	entry_t **a = A->data;
+	Assert$(IsSquare$(A), "Matrix A should be square.");
 
+	Mat P = Identity(A->rowsCount);
+	entry_type **a = A->data;
+
+	//Pivotize
 	for (size_t k = 0; k < A->rowsCount; k++) {
-		size_t piv = k;
+		//Find pivot
+		size_t piv_row = k;
 
 		for (size_t i = k + 1; i < A->rowsCount; i++) {
-			if (abs(a[i][k]) > abs(a[piv][k])) {
-				piv = i;
+			//Reference implementation of pivoting algorithm
+			if (abs(a[i][k]) > abs(a[piv_row][k])) {
+				piv_row = i;
 			}
 		}
 
-		if (piv > k) {
-			swapRows(A, piv, k);
-			swapRows(P, piv, k);
+		if (isnotzero(a[piv_row][k])) {
+			//Swap rows
+			if (piv_row > k) {
+				swapRows(A, piv_row, k);
+				swapRows(P, piv_row, k);
 
-			P->permutationSign *= -1; //-V127
+				P->permutationSign *= -1; //-V127
+			}
+		} else {
+			A->isSingular = true;
 		}
 	}
+
+	Check$(!(A->isSingular), "Singular matrix.");
 
 	return P;
 }
@@ -159,46 +173,86 @@ Mat *Dcmp_LU_Crout (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
 	Mat L = Identity(A->rowsCount);
-	Mat U = AllocMat(A->rowsCount, A->colsCount);
-	fill_zeroes(U);
-	Mat A_copy = DeepCopy(A);
-	Mat P = Pivotize_LU(A_copy);
+	Mat U = Zeroes(A->rowsCount);
+	Mat A1 = DeepCopy(A);
+	Mat P = Pivotize_LU(A1);
 
-	entry_t **l = L->data;
-	entry_t **u = U->data;
-	entry_t **a = A_copy->data;
+	entry_type **l = L->data;
+	entry_type **u = U->data;
+	entry_type **a1 = A1->data;
 
 	for (size_t j = 0; j < A->rowsCount; j++) {
 		for (size_t i = 0; i <= j; i++) {
-			entry_t sum = 0.0;
+			entry_type sum = 0.0;
 
 			for (size_t k = 0; k < i; k++) {
-				sum += u[k][j] * l[i][k];
+				sum += l[i][k] * u[k][j];
 			}
 
-			u[i][j] = a[i][j] - sum;
+			u[i][j] = a1[i][j] - sum;
 		}
 
 		for (size_t i = j; i < A->rowsCount; i++) {
-			entry_t sum = 0.0;
+			entry_type sum = 0.0;
 
 			for (size_t k = 0; k < j; k++) {
-				sum += u[k][j] * l[i][k];
+				sum += l[i][k] * u[k][j];
 			}
 
-			l[i][j] = (a[i][j] - sum) / u[j][j];
+			if (isnotzero(u[j][j])) {
+				l[i][j] = (a1[i][j] - sum) / u[j][j];
+			} else {
+				A1->isSingular = true;
+			}
 		}
 	}
 
-	Mat *result = (Mat*) malloc(3 * sizeof(*result));
-	Assert$(result != NULL, "Cannot allocate.");
-	result[0] = L;
-	result[1] = U;
-	result[2] = P;
+//	Mat L = Zeroes(A->rowsCount);
+//	Mat U = Identity(A->rowsCount);
+//	Mat A1 = DeepCopy(A);
+//	Mat P = Pivotize_LU(A1);
+//
+//	entry_type **l = L->data;
+//	entry_type **u = U->data;
+//	entry_type **a1 = A1->data;
+//
+//	for (size_t j = 0; j < A1->rowsCount; j++) {
+//		for (size_t i = j; i < A1->rowsCount; i++) {
+//			entry_type sum = 0.0;
+//
+//			for (size_t k = 0; k < j; k++) {
+//				sum += l[i][k] * u[k][j];
+//			}
+//
+//			l[i][j] = a1[i][j] - sum;
+//		}
+//
+//		for (size_t i = j; i < A1->rowsCount; i++) {
+//			entry_type sum = 0.0;
+//
+//			for (size_t k = 0; k < j; k++) {
+//				sum += l[j][k] * u[k][i];
+//			}
+//
+//			if (isnotzero(l[j][j])) {
+//				u[j][i] = (a1[j][i] - sum) / l[j][j];
+//			} else {
+//				A1->isSingular = true;
+//			}
+//		}
+//	}
 
-	freeMat$(A_copy);
+	Check$(!(A1->isSingular), "Singular matrix.");
+	A->isSingular = A1->isSingular;
+	freeMat$(A1);
 
-	return result;
+	Mat *res = (Mat*) malloc(3 * sizeof(struct _mat_s));
+	Assert$(res != NULL, "Cannot allocate memory.");
+	res[0] = L;
+	res[1] = U;
+	res[2] = P;
+
+	return res;
 }
 #pragma endregion "Crout"
 
@@ -220,15 +274,17 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
 	Check$(!IsSingular_LUP(LUP), "Cannot solve for singular matrix.");
 	Assert$(LUP[0]->rowsCount == B->rowsCount, "Rows count mismatch.");
 
-	entry_t **l = LUP[0]->data;
-	entry_t **u = LUP[1]->data;
+	entry_type **l = LUP[0]->data;
+	entry_type **u = LUP[1]->data;
+
 	Mat PB = MatMul$(LUP[2], B);
-	entry_t **pb = PB->data;
+	entry_type **pb = PB->data;
 
 	Mat Y = AllocMat(B->rowsCount, B->colsCount);
-	entry_t **y = Y->data;
+	entry_type **y = Y->data;
+
 	Mat X = AllocMat(B->rowsCount, B->colsCount);
-	entry_t **x = X->data;
+	entry_type **x = X->data;
 
 	for (size_t c = 0; c < B->colsCount; c++) {
 		//forward solve L.y = b
@@ -271,8 +327,8 @@ Mat Solve_LUP (Mat *LUP, Mat B) {
  \return			Determinant value.
  */
 double Det_LUP (Mat *LUP) {
-	entry_t **u = LUP[1]->data;
-	entry_t det = LUP[2]->permutationSign;
+	entry_type **u = LUP[1]->data;
+	entry_type det = LUP[2]->permutationSign;
 
 	for (size_t i = 0; i < LUP[1]->rowsCount; i++) {
 		det *= u[i][i];

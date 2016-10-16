@@ -30,11 +30,11 @@ Mat *Dcmp_QR_Householder (Mat A) {
 	Mat R = AllocMat(rows, columns);
 	fill_zeroes(R);
 
-	entry_t **qr = QR->data;
+	entry_type **qr = QR->data;
 
 	for (size_t k = 0; k < columns; k++) {
 		//Compute 2-norm of k-th column without under/overflow.
-		entry_t norm = 0.0;
+		entry_type norm = 0.0;
 
 		for (size_t i = k; i < rows; i++) {
 			norm = hypot(norm, qr[i][k]);
@@ -42,7 +42,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 		if (isnotzero(norm)) {
 			//Form k-th Householder vector.
-			if (qr[k][k] < (entry_t) 0.0) {
+			if (qr[k][k] < (entry_type) 0.0) {
 				norm = -norm;
 			}
 
@@ -54,7 +54,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 			//Apply transformation to remaining columns.
 			for (size_t j = k + 1; j < columns; j++) {
-				entry_t s = 0.0;
+				entry_type s = 0.0;
 
 				for (size_t i = k; i < rows; i++) {
 					s += qr[i][k] * qr[i][j];
@@ -90,7 +90,7 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 		for (size_t j = (size_t) k; j < columns; j++) {
 			if (isnotzero(qr[k][k])) {
-				entry_t s = 0.0;
+				entry_type s = 0.0;
 
 				for (size_t i = (size_t) k; i < rows; i++) {
 					s += qr[i][k] * Q->data[i][j];
@@ -107,17 +107,17 @@ Mat *Dcmp_QR_Householder (Mat A) {
 
 	freeMat$(QR);
 
-	Mat *result = (Mat*) malloc(2 * sizeof(*result));
-	Assert$(result != NULL, "Cannot allocate.");
-	result[0] = Q;
-	result[1] = R;
+	Mat *res = (Mat*) malloc(2 * sizeof(struct _mat_s));
+	Assert$(res != NULL, "Cannot allocate memory.");
+	res[0] = Q;
+	res[1] = R;
 
-	return result;
+	return res;
 }
 
-entry_t Det_QR (Mat *QR) {
-	entry_t det = (entry_t) QR[1]->permutationSign;
-	entry_t **r = QR[1]->data;
+entry_type Det_QR (Mat *QR) {
+	entry_type det = (entry_type) QR[1]->permutationSign;
+	entry_type **r = QR[1]->data;
 
 	for (size_t i = 0; i < QR[1]->rowsCount; i++) {
 		det *= r[i][i];
@@ -132,9 +132,9 @@ Mat Solve_QR (Mat *QR, Mat B) {
 	Assert$(QR[0]->rowsCount == B->rowsCount, "Rows count doesn't match.");
 	Check$(QR[1]->isRankDeficient == false, "Rank deficient system.");
 
-	Mat Qt = Transposed(QR[0]);
-	matMul_inplace(&Qt, B);
-	entry_t **qt = Qt->data;
+	Mat QT = Transpose(QR[0]);
+	matMul_inplace(&QT, B);
+	entry_type **qt = QT->data;
 
 	for (ssize_t k = QR[0]->colsCount - 1; k >= 0; k--) {
 		for (size_t j = 0; j < B->colsCount; j++) {
@@ -148,7 +148,7 @@ Mat Solve_QR (Mat *QR, Mat B) {
 		}
 	}
 
-	return Qt;
+	return QT;
 }
 
 //TODO: Solve X*A = B === A'*X' = B'

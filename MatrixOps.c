@@ -28,13 +28,13 @@ EntryWiseFunc_MatrixScalar_Inplace$(mul, *)
 EntryWiseFunc_MatrixScalar_Inplace$(div, /)
 
 
-Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
+Mat MatLerp_entrywise (Mat A, Mat B, entry_type t) {
 	Assert$(IsDimsEqual(A, B), "Matrices A and B should be equal by sizes.");
 
 	Mat L = AllocMat(A->rowsCount, A->colsCount);
-	entry_t **l = L->data;
-	entry_t **a = A->data;
-	entry_t **b = B->data;
+	entry_type **l = L->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
 
 	for (size_t i = 0; i < L->rowsCount; i++) {
 		for (size_t j = 0; j < L->colsCount; j++) {
@@ -61,8 +61,8 @@ Mat MatLerp_entrywise (Mat A, Mat B, entry_t t) {
  \return	true if equal, else false.
  */
 bool IsEntriesEqual (Mat A, Mat B) {
-	entry_t **a = A->data;
-	entry_t **b = B->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
 
 	if (!IsDimsEqual(A, B)) {
 		return false;
@@ -100,22 +100,22 @@ bool IsIdentity (Mat A) {
 	if (A->isIdentity) {
 		return true;
 	} else {
-		entry_t **a = A->data;
+		entry_type **a = A->data;
 
 		switch (A->rowsCount) {
 			case 0:
 				return false;
 			case 1:
-				return equals(a[0][0], (entry_t) 1.0);
+				return equals(a[0][0], (entry_type) 1.0);
 			case 2:
-				return equals(a[0][0], (entry_t) 1.0) && iszero(a[0][1]) && iszero(a[1][0]) && equals(a[1][1], (entry_t) 1.0);
+				return equals(a[0][0], (entry_type) 1.0) && iszero(a[0][1]) && iszero(a[1][0]) && equals(a[1][1], (entry_type) 1.0);
 			default:
 				for (size_t i = 0; i < A->rowsCount; i++) {
 					for (size_t j = 0; j < A->colsCount; j++) {
 						if ((i != j) && (isnotzero(a[i][j]))) {
 							return false;
 						} else {
-							if ((i == j) && (!(equals(a[i][j], (entry_t) 1.0)))) {
+							if ((i == j) && (!(equals(a[i][j], (entry_type) 1.0)))) {
 								return false;
 							}
 						}
@@ -133,10 +133,10 @@ bool IsSingular (Mat A) {
 	if (A->isSingular) {
 		return true;
 	} else {
-		Mat T = DeepCopy(A);
-		toRowEchelonForm_reference(T);
-		bool isSingular = T->isSingular;
-		freeMat$(T);
+		Mat A1 = DeepCopy(A);
+		toUpperTriangularForm_ref(A1);
+		bool isSingular = A1->isSingular;
+		freeMat$(A1);
 		A->isSingular = isSingular;
 
 		return isSingular;
@@ -156,7 +156,7 @@ bool IsSymmetric (Mat A) {
 	if (!IsSquare$(A)) {
 		return false;
 	} else {
-		entry_t **a = A->data;
+		entry_type **a = A->data;
 
 		for (size_t i = 0; i < A->rowsCount; i++) {
 			for (size_t j = 0; j < i; j++) {
@@ -174,7 +174,7 @@ bool IsSkewSymmetric (Mat A) {
 	if (!IsSquare$(A)) {
 		return false;
 	} else {
-		entry_t **a = A->data;
+		entry_type **a = A->data;
 
 		for (size_t i = 0; i < A->rowsCount; i++) {
 			for (size_t j = 0; j < i; j++) {
@@ -192,30 +192,7 @@ bool IsSkewSymmetric (Mat A) {
 
 #pragma region "Transpose & Inverse"
 /**
- \fn	void toTransposed_square (Mat A)
-
- \brief	In-place square matrix transposition.
-
- \date	04-Jun-14
-
- \param	A	The Mat to process.
- */
-void toTransposed_square (Mat A) {
-	Assert$(IsSquare$(A), "Cannot transpose non-square matrix with this function. Use `toTransposed()' instead.");
-
-	entry_t **a = A->data;
-
-	for (size_t i = 0; i < A->rowsCount - 1; i++) {
-		for (size_t j = i + 1; j < A->rowsCount; j++) {
-			swap(a[i][j], a[j][i]);
-		}
-	}
-
-	return;
-}
-
-/**
- \fn	Mat Transposed (Mat A)
+ \fn	Mat Transpose (Mat A)
 
  \brief	Returns A transposed.
 
@@ -225,10 +202,10 @@ void toTransposed_square (Mat A) {
 
  \return	Matrix A transposed.
  */
-Mat Transposed (Mat A) {
+Mat Transpose (Mat A) {
 	Mat T = AllocMat(A->colsCount, A->rowsCount);
-	entry_t **t = T->data;
-	entry_t **a = A->data;
+	entry_type **t = T->data;
+	entry_type **a = A->data;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -247,10 +224,13 @@ Mat Transposed (Mat A) {
  \param	A	The Mat to process.
  */
 void toTransposed (Mat *A) {
+	Assert$(A != NULL, "*A should not be NULL.");
+	Assert$((*A) != NULL, "A should not be NULL.");
+
 	if ((*A)->rowsCount == (*A)->colsCount) {
 		toTransposed_square(*A);
 	} else {
-		Mat T = Transposed(*A);
+		Mat T = Transpose(*A);
 		freeMat$(*A);
 		*A = DeepCopy(T);
 		freeMat$(T);
@@ -260,7 +240,30 @@ void toTransposed (Mat *A) {
 }
 
 /**
- \fn	Mat Inverse (Mat A)
+ \fn	void toTransposed_square (Mat A)
+
+ \brief	In-place square matrix transposition.
+
+ \date	04-Jun-14
+
+ \param	A	The Mat to process.
+ */
+void toTransposed_square (Mat A) {
+	Assert$(IsSquare$(A), "Cannot transpose non-square matrix with this function. Use `toTransposed()' instead.");
+
+	entry_type **a = A->data;
+
+	for (size_t i = 0; i < A->rowsCount - 1; i++) {
+		for (size_t j = i + 1; j < A->rowsCount; j++) {
+			swap(a[i][j], a[j][i]);
+		}
+	}
+
+	return;
+}
+
+/**
+ \fn	Mat Inverse_GaussJordan (Mat A)
 
  \brief	Returns the Inverse matrix of the given Matrix A.
 
@@ -268,95 +271,95 @@ void toTransposed (Mat *A) {
 
  \return	A^(-1).
  */
-Mat Inverse (Mat A) {
+Mat Inverse_GaussJordan (Mat A) {
 	Assert$(IsSquare$(A), "Matrix A should be square.");
 
-	entry_t _det = Det_Gauss(A);
+	entry_type det = Det_Gauss(A); //TODO:
 
 	if (!Check$(!(A->isSingular), "Cannot invert singular matrix.")) {
 		return NULL;
 	}
 
-	Mat RI = NULL, I = NULL;
-	entry_t **a = A->data;
+	Mat I = NULL, E = NULL;
+	entry_type **a = A->data;
 
 	switch (A->rowsCount) {
 		case 1:
-			RI = AllocMat(A->rowsCount, A->colsCount);
+			I = AllocMat(A->rowsCount, A->colsCount);
 
-			RI->data[0][0] = (entry_t) 1.0 / A->det;
+			I->data[0][0] = (entry_type) 1.0 / A->det;
 
-			return RI;
+			return I;
 		case 2:
-			RI = AllocMat(A->rowsCount, A->colsCount);
+			I = AllocMat(A->rowsCount, A->colsCount);
 
-			RI->data[1][0] = -a[1][0];
-			RI->data[0][1] = -a[0][1];
-			RI->data[0][0] =  a[1][1];
-			RI->data[1][1] =  a[0][0];
+			I->data[1][0] = -a[1][0];
+			I->data[0][1] = -a[0][1];
+			I->data[0][0] =  a[1][1];
+			I->data[1][1] =  a[0][0];
 
-			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
+			_mul_m_s_inplace(I, (entry_type) 1.0 / A->det);
 
-			return RI;
+			return I;
 		case 3:
-			RI = AllocMat(A->rowsCount, A->colsCount);
+			I = AllocMat(A->rowsCount, A->colsCount);
 
-			RI->data[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
-			RI->data[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
-			RI->data[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1];
-			RI->data[1][0] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
-			RI->data[1][1] = a[0][0] * a[2][2] - a[0][2] * a[2][0];
-			RI->data[1][2] = a[1][0] * a[0][2] - a[0][0] * a[1][2];
-			RI->data[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1];
-			RI->data[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
-			RI->data[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
+			I->data[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
+			I->data[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
+			I->data[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1];
+			I->data[1][0] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
+			I->data[1][1] = a[0][0] * a[2][2] - a[0][2] * a[2][0];
+			I->data[1][2] = a[1][0] * a[0][2] - a[0][0] * a[1][2];
+			I->data[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1];
+			I->data[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
+			I->data[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
 
-			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
+			_mul_m_s_inplace(I, (entry_type) 1.0 / A->det);
 
-			return RI;
+			return I;
 		case 4:
-			RI = AllocMat(A->rowsCount, A->colsCount);
+			I = AllocMat(A->rowsCount, A->colsCount);
 
-			RI->data[0][0] = a[1][2] * a[2][3] * a[3][1] - a[1][3] * a[2][2] * a[3][1] + a[1][3] * a[2][1] * a[3][2] - a[1][1] * a[2][3] * a[3][2] - a[1][2] * a[2][1] * a[3][3] + a[1][1] * a[2][2] * a[3][3];
-			RI->data[0][1] = a[0][3] * a[2][2] * a[3][1] - a[0][2] * a[2][3] * a[3][1] - a[0][3] * a[2][1] * a[3][2] + a[0][1] * a[2][3] * a[3][2] + a[0][2] * a[2][1] * a[3][3] - a[0][1] * a[2][2] * a[3][3];
-			RI->data[0][2] = a[0][2] * a[1][3] * a[3][1] - a[0][3] * a[1][2] * a[3][1] + a[0][3] * a[1][1] * a[3][2] - a[0][1] * a[1][3] * a[3][2] - a[0][2] * a[1][1] * a[3][3] + a[0][1] * a[1][2] * a[3][3];
-			RI->data[0][3] = a[0][3] * a[1][2] * a[2][1] - a[0][2] * a[1][3] * a[2][1] - a[0][3] * a[1][1] * a[2][2] + a[0][1] * a[1][3] * a[2][2] + a[0][2] * a[1][1] * a[2][3] - a[0][1] * a[1][2] * a[2][3];
+			I->data[0][0] = a[1][2] * a[2][3] * a[3][1] - a[1][3] * a[2][2] * a[3][1] + a[1][3] * a[2][1] * a[3][2] - a[1][1] * a[2][3] * a[3][2] - a[1][2] * a[2][1] * a[3][3] + a[1][1] * a[2][2] * a[3][3];
+			I->data[0][1] = a[0][3] * a[2][2] * a[3][1] - a[0][2] * a[2][3] * a[3][1] - a[0][3] * a[2][1] * a[3][2] + a[0][1] * a[2][3] * a[3][2] + a[0][2] * a[2][1] * a[3][3] - a[0][1] * a[2][2] * a[3][3];
+			I->data[0][2] = a[0][2] * a[1][3] * a[3][1] - a[0][3] * a[1][2] * a[3][1] + a[0][3] * a[1][1] * a[3][2] - a[0][1] * a[1][3] * a[3][2] - a[0][2] * a[1][1] * a[3][3] + a[0][1] * a[1][2] * a[3][3];
+			I->data[0][3] = a[0][3] * a[1][2] * a[2][1] - a[0][2] * a[1][3] * a[2][1] - a[0][3] * a[1][1] * a[2][2] + a[0][1] * a[1][3] * a[2][2] + a[0][2] * a[1][1] * a[2][3] - a[0][1] * a[1][2] * a[2][3];
 
-			RI->data[1][0] = a[1][3] * a[2][2] * a[3][0] - a[1][2] * a[2][3] * a[3][0] - a[1][3] * a[2][0] * a[3][2] + a[1][0] * a[2][3] * a[3][2] + a[1][2] * a[2][0] * a[3][3] - a[1][0] * a[2][2] * a[3][3];
-			RI->data[1][1] = a[0][2] * a[2][3] * a[3][0] - a[0][3] * a[2][2] * a[3][0] + a[0][3] * a[2][0] * a[3][2] - a[0][0] * a[2][3] * a[3][2] - a[0][2] * a[2][0] * a[3][3] + a[0][0] * a[2][2] * a[3][3];
-			RI->data[1][2] = a[0][3] * a[1][2] * a[3][0] - a[0][2] * a[1][3] * a[3][0] - a[0][3] * a[1][0] * a[3][2] + a[0][0] * a[1][3] * a[3][2] + a[0][2] * a[1][0] * a[3][3] - a[0][0] * a[1][2] * a[3][3];
-			RI->data[1][3] = a[0][2] * a[1][3] * a[2][0] - a[0][3] * a[1][2] * a[2][0] + a[0][3] * a[1][0] * a[2][2] - a[0][0] * a[1][3] * a[2][2] - a[0][2] * a[1][0] * a[2][3] + a[0][0] * a[1][2] * a[2][3];
+			I->data[1][0] = a[1][3] * a[2][2] * a[3][0] - a[1][2] * a[2][3] * a[3][0] - a[1][3] * a[2][0] * a[3][2] + a[1][0] * a[2][3] * a[3][2] + a[1][2] * a[2][0] * a[3][3] - a[1][0] * a[2][2] * a[3][3];
+			I->data[1][1] = a[0][2] * a[2][3] * a[3][0] - a[0][3] * a[2][2] * a[3][0] + a[0][3] * a[2][0] * a[3][2] - a[0][0] * a[2][3] * a[3][2] - a[0][2] * a[2][0] * a[3][3] + a[0][0] * a[2][2] * a[3][3];
+			I->data[1][2] = a[0][3] * a[1][2] * a[3][0] - a[0][2] * a[1][3] * a[3][0] - a[0][3] * a[1][0] * a[3][2] + a[0][0] * a[1][3] * a[3][2] + a[0][2] * a[1][0] * a[3][3] - a[0][0] * a[1][2] * a[3][3];
+			I->data[1][3] = a[0][2] * a[1][3] * a[2][0] - a[0][3] * a[1][2] * a[2][0] + a[0][3] * a[1][0] * a[2][2] - a[0][0] * a[1][3] * a[2][2] - a[0][2] * a[1][0] * a[2][3] + a[0][0] * a[1][2] * a[2][3];
 
-			RI->data[2][0] = a[1][1] * a[2][3] * a[3][0] - a[1][3] * a[2][1] * a[3][0] + a[1][3] * a[2][0] * a[3][1] - a[1][0] * a[2][3] * a[3][1] - a[1][1] * a[2][0] * a[3][3] + a[1][0] * a[2][1] * a[3][3];
-			RI->data[2][1] = a[0][3] * a[2][1] * a[3][0] - a[0][1] * a[2][3] * a[3][0] - a[0][3] * a[2][0] * a[3][1] + a[0][0] * a[2][3] * a[3][1] + a[0][1] * a[2][0] * a[3][3] - a[0][0] * a[2][1] * a[3][3];
-			RI->data[2][2] = a[0][1] * a[1][3] * a[3][0] - a[0][3] * a[1][1] * a[3][0] + a[0][3] * a[1][0] * a[3][1] - a[0][0] * a[1][3] * a[3][1] - a[0][1] * a[1][0] * a[3][3] + a[0][0] * a[1][1] * a[3][3];
-			RI->data[2][3] = a[0][3] * a[1][1] * a[2][0] - a[0][1] * a[1][3] * a[2][0] - a[0][3] * a[1][0] * a[2][1] + a[0][0] * a[1][3] * a[2][1] + a[0][1] * a[1][0] * a[2][3] - a[0][0] * a[1][1] * a[2][3];
+			I->data[2][0] = a[1][1] * a[2][3] * a[3][0] - a[1][3] * a[2][1] * a[3][0] + a[1][3] * a[2][0] * a[3][1] - a[1][0] * a[2][3] * a[3][1] - a[1][1] * a[2][0] * a[3][3] + a[1][0] * a[2][1] * a[3][3];
+			I->data[2][1] = a[0][3] * a[2][1] * a[3][0] - a[0][1] * a[2][3] * a[3][0] - a[0][3] * a[2][0] * a[3][1] + a[0][0] * a[2][3] * a[3][1] + a[0][1] * a[2][0] * a[3][3] - a[0][0] * a[2][1] * a[3][3];
+			I->data[2][2] = a[0][1] * a[1][3] * a[3][0] - a[0][3] * a[1][1] * a[3][0] + a[0][3] * a[1][0] * a[3][1] - a[0][0] * a[1][3] * a[3][1] - a[0][1] * a[1][0] * a[3][3] + a[0][0] * a[1][1] * a[3][3];
+			I->data[2][3] = a[0][3] * a[1][1] * a[2][0] - a[0][1] * a[1][3] * a[2][0] - a[0][3] * a[1][0] * a[2][1] + a[0][0] * a[1][3] * a[2][1] + a[0][1] * a[1][0] * a[2][3] - a[0][0] * a[1][1] * a[2][3];
 
-			RI->data[3][0] = a[1][2] * a[2][1] * a[3][0] - a[1][1] * a[2][2] * a[3][0] - a[1][2] * a[2][0] * a[3][1] + a[1][0] * a[2][2] * a[3][1] + a[1][1] * a[2][0] * a[3][2] - a[1][0] * a[2][1] * a[3][2];
-			RI->data[3][1] = a[0][1] * a[2][2] * a[3][0] - a[0][2] * a[2][1] * a[3][0] + a[0][2] * a[2][0] * a[3][1] - a[0][0] * a[2][2] * a[3][1] - a[0][1] * a[2][0] * a[3][2] + a[0][0] * a[2][1] * a[3][2];
-			RI->data[3][2] = a[0][2] * a[1][1] * a[3][0] - a[0][1] * a[1][2] * a[3][0] - a[0][2] * a[1][0] * a[3][1] + a[0][0] * a[1][2] * a[3][1] + a[0][1] * a[1][0] * a[3][2] - a[0][0] * a[1][1] * a[3][2];
-			RI->data[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
+			I->data[3][0] = a[1][2] * a[2][1] * a[3][0] - a[1][1] * a[2][2] * a[3][0] - a[1][2] * a[2][0] * a[3][1] + a[1][0] * a[2][2] * a[3][1] + a[1][1] * a[2][0] * a[3][2] - a[1][0] * a[2][1] * a[3][2];
+			I->data[3][1] = a[0][1] * a[2][2] * a[3][0] - a[0][2] * a[2][1] * a[3][0] + a[0][2] * a[2][0] * a[3][1] - a[0][0] * a[2][2] * a[3][1] - a[0][1] * a[2][0] * a[3][2] + a[0][0] * a[2][1] * a[3][2];
+			I->data[3][2] = a[0][2] * a[1][1] * a[3][0] - a[0][1] * a[1][2] * a[3][0] - a[0][2] * a[1][0] * a[3][1] + a[0][0] * a[1][2] * a[3][1] + a[0][1] * a[1][0] * a[3][2] - a[0][0] * a[1][1] * a[3][2];
+			I->data[3][3] = a[0][1] * a[1][2] * a[2][0] - a[0][2] * a[1][1] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[0][0] * a[1][2] * a[2][1] - a[0][1] * a[1][0] * a[2][2] + a[0][0] * a[1][1] * a[2][2];
 
-			_mul_m_s_inplace(RI, (entry_t) 1.0 / A->det);
+			_mul_m_s_inplace(I, (entry_type) 1.0 / A->det);
 
-			return RI;
+			return I;
 		default:
-			RI = DeepCopy(A);
-			I = Identity(A->rowsCount);
+			I = DeepCopy(A);
+			E = Identity(A->rowsCount);
 
-			join(RI, I);
+			joinColumns(I, E);
 
-			toReducedRowEchelonForm(RI);
+			toReducedRowEchelonForm(I);
 
-			for (size_t i = 0; i < A->rowsCount; i++) {
-				for (size_t j = 0; j < A->colsCount; j++) {
-					I->data[i][j] = RI->data[i][j + A->colsCount];
+			for (size_t i = 0; i < E->rowsCount; i++) {
+				for (size_t j = A->colsCount; j < I->colsCount; j++) {
+					E->data[i][j - A->colsCount] = I->data[i][j];
 				}
 			}
 
-			freeMat$(RI);
+			freeMat$(I);
 
-			return I;
+			return E;
 	}
 }
 
@@ -371,7 +374,11 @@ Mat Inverse (Mat A) {
  \param	A	The Mat to process.
  */
 void toInverse (Mat *A) {
-	Mat I = Inverse(*A);
+	Assert$(A != NULL, "*A should not be NULL.");
+	Assert$((*A) != NULL, "A should not be NULL.");
+	Assert$(IsSquare$(*A), "Matrix A should be square.");
+
+	Mat I = Inverse$(*A);
 	freeMat$(*A);
 	*A = I;
 
@@ -398,9 +405,9 @@ Mat MatMul_naive (Mat A, Mat B) {
 	Assert$(A->colsCount == B->rowsCount, "Number of columns in A must be equal to number of rows in B.");
 
 	Mat C = AllocMat(A->rowsCount, B->colsCount);
-	entry_t **a = A->data;
-	entry_t **b = B->data;
-	entry_t **c = C->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
+	entry_type **c = C->data;
 
 	if (IsSquare$(A) && IsDimsEqual(A, B)) {
 		switch (A->rowsCount) {
@@ -454,17 +461,17 @@ Mat MatMul_naive (Mat A, Mat B) {
 
 				return C;
 			default:
-				goto generalized;
+				goto matmul_gen;
 		}
 	} else {
-		goto generalized;
+		goto matmul_gen;
 	}
 
-generalized:
+matmul_gen:
 	fill_zeroes(C);
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t k = 0; k < A->colsCount; k++) {
-			entry_t f = a[i][k];
+			entry_type f = a[i][k];
 			for (size_t j = 0; j < B->colsCount; j++) {
 				c[i][j] += f * b[k][j];
 			}
@@ -480,13 +487,13 @@ generalized:
  \brief	Recursive implementation of naive matrix multiplication algorithm.
  		Only for square matrices with size=2^n. Not memory efficient!
 		A, B & product C will be split into 4 submatrices, then the product will be:
-		C11 = A11B11 + A12B21
-		C12 = A11B12 + A12B22
-		C21 = A21B11 + A22B21
-		C22 = A21B12 + A22B22,
+		C11 = A11 . B11 + A12 . B21
+		C12 = A11 . B12 + A12 . B22
+		C21 = A21 . B11 + A22 . B21
+		C22 = A21 . B12 + A22 . B22,
 		or:
-		C11 ← A11×B11;  C11 ← C11 + A12×B21
-		C12 ← A11×B12;  C12 ← C12 + A12×B22
+		C11 ← A11 . B11;  C11 ← C11 + A12×B21
+		C12 ← A11 . B12;  C12 ← C12 + A12×B22
 		C21 ← A21×B11;  C21 ← C21 + A22×B21
 		C22 ← A21×B12;  C22 ← C22 + A22×B22
 
@@ -500,8 +507,8 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 
 	Mat C = NULL;
 	size_t size = A->rowsCount;
-	entry_t **a = A->data;
-	entry_t **b = B->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
 
 	switch (size) {
 		case 1:
@@ -596,24 +603,23 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
 					}
 				}
 
-				//TODO: C22 can be used as temporary, so no tmp_1 needed!)
-				tmp_1 = MatMul_naive_recursive(A12, B21);
 				Mat C11 = MatMul_naive_recursive(A11, B11);
+				tmp_1 = MatMul_naive_recursive(A12, B21);
 				_add_m_m_inplace(C11, tmp_1);
 				freeMat$(tmp_1);
 
-				tmp_1 = MatMul_naive_recursive(A12, B22);
 				Mat C12 = MatMul_naive_recursive(A11, B12);
+				tmp_1 = MatMul_naive_recursive(A12, B22);
 				_add_m_m_inplace(C12, tmp_1);
 				freeMat$(tmp_1);
 
-				tmp_1 = MatMul_naive_recursive(A22, B21);
 				Mat C21 = MatMul_naive_recursive(A21, B11);
+				tmp_1 = MatMul_naive_recursive(A22, B21);
 				_add_m_m_inplace(C21, tmp_1);
 				freeMat$(tmp_1);
 
-				tmp_1 = MatMul_naive_recursive(A22, B22);
 				Mat C22 = MatMul_naive_recursive(A21, B12);
+				tmp_1 = MatMul_naive_recursive(A22, B22);
 				_add_m_m_inplace(C22, tmp_1);
 				freeMat$(tmp_1);
 
@@ -645,18 +651,20 @@ Mat MatMul_naive_recursive (Mat A, Mat B) {
  \param	B	The Mat B to process.
  */
 void matMul_inplace (Mat *A, Mat B) {
+	Assert$(A != NULL, "*A should not be NULL.");
+	Assert$((*A) != NULL, "A should not be NULL.");
 	Assert$((*A)->colsCount == B->rowsCount, "Number of columns of A must be equal to number of rows of B.");
 
-	Mat P = MatMul$(*A, B);
+	Mat C = MatMul$(*A, B);
 	freeMat$(*A);
-	*A = DeepCopy(P);
-	freeMat$(P);
+	*A = DeepCopy(C);
+	freeMat$(C);
 
 	return;
 }
 
 /**
- \fn	Mat MatPow (Mat A, size_t pow)
+ \fn	Mat MatPow_naive (Mat A, size_t pow)
 
  \brief	Raise matrix to power N.
 		TODO: use addition - chain exponentiation.
@@ -668,34 +676,34 @@ void matMul_inplace (Mat *A, Mat B) {
 
  \return	A^n.
  */
-Mat MatPow (Mat A, size_t pow) {
+Mat MatPow_naive (Mat A, size_t pow) {
 	Assert$(IsSquare$(A), "Cannot raise power of non-square matrix.");
 
 	size_t c = 0;
-	Mat R;
+	Mat P;
 
 	switch (pow) {
 		case 0:
 			return Identity(A->rowsCount);
 		case 1:
-			R = DeepCopy(A);
+			P = DeepCopy(A);
 
-			return R;
+			return P;
 		case 2:
-			R = DeepCopy(A);
+			P = DeepCopy(A);
 
-			matMul_inplace(&R, A);
+			matMul_inplace(&P, A);
 
-			return R;
+			return P;
 		default:
-			R = DeepCopy(A);
+			P = DeepCopy(A);
 
 			do {
-				matMul_inplace(&R, A);
+				matMul_inplace(&P, A);
 				c++;
 			} while (c < pow - 1);
 
-			return R;
+			return P;
 	}
 }
 #pragma endregion "Matrix multiplication"
@@ -714,7 +722,7 @@ Mat MatPow (Mat A, size_t pow) {
  \return	Rank value.
  */
 size_t Rank (Mat RREF) {
-	entry_t **a = RREF->data;
+	entry_type **a = RREF->data;
 	size_t rank = 0;
 
 	for (size_t i = 0; i < RREF->rowsCount; i++) {
@@ -739,9 +747,9 @@ size_t Rank (Mat RREF) {
 
  \return	Trace value.
  */
-entry_t Trace (Mat A) {
-	entry_t **a = A->data;
-	entry_t tr = 0.0;
+entry_type Trace (Mat A) {
+	entry_type **a = A->data;
+	entry_type tr = 0.0;
 
 	for (size_t i = 0; i < min(A->rowsCount, A->colsCount); i++) {
 		tr += a[i][i];
@@ -760,11 +768,11 @@ entry_t Trace (Mat A) {
 
  \return	1-norm.
  */
-entry_t OneNorm (Mat A) {
-	entry_t norm = 0.0;
+entry_type OneNorm (Mat A) {
+	entry_type norm = 0.0;
 
 	for (size_t i = 0; i < A->colsCount; i++) {
-        entry_t sum = 0.0;
+        entry_type sum = 0.0;
 
 		for (size_t j = 0; j < A->rowsCount; j++) {
 			sum += abs(A->data[j][i]);
@@ -776,7 +784,7 @@ entry_t OneNorm (Mat A) {
 	return norm;
 }
 
-entry_t TwoNorm (Mat A) {
+entry_type TwoNorm (Mat A) {
 	Assert$(false, "Not Yet Implemented."); //TODO:
 
 	return 0.0;
@@ -791,11 +799,11 @@ entry_t TwoNorm (Mat A) {
 
  \return	Inf-norm.
  */
-entry_t InfinityNorm (Mat A) {
-	entry_t norm = 0.0;
+entry_type InfinityNorm (Mat A) {
+	entry_type norm = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
-		entry_t sum = 0.0;
+		entry_type sum = 0.0;
 
 		for (size_t j = 0; j < A->colsCount; j++) {
 			sum += abs(A->data[i][j]);
@@ -817,8 +825,8 @@ entry_t InfinityNorm (Mat A) {
 
  \return	Euclidean norm.
  */
-entry_t EuclideanNorm (Mat A) {
-	entry_t sum = 0.0;
+entry_type EuclideanNorm (Mat A) {
+	entry_type sum = 0.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		for (size_t j = 0; j < A->colsCount; j++) {
@@ -838,15 +846,15 @@ entry_t EuclideanNorm (Mat A) {
 
  \return	Condition number.
  */
-entry_t ConditionNumber (Mat A) {
-	Mat Ai = DeepCopy(A);
+entry_type ConditionNumber (Mat A) {
+	Mat AI = DeepCopy(A);
 
-	toInverse(&Ai);
+	toInverse(&AI);
 
-	if (Ai != NULL) {
-		entry_t c = InfinityNorm(A) * InfinityNorm(Ai);
+	if (AI != NULL) {
+		entry_type c = InfinityNorm(A) * InfinityNorm(AI);
 
-		freeMat$(Ai);
+		freeMat$(AI);
 
 		return c;
 	} else {
@@ -854,8 +862,8 @@ entry_t ConditionNumber (Mat A) {
 	}
 }
 
-entry_t DiagProd (Mat A) {
-	entry_t prod = 1.0;
+entry_type DiagProd (Mat A) {
+	entry_type prod = 1.0;
 
 	for (size_t i = 0; i < A->rowsCount; i++) {
 		prod *= A->data[i][i];
@@ -879,9 +887,9 @@ entry_t DiagProd (Mat A) {
  */
 Mat KroneckerProd (Mat A, Mat B) {
 	Mat K = AllocMat(A->rowsCount * B->rowsCount, A->colsCount * B->colsCount);
-	entry_t **a = A->data;
-	entry_t **b = B->data;
-	entry_t **k = K->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
+	entry_type **k = K->data;
 
 	for (size_t i = 0; i < K->rowsCount; i++) {
 		for (size_t j = 0; j < K->colsCount; j++) {
@@ -905,20 +913,17 @@ Mat KroneckerProd (Mat A, Mat B) {
 Mat KroneckerSum (Mat A, Mat B) {
 	Assert$(IsSquare$(A) && IsSquare$(B), "Matrices A and B should be square.");
 
-	Mat Ib = Identity(B->rowsCount);
-	Mat Ia = Identity(A->rowsCount);
-	Mat AI = KroneckerProd(A, Ib);
-	Mat IB = KroneckerProd(Ia, B);
-	Mat KS = AllocMat(A->rowsCount * B->rowsCount, A->colsCount * B->colsCount);
+	Mat EA = Identity(A->rowsCount);
+	Mat EB = Identity(B->rowsCount);
+	Mat AEB = KroneckerProd(A, EB);
+	Mat EAB = KroneckerProd(EA, B);
+	Mat K = AllocMat(A->rowsCount * B->rowsCount, A->colsCount * B->colsCount);
 
-	_add_m_m_m(AI, IB, KS);
+	_add_m_m_m(AEB, EAB, K);
 
-	freeMat$(IB);
-	freeMat$(Ia);
-	freeMat$(AI);
-	freeMat$(Ib);
+	freeMats(EAB, AEB, EB, EA, NULL);
 
-	return KS;
+	return K;
 }
 #pragma endregion "Kronecker"
 
@@ -935,7 +940,7 @@ Mat KroneckerSum (Mat A, Mat B) {
  */
 size_t _adjustSize (size_t size) {
 	if (!(Check$(ispowerof2_i(size), "Matrix size is not a power of 2."))) {
-		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(size)))); //-V113 //TODO: get rid of FP operations here
+		return (size_t) ((int64_t) (1) << (int64_t) (ceil(log2(size)))); //-V113 //TODO: get rid of FP ops here
 	} else {
 		return size;
 	}
@@ -950,17 +955,17 @@ size_t _adjustSize (size_t size) {
  (or when size of blocks reaches some threshold value when naive algorithm will be used).
  Complexity: O(n^2.8)
  TODO: convert input matrices into 'recursion-friendly' form (e.g 'matrix of matrices')
-		M1 := (A11 + A22)(B11 + B22)
-		M2 := (A21 + A22)B11
-		M3 := A11(B12 − B22)
-		M4 := A22(B21 − B11)
-		M5 := (A11 + A12)B22
-		M6 := (A21 − A11)(B11 + B12)
-		M7 := (A12 − A22)(B21 + B22)
-		C11 = M1 + M4 − M5 + M7
-		C12 = M3 + M5
-		C21 = M2 + M4
-		C22 = M1 − M2 + M3 + M6.
+		M1 := (A11 + A22) . (B11 + B22)
+		M2 := (A21 + A22) . B11
+		M3 := A11 . (B12 − B22)
+		M4 := A22 . (B21 − B11)
+		M5 := (A11 + A12) . B22
+		M6 := (A21 − A11) . (B11 + B12)
+		M7 := (A12 − A22) . (B21 + B22)
+		C11 := M1 + M4 − M5 + M7
+		C12 := M3 + M5
+		C21 := M2 + M4
+		C22 := M1 − M2 + M3 + M6.
 
  \param	A	The Mat A to process.
  \param	B	The Mat B to process.
@@ -970,8 +975,8 @@ size_t _adjustSize (size_t size) {
 Mat MatMul_Strassen (Mat A, Mat B) {
 	Mat C = NULL;
 	size_t size = A->rowsCount;
-	entry_t **a = A->data;
-	entry_t **b = B->data;
+	entry_type **a = A->data;
+	entry_type **b = B->data;
 
 	switch (size) {
 		case 1:
@@ -1069,27 +1074,27 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 
 				_add_m_m_m(A11, A22, A_tmp); //A11 + A22
 				_add_m_m_m(B11, B22, B_tmp); //B11 + B22
-				Mat P1 = MatMul_Strassen(A_tmp, B_tmp); //P1 = (A11+A22) * (B11+B22)
+				Mat P1 = MatMul_Strassen(A_tmp, B_tmp); //P1 = (A11 + A22) . (B11 + B22)
 
 				_add_m_m_m(A21, A22, A_tmp); //A21 + A22
-				Mat P2 = MatMul_Strassen(A_tmp, B11); //P2 = (A21+A22) * (B11)
+				Mat P2 = MatMul_Strassen(A_tmp, B11); //P2 = (A21 + A22) . (B11)
 
 				_sub_m_m_m(B12, B22, B_tmp); //B12 - B22
-				Mat P3 = MatMul_Strassen(A11, B_tmp); //P3 = (A11) * (B12 - B22)
+				Mat P3 = MatMul_Strassen(A11, B_tmp); //P3 = (A11) . (B12 - B22)
 
 				_sub_m_m_m(B21, B11, B_tmp); //B21 - B11
-				Mat P4 = MatMul_Strassen(A22, B_tmp); //P4 = (A22) * (B21 - B11)
+				Mat P4 = MatMul_Strassen(A22, B_tmp); //P4 = (A22) . (B21 - B11)
 
 				_add_m_m_m(A11, A12, A_tmp); //A11 + A12
-				Mat P5 = MatMul_Strassen(A_tmp, B22); //P5 = (A11 + A12) * (B22)
+				Mat P5 = MatMul_Strassen(A_tmp, B22); //P5 = (A11 + A12) . (B22)
 
 				_sub_m_m_m(A21, A11, A_tmp); //A21 - A11
 				_add_m_m_m(B11, B12, B_tmp); //B11 + B12
-				Mat P6 = MatMul_Strassen(A_tmp, B_tmp); //P6 = (A21 - A11) * (B11 + B12)
+				Mat P6 = MatMul_Strassen(A_tmp, B_tmp); //P6 = (A21 - A11) . (B11 + B12)
 
 				_sub_m_m_m(A12, A22, A_tmp); //A12 - A22
 				_add_m_m_m(B21, B22, B_tmp); //B21 + B22
-				Mat P7 = MatMul_Strassen(A_tmp, B_tmp); //P7 = (A12 - A22) * (B21 + B22)
+				Mat P7 = MatMul_Strassen(A_tmp, B_tmp); //P7 = (A12 - A22) . (B21 + B22)
 
 				Mat C11 = AllocMat(size, size);
 				Mat C12 = AllocMat(size, size);
@@ -1127,27 +1132,27 @@ Mat MatMul_Strassen (Mat A, Mat B) {
 	}
 }
 
-/**
- \fn	Mat MatMul_Strassen_optimized (Mat A, Mat B)
-
- \brief	P1 = (A01+A10)(B10+B01)
-		P2 = (A10+A11)B10
-		P3 = A01(B11-B01)
-		P4 = A10(B00-B10)
-		P5 = (A01+A00)B01
-		P6 = (A11-A01)(B10+B11)
-		P7 = (A00-A10)(B00+B01)
-		C00 = P1+P4-P5+P7
-		C01 = P3+P5
-		C10 = P2+P4
-		C11 = P1-P2+P3+P6.
-
- \param	A	The Mat to process.
- \param	B	The Mat to process.
-
- \return	A . B.
- */
-Mat MatMul_Strassen_optimized (Mat A, Mat B) {
-	return MatMul_Strassen(A, B); //TODO:
-}
+///**
+// \fn	Mat MatMul_Strassen_optimized (Mat A, Mat B)
+//
+// \brief	P1 := (A01 + A10) . (B10 + B01)
+//		P2 := (A10 + A11) . B10
+//		P3 := A01 . (B11 - B01)
+//		P4 := A10 . (B00 - B10)
+//		P5 := (A01 + A00) . B01
+//		P6 := (A11 - A01) . (B10 + B11)
+//		P7 := (A00 - A10) . (B00 + B01)
+//		C00 := P1 + P4 - P5 + P7
+//		C01 := P3 + P5
+//		C10 := P2 + P4
+//		C11 := P1 - P2 + P3 + P6.
+//
+// \param	A	The Mat to process.
+// \param	B	The Mat to process.
+//
+// \return	A . B.
+// */
+//Mat MatMul_Strassen_optimized (Mat A, Mat B) {
+//	return MatMul_Strassen(A, B); //TODO:
+//}
 #pragma endregion "Strassen"
